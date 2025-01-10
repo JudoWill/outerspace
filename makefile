@@ -12,3 +12,5 @@ reads:
 hello:
 	ls -l $(DIR_RB_READS)
 
+clean:
+	rm -f grna_extraction/.ipynb_checkpoints/extraction_attempt-checkpoint.py
