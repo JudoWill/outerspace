@@ -14,10 +14,6 @@ import regex
 import tqdm
 import csv
 
-
-# In[2]:
-
-
 dir_crispr = '../../../nonn-lab/rachel-test-crispr'
 
 dir_read = join(dir_crispr, 'reads/')
@@ -83,10 +79,6 @@ def process_paired_read_file(outpath, path1, path2, forward_umi_reg, protospacer
         stream = extract_from_paired_reads(path1, path2, forward_umi_reg, protospacer_reg, reverse_umi_reg)
         writer.writerows(stream)
 
-
-# In[3]:
-
-
 forward_umi_reg = regex.compile('(?P<UMI>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}', flags=regex.BESTMATCH)
 protospacer_reg = regex.compile('(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?:GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}',
                                 flags=regex.BESTMATCH)
@@ -96,31 +88,10 @@ back_umi_rc = reverse_complement(back_umi_forward)
 
 reverse_umi_reg = regex.compile(f'(?P<UMI>.{{8}})(?:{back_umi_rc}){{s<=4}}', flags=regex.BESTMATCH)
 
-
-# In[4]:
-
-
 def main():
     print('running_main')
     csv = '409-4.csv'
 
     process_paired_read_file(csv, path1, path2, forward_umi_reg, protospacer_reg, reverse_umi_reg)
-
-
-# In[5]:
-
-
-main()
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
 
 # Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.
