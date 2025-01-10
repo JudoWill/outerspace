@@ -88,10 +88,4 @@ back_umi_rc = reverse_complement(back_umi_forward)
 
 reverse_umi_reg = regex.compile(f'(?P<UMI>.{{8}})(?:{back_umi_rc}){{s<=4}}', flags=regex.BESTMATCH)
 
-def main():
-    print('running_main')
-    csv = '409-4.csv'
-
-    process_paired_read_file(csv, path1, path2, forward_umi_reg, protospacer_reg, reverse_umi_reg)
-
 # Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.
