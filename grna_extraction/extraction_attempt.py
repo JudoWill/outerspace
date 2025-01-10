@@ -1,8 +1,7 @@
-#!/usr/bin/env python
-# coding: utf-8
+"""Extraction of sequence from reads"""
 
-# In[1]:
-
+__copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
+__author__ = "SC Barrera"
 
 from os.path import join
 from Bio import SeqIO
@@ -124,4 +123,4 @@ main()
 
 
 
-
+# Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.
