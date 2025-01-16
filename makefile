@@ -1,7 +1,7 @@
 DIR_RB_READS := ../../nonn-lab/rachel-test-crispr/
 
 py:
-	find grna_extraction bin -name '*.py' -type f
+	find grna_extraction bin -name '*.py' -type f | grep -v checkpoint
 
 run_script:
 	cd grna_extraction; python extraction_attempt.py
