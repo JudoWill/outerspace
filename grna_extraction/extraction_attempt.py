@@ -12,7 +12,7 @@
 ####
 ####import regex
 ####import tqdm
-####import csv
+import csv
 ####
 ####dir_crispr = '../../../nonn-lab/rachel-test-crispr'
 ####
@@ -48,7 +48,8 @@
 ####    if len(result) == 1:
 ####        return result[0]
 ####    
-####def extract_from_paired_reads(read1_path, read2_path, forward_reg, proto_reg, reverse_reg):
+def extract_from_paired_reads(read1_path, read2_path, forward_reg, proto_reg, reverse_reg):
+    print("yay")
 ####    
 ####    total = 0
 ####    missed = 0
@@ -70,16 +71,15 @@
 ####    print(f'Total sequences: {total}\nMissed sequences: {missed}')
 ####    
 def process_paired_read_file(outpath, path1, path2, forward_umi_reg, protospacer_reg, reverse_umi_reg):
-    print('YAYY')
-####    
-####    with open(outpath, mode='w') as handle:
-####        fieldnames = ['read_id', 'forward_umi', 'protospacer', 'reverse_umi']
-####        writer = csv.DictWriter(handle, fieldnames)
-####        writer.writeheader()
-####        
-####        stream = extract_from_paired_reads(path1, path2, forward_umi_reg, protospacer_reg, reverse_umi_reg)
-####        writer.writerows(stream)
-####
+    
+    with open(outpath, mode='w') as handle:
+        fieldnames = ['read_id', 'forward_umi', 'protospacer', 'reverse_umi']
+        writer = csv.DictWriter(handle, fieldnames)
+        writer.writeheader()
+        
+        stream = extract_from_paired_reads(path1, path2, forward_umi_reg, protospacer_reg, reverse_umi_reg)
+        #writer.writerows(stream)
+
 ####forward_umi_reg = regex.compile('(?P<UMI>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}', flags=regex.BESTMATCH)
 ####protospacer_reg = regex.compile('(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?:GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}',
 ####                                flags=regex.BESTMATCH)
