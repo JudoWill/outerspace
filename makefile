@@ -1,4 +1,9 @@
 DIR_RB_READS := ../../nonn-lab/rachel-test-crispr/
+P1 := ../../nonn-lab/rachel-test-crispr/reads/409-4_S1_L001_R1_001.fastq.gz
+P2 := ../../nonn-lab/rachel-test-crispr/reads/409-4_S1_L001_R2_001.fastq.gz
+
+run:
+	bin/main.py $(P1) $(P2)
 
 py:
 	find grna_extraction bin -name '*.py' -type f | grep -v checkpoint
@@ -14,3 +19,6 @@ hello:
 
 clean:
 	rm -f grna_extraction/.ipynb_checkpoints/extraction_attempt-checkpoint.py
+
+vim:
+	vim -p grna_extraction/extraction_attempt.py bin/main.py
