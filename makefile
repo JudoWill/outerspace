@@ -6,7 +6,10 @@ run:
 	bin/main.py $(P1) $(P2)
 
 py:
-	find grna_extraction bin -name '*.py' -type f | grep -v checkpoint
+	find tests grna_extraction bin -name '*.py' -type f | grep -v checkpoint
+
+vim:
+	vim -p grna_extraction/extraction_attempt.py bin/main.py
 
 run_script:
 	cd grna_extraction; python extraction_attempt.py
@@ -19,6 +22,3 @@ hello:
 
 clean:
 	rm -f grna_extraction/.ipynb_checkpoints/extraction_attempt-checkpoint.py
-
-vim:
-	vim -p grna_extraction/extraction_attempt.py bin/main.py
