@@ -22,10 +22,13 @@ grna = table()
 grna.add("name", "SCB, DK, WND, RB")
 grna.add("organization", "DUCOM")
 
-grna.add("forward_umi_reg = regex.compile('(?P<UMI>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}', flags=regex.BESTMATCH) 
-grna.add("protospacer_reg = regex.compile('(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?:GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}', flags=regex.BESTMATCH)
-grna.add("back_umi_forward = 'gtgtgtcagttagggtgtggaa'.upper()
-grna.add("back_umi_rc = reverse_complement(back_umi_forward)
-grna.add("reverse_umi_reg = regex.compile(f'(?P<UMI>.{{8}})(?:{back_umi_rc}){{s<=4}}', flags=regex.BESTMATCH) 
+grna.add("regex_flags", "BESTMATCH")
+grna.add("forward_umi_pattern", '(?P<UMI>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}') 
+grna.add("protospacer_pattern", '(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?:GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}')
+
+grna.add("back_umi_forward", 'gtgtgtcagttagggtgtggaa')
+
+grna.add("reverse_umi_pattern",'(?P<UMI>.{{8}})(?:{back_umi_rc}){{s<=4}}') 
+
 # Adding the table to the document
 doc.add("define_motifs", grna)
