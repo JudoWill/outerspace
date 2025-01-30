@@ -8,6 +8,9 @@ run:
 py:
 	find tests grna_extraction bin -name '*.py' -type f | grep -v checkpoint
 
+md:
+	find . -type f -name '*.md'
+
 vim:
 	vim -p grna_extraction/extraction_attempt.py bin/main.py
 

@@ -3,15 +3,23 @@ from tomlkit import comment
 from tomlkit import document
 from tomlkit import nl
 from tomlkit import table
+from tomlkit import toml_file
 
 print(f'CCCCCCCCC config({__name__})')
 
 # Format taken from TOML Quickstart Kit
 class Cfg:
     """configuration for defining motifs"""
+    
+    # Upon Cfg() __init__() runs - bc we are creating document here
+    def __init__(self):
+        self.doc = self._init_doc()
+
+    def __str__(self):
+        return self.doc.as_string()
 
     @staticmethod
-    def get_doc():
+    def _init_doc():
         doc = document()
         doc.add(comment("TOML document for gRNA extraction."))
         doc.add(nl())
@@ -21,13 +29,10 @@ class Cfg:
         owner = table()
         owner.add("name", "SCB, DK, WND, RB")
         owner.add("organization", "DUCOM")
-        
         # Adding the table to the document
         doc.add("owner", owner)
         
         grna = table()
-        grna.add("name", "SCB, DK, WND, RB")
-        grna.add("organization", "DUCOM")
         
         grna.add("regex_flags", "BESTMATCH")
         grna.add("forward_umi_pattern", '(?P<UMI>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}') 
@@ -39,3 +44,4 @@ class Cfg:
         
         # Adding the table to the document
         doc.add("define_motifs", grna)
+        return doc
