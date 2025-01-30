@@ -1,4 +1,5 @@
 # gRNA EXTRACTION PROJECT  
+* [definitions](doc/definitions.md)
   
 ## Description:
 This pipeline is intended to to extract the gRNA protospacer from reads. In future will adjust to also extract tracrRNA from reads for a CRISPR Screen.  
