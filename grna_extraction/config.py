@@ -35,12 +35,12 @@ class Cfg:
         grna = table()
         
         grna.add("regex_flags", "BESTMATCH")
-        grna.add("forward_umi_pattern", '(?P<UMI>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}') 
+        grna.add("umi_pattern_forward", '(?P<UMI>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}') 
         grna.add("protospacer_pattern", '(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?:GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}')
         
         grna.add("back_umi_forward", 'gtgtgtcagttagggtgtggaa')
         
-        grna.add("reverse_umi_pattern",'(?P<UMI>.{{8}})(?:{back_umi_rc}){{s<=4}}') 
+        grna.add("umi_pattern_reverse",'(?P<UMI>.{{8}})(?:{back_umi_rc}){{s<=4}}') 
         
         # Adding the table to the document
         doc.add("define_motifs", grna)

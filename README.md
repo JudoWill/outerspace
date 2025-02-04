@@ -1,5 +1,7 @@
 # gRNA EXTRACTION PROJECT  
 * [definitions](doc/definitions.md)
+* [snapgene gRNA query file](doc/indexed_lib_grna_query_umi.dna)
+    - open in snapgene
   
 ## Description:
 This pipeline is intended to to extract the gRNA protospacer from reads. In future will adjust to also extract tracrRNA from reads for a CRISPR Screen.  
@@ -8,7 +10,7 @@ Original Location: Mistake-Not - /share/nonn-lab/Rachel-test-cripr
 ## Tools utilized
 ### Regex  
 To find the protospacer because it contains a surrounding pattern.  
-- Regex Link: -	https://pypi.org/project/regex/ 
+- [Regex Link:](https://pypi.org/project/regex/) 
 - Regex has approximate fuzzy matching
 - Regex usually attempts an exact match, but sometimes an approximate, or “fuzzy”, match is needed, for those cases where the text being searched may contain errors in the form of inserted, deleted or substituted characters.
 
