@@ -1,3 +1,4 @@
+.timetracker/start_*.txt
 .ipynb_checkpoints
 409-4.csv
 __pycache__
