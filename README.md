@@ -1,8 +1,11 @@
 # gRNA EXTRACTION PROJECT  
 * [definitions](doc/definitions.md)
-* [snapgene gRNA query file](doc/indexed_lib_grna_query_umi.dna)
+* [snapgene dna fragment file](doc/indexed_lib_grna_query_umi.dna)
     - open in snapgene
+* [TOML website](https://tomlkit.readthedocs.io/en/latest/api/#tomlkit.toml_document.TOMLDocument)
+
   
+
 ## Description:
 This pipeline is intended to to extract the gRNA protospacer from reads. In future will adjust to also extract tracrRNA from reads for a CRISPR Screen.  
 Original Location: Mistake-Not - /share/nonn-lab/Rachel-test-cripr 

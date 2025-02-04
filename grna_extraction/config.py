@@ -18,6 +18,16 @@ class Cfg:
     def __str__(self):
         return self.doc.as_string()
 
+    def get_umi_pattern_forward(self):
+        """Get forward UMI regex pattern"""
+        return ('(?P<UMI>.{'
+            f"{self.doc['define_motifs']['umi_pattern_forward_num_umi_nt']}"
+            '})(?:'
+            f"{self.doc['define_motifs']['umi_pattern_forward_pattern_nt']}"
+            '){s<='
+            f"{self.doc['define_motifs']['umi_pattern_forward_mismatch_max_nt']}"
+            '}')
+
     @staticmethod
     def _init_doc():
         doc = document()
@@ -35,7 +45,12 @@ class Cfg:
         grna = table()
         
         grna.add("regex_flags", "BESTMATCH")
-        grna.add("umi_pattern_forward", '(?P<UMI>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}') 
+        
+        # grna.add("umi_pattern_forward", '(?P<UMI>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}') 
+        grna.add("umi_pattern_forward_num_umi_nt", 8) 
+        grna.add("umi_pattern_forward_pattern_nt", 'CTTGGCTTTATATATCTTGTGG') 
+        grna.add("umi_pattern_forward_mismatch_max_nt", 4) 
+
         grna.add("protospacer_pattern", '(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?:GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}')
         
         grna.add("back_umi_forward", 'gtgtgtcagttagggtgtggaa')

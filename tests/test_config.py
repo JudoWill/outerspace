@@ -13,12 +13,25 @@ def test_config():
     # assert not dct, f"Dictionary contains stuff & shouldn't:\n{dct}"
     assert dct, f"Dictionary is empty & should contain stuff: {dct}"
     assert sorted(dct.keys()) == sorted(['title', 'owner', 'define_motifs'])
-    assert sorted(dct['define_motifs'].keys()) == sorted(['regex_flags', 'umi_pattern_forward', 'protospacer_pattern', 'back_umi_forward', 'umi_pattern_reverse'])
+    assert sorted(dct['define_motifs'].keys()) == sorted([
+        'regex_flags',
+        "umi_pattern_forward_num_umi_nt",
+        "umi_pattern_forward_pattern_nt",
+        "umi_pattern_forward_mismatch_max_nt",
+        'protospacer_pattern',
+        'back_umi_forward',
+        'umi_pattern_reverse'])
+    assert cfg.get_umi_pattern_forward() == (
+        '(?P<UMI>.{8})'
+        '(?:CTTGGCTTTATATATCTTGTGG)'
+        '{s<=4}')
+    print(cfg.get_umi_pattern_forward())
 
-    
-    print(cfg)
-    print(dct)
-    print(dct['define_motifs'].keys())
+    # These prints below were to see the keys that were printed out to then add them to the assert tests above
+    # print(cfg)
+    # print(dct)
+    # print(dct['define_motifs'].keys())
+
     print("TEST PASSED")
 
 if __name__ == '__main__':
