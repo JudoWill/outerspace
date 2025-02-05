@@ -2,10 +2,12 @@
 ### NEED TO ADD MORE DETAILS ABOUT THE CODE ITSELF
 ```
 forward_umi_reg
+(renamed umi_pattern_forward...)
     = regex.compile('(?P<UMI>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}    , flags=regex.BESTMATCH)`
     = Primer (Read 1 SEQ Primer) complementary to U6 promoter for gRNA overlapped by forward UMI (LIB gRNA query UMI FWD) allowing 4 substitutions 
 
 protospacer_reg 
+(renamed pattern_forward_protospacer...)
     = regex.compile('(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protosp    acer>.{19,21})(?:GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}', flags=regex.BESTMATCH)
     = Obtaining protospacer sequence
     = Protospacer the length of 19-21
@@ -13,7 +15,8 @@ protospacer_reg
         = Upstream Sequence within U6 promoter for gRNA, partial overlap of primer (Read 1 SEQ Primer) and partial overlap of forward UMI (LIB gRNA query UMI FWD)
         = Downstream Sequence within the SaCas9 gRNA tracrRNA/ scaffold
 
-back_umi_forward
+back_umi_forward 
+(renamed umi_pattern_forward_downstream...)
     = 'gtgtgtcagttagggtgtggaa'.upper()
     = Sequence within the start of SV40 promoter for Cas9 (downstream the gRNA), complementary to the primer (Read2 SEQ Primer), overlapping reverse UMI (LIB gRNA query UMI REV)
 

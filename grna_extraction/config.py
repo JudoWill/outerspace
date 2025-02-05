@@ -28,6 +28,32 @@ class Cfg:
             f"{self.doc['define_motifs']['umi_pattern_forward_mismatch_max_nt']}"
             '}')
 
+    def get_protospacer_forward(self):
+        """Get forward prtospacer pattern"""
+        return ('(?:'
+            f"{self.doc['define_motifs']['pattern_forward_upstream_protospacer']}"
+            '){s<='
+            f"{self.doc['define_motifs']['pattern_forward_upstream_protospacer_mismatch_max_nt']}"
+            '}(?P<protospacer>.{'
+            f"{self.doc['define_motifs']['pattern_forward_num_protospacer_nt_range_from']}"
+            ','
+            f"{self.doc['define_motifs']['pattern_forward_num_protospacer_nt_range_to']}"
+            '})(?:'
+            f"{self.doc['define_motifs']['pattern_forward_downstream_protospacer']}"
+            '){s<='
+            f"{self.doc['define_motifs']['pattern_forward_protospacer_mismatch_max_nt']}"
+            '}')
+        
+    def  get_umi_pattern_forward_downstream(self):
+        """Get downstream forward UMI regex pattern"""
+        return ('('
+            f"{self.doc[define_motifs']['umi_pattern_forward_downstream_nt']}"
+            ')')
+##########STOPPED HERE#####
+### Need to fix this error bc when run tests script its giving string error
+### Next need to finish 
+
+
     @staticmethod
     def _init_doc():
         doc = document()
@@ -47,14 +73,29 @@ class Cfg:
         grna.add("regex_flags", "BESTMATCH")
         
         # grna.add("umi_pattern_forward", '(?P<UMI>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}') 
+        # pulled apart this variable into 3 parts
         grna.add("umi_pattern_forward_num_umi_nt", 8) 
         grna.add("umi_pattern_forward_pattern_nt", 'CTTGGCTTTATATATCTTGTGG') 
         grna.add("umi_pattern_forward_mismatch_max_nt", 4) 
 
-        grna.add("protospacer_pattern", '(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?:GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}')
+
+        # grna.add("protospacer_pattern", '(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?:GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}')
+        # pulled apart this variable into 6 parts
+        # NOTE THAT THE PROTOSPACER ITSLEF CAN BE A RANGE OR JUST ONE # - WILL NEED TO MAKE THIS SO THAT IT TESTS APPROPRIATELY
+        grna.add("pattern_forward_upstream_protospacer", 'TATCTTGTGGAAAGGACGAAACACC')
+        grna.add("pattern_forward_upstream_protospacer_mismatch_max_nt", 4)
+        grna.add("pattern_forward_num_protospacer_nt_range_from", 19)
+        grna.add("pattern_forward_num_protospacer_nt_range_to", 21)
+        grna.add("pattern_forward_downstream_protospacer", 'GTTTAAGTACTCTGTGCTGGAAACAG')
+        grna.add("pattern_forward_protospacer_mismatch_max_nt", 4)
         
-        grna.add("back_umi_forward", 'gtgtgtcagttagggtgtggaa')
-        
+
+         
+        # grna.add("back_umi_forward", 'gtgtgtcagttagggtgtggaa')
+        # Kept this variable in 1 part
+        grna.add("umi_pattern_forward_downstream_nt", 'gtgtgtcagttagggtgtggaa')
+
+##############FINISH THIS LAST ONE BELOW & MAKE SURE TO MAKE CHANGES AND ADD TESTS TO TESTS SCRIPT & MAKE SURE TO ADD TO THE DICTIONARY IN THAT FILE AS WELL#############
         grna.add("umi_pattern_reverse",'(?P<UMI>.{{8}})(?:{back_umi_rc}){{s<=4}}') 
         
         # Adding the table to the document
