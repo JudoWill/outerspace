@@ -18,15 +18,43 @@ def test_config():
         "umi_pattern_forward_num_umi_nt",
         "umi_pattern_forward_pattern_nt",
         "umi_pattern_forward_mismatch_max_nt",
-        'protospacer_pattern',
-        'back_umi_forward',
+        "pattern_forward_upstream_protospacer",
+        "pattern_forward_upstream_protospacer_mismatch_max_nt",
+        "pattern_forward_num_protospacer_nt_range_from",
+        "pattern_forward_num_protospacer_nt_range_to",
+        "pattern_forward_downstream_protospacer",
+        "pattern_forward_protospacer_mismatch_max_nt",
+        "umi_pattern_forward_downstream_nt",
         'umi_pattern_reverse'])
+
+    # Asserting variable is equal to what is defined in grna_extraction/config.py
     assert cfg.get_umi_pattern_forward() == (
         '(?P<UMI>.{8})'
         '(?:CTTGGCTTTATATATCTTGTGG)'
         '{s<=4}')
     print(cfg.get_umi_pattern_forward())
 
+    # Asserting variable is equal to what is defined in grna_extraction/config.py
+    assert cfg.get_protospacer_forward() == (
+        '(?:TATCTTGTGGAAAGGACGAAACACC)'
+        '{s<=4}'
+        '(?P<protospacer>.{19,21})'
+        '(?:GTTTAAGTACTCTGTGCTGGAAACAG)'
+        '{s<=4}')
+    print(cfg.get_protospacer_forward())
+
+    #Asserting variable is equal to what is defined in grna_extraction/config.py
+    exp_pat = 'gtgtgtcagttagggtgtggaa'
+    assert cfg.get_umi_pattern_forward_downstream_nt() == exp_pat,(
+            f'\nACTUAL: {cfg.get_umi_pattern_forward_downstream_nt()}\n'
+            f'EXPECTED: {exp_pat}')
+            
+    print(cfg.get_umi_pattern_forward_downstream_nt())
+
+    #Asserting variable is equal to what is defined in grna_extraction/config.py
+    
+
+        
     # These prints below were to see the keys that were printed out to then add them to the assert tests above
     # print(cfg)
     # print(dct)

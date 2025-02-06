@@ -3,6 +3,8 @@
 ####__copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
 ####__author__ = "SC Barrera"
 ####
+#### The origninal notebook from which this script is derived is in: /notebooks/extraction_attempt.ipynb
+####
 ####from os.path import join
 ####from Bio import SeqIO
 ####import gzip
