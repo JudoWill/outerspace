@@ -44,11 +44,11 @@ class Cfg:
             f"{self.doc['define_motifs']['pattern_forward_protospacer_mismatch_max_nt']}"
             '}')
         
-    def  get_umi_pattern_forward_downstream(self):
+    def  get_umi_pattern_forward_downstream_nt(self):
         """Get downstream forward UMI regex pattern"""
-        return ('('
-            f"{self.doc[define_motifs']['umi_pattern_forward_downstream_nt']}"
-            ')')
+        return f"{self.doc['define_motifs']['umi_pattern_forward_downstream_nt']}"
+
+
 ##########STOPPED HERE#####
 ### Need to fix this error bc when run tests script its giving string error
 ### Next need to finish 

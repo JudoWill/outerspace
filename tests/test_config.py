@@ -44,7 +44,11 @@ def test_config():
     print(cfg.get_protospacer_forward())
 
     #Asserting variable is equal to what is defined in grna_extraction/config.py
-    assert cfg.get_umi_pattern_forward_downstream_nt() == ('gtgtgtcagttagggtgtggaa')
+    exp_pat = 'gtgtgtcagttagggtgtggaa'
+    assert cfg.get_umi_pattern_forward_downstream_nt() == exp_pat,(
+            f'\nACTUAL: {cfg.get_umi_pattern_forward_downstream_nt()}\n'
+            f'EXPECTED: {exp_pat}')
+            
     print(cfg.get_umi_pattern_forward_downstream_nt())
 
     #Asserting variable is equal to what is defined in grna_extraction/config.py
