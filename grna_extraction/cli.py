@@ -9,7 +9,7 @@ from os.path import isfile
 from os.path import exists
 from argparse import ArgumentParser
 
-def _get_args():
+def get_args(args=None):
     parser = ArgumentParser(
                     prog='grna_extraction',
                     description='Get protospacers and UMIs',
@@ -17,7 +17,7 @@ def _get_args():
     parser.add_argument('filename_or_dir', nargs='*',
             help='zipped fastq files or a directory containing fastq files')
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
     if args.filename_or_dir:
         _chk_exists(args.filename_or_dir)
     else:
