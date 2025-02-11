@@ -25,3 +25,4 @@ hello:
 
 clean:
 	rm -f grna_extraction/.ipynb_checkpoints/extraction_attempt-checkpoint.py
+	rm -f testing.cfg
