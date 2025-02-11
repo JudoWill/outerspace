@@ -24,6 +24,7 @@ back_umi_rc = reverse_complement(back_umi_forward)
     = reverse complement the sequence within the start of SV40 promoter
 
 reverse_umi_reg = regex.compile(f'(?P<UMI>.{{8}})(?:{back_umi_rc}){{s<=4}}', fl    ags=regex.BESTMATCH)
-    = allow 4 substitutions for the reverse complement of sequence withing start of SV40 promoter
+    = (renamed 
+    = allow 4 substitutions for the reverse complement of sequence within start of SV40 promoter
 ```
 
