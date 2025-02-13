@@ -15,14 +15,22 @@ class Cfg:
     """configuration for defining motifs"""
     
     # Upon Cfg() __init__() runs - bc we are creating document here
-    #def __init__(self):
-    #    self.doc = self.get_doc_default()
+    # referring to self and filename in arguments that are passed by the user
+    # Need self in the class to have acces to everything within the class
+    def __init__(self, filename):
+        self.filename = filename
 
-    def write_file(self, filename):
+    def read_file(self):
+        """Read the file specified"""
+        print(f'  READ: {self.filename}')
+        return TOMLFile(self.filename).read()
+        
+
+    def write_file(self):
         """Write a default configuration file"""
         doc = self.get_doc_default()
-        TOMLFile(filename).write(doc)
-        print(f'  WROTE: {filename}')
+        TOMLFile(self.filename).write(doc)
+        print(f'  WROTE: {self.filename}')
 
     def get_umi_pattern_forward(self):
         """Get forward UMI regex pattern"""
