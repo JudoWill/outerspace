@@ -1,6 +1,6 @@
-DIR_RB_READS := ../../nonn-lab/rachel-test-crispr/
-P1 := ../../nonn-lab/rachel-test-crispr/reads/409-4_S1_L001_R1_001.fastq.gz
-P2 := ../../nonn-lab/rachel-test-crispr/reads/409-4_S1_L001_R2_001.fastq.gz
+DIR_RB_READS := /data/share/nonn-lab/rachel-test-crispr/reads
+P1 := $(DIR_RB_READS)/409-4_S1_L001_R1_001.fastq.gz
+P2 := $(DIR_RB_READS)/409-4_S1_L001_R2_001.fastq.gz
 
 run:
 	bin/main.py $(P1) $(P2)

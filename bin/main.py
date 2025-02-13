@@ -15,7 +15,7 @@ from Bio.Seq import reverse_complement
 
 import regex
 
-from grna_extraction.extraction_attempt import process_paired_read_file
+from original.extraction_attempt import process_paired_read_file
 
 def main():
     print('running_main')
