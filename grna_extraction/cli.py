@@ -10,6 +10,7 @@ from os.path import exists
 from argparse import ArgumentParser
 
 def get_args(args=None):
+    """cli for entering the reads"""
     parser = ArgumentParser(
                     prog='grna_extraction',
                     description='Get protospacers and UMIs',

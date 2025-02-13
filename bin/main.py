@@ -12,6 +12,8 @@ from os.path import exists
 from argparse import ArgumentParser
 
 from Bio.Seq import reverse_complement
+from grna_extraction.cli import get_args   ###RB
+
 
 import regex
 
@@ -24,7 +26,7 @@ def main():
     ####dir_crispr = '../../../nonn-lab/rachel-test-crispr'
 
     ####dir_read = join(dir_crispr, 'reads/')
-    args = _get_args()
+    args = get_args()
     ####path1 = join(dir_read, '409-4_S1_L001_R1_001.fastq.gz')
     ####path2 = join(dir_read, '409-4_S1_L001_R2_001.fastq.gz')
     path1 = args.filename_or_dir[0]
@@ -44,38 +46,6 @@ def main():
     
     process_paired_read_file(csv, path1, path2, forward_umi_reg, protospacer_reg, reverse_umi_reg)
 
-def _get_args():
-    parser = ArgumentParser(
-                    prog='grna_extraction',
-                    description='Get protospacers and UMIs',
-                    epilog='Created by ThreeBlindMice - See how they run code')
-    parser.add_argument('filename_or_dir', nargs='*',
-            help='zipped fastq files or a directory containing fastq files')
-    
-    args = parser.parse_args()
-    if args.filename_or_dir:
-        _chk_exists(args.filename_or_dir)
-    else:
-        print(f'EXITING: NEED FASTQ READS FILES TO READ')
-        sys_exit(1)
-    print(f'ARGS: {args}')
-    return args
-
-def _chk_exists(filename_or_dir):
-    not_exists = []
-    for name in filename_or_dir:
-        if not exists(name):
-            not_exists.append(name)
-        elif isdir(name):
-            raise RuntimeError('TIME TO IMPLEMENT READING DIRECTORIES')
-        else:
-            assert isfile(name)
-    if not_exists:
-        for name in not_exists:
-            print(f'DOES NOT EXIST: {name}')
-        print(f'EXITING: {len(not_exists)} FASTQ FILE/DIR NOT EXIST')
-        sys_exit(1)
-        
 if __name__ == '__main__':
     main()
 
