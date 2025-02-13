@@ -8,6 +8,7 @@ from os.path import isdir
 from os.path import isfile
 from os.path import exists
 from argparse import ArgumentParser
+from logging import debug
 
 def get_args(args=None):
     """cli for entering the reads"""
@@ -19,6 +20,8 @@ def get_args(args=None):
             help='zipped fastq files or a directory containing fastq files')
 
     args = parser.parse_args(args)
+    debug(f'ARGS: {args}')
+    
     if args.filename_or_dir:
         _chk_exists(args.filename_or_dir)
     else:
