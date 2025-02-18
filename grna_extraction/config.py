@@ -1,4 +1,8 @@
 """configuration for defining motifs"""
+
+__copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
+__author__ = "??"
+
 from tomlkit import comment
 from tomlkit import document
 from tomlkit import nl
@@ -17,20 +21,24 @@ class Cfg:
     # Upon Cfg() __init__() runs - bc we are creating document here
     # referring to self and filename in arguments that are passed by the user
     # Need self in the class to have acces to everything within the class
-    def __init__(self, filename):
+    def __init__(self, filename=None):
         self.filename = filename
 
+    #file does not need to be given name
     def read_file(self):
         """Read the file specified"""
         print(f'  READ: {self.filename}')
-        return TOMLFile(self.filename).read()
+        return TOMLFile(self.filename).read() if filename is not None else None
         
 
     def write_file(self):
         """Write a default configuration file"""
         doc = self.get_doc_default()
-        TOMLFile(self.filename).write(doc)
-        print(f'  WROTE: {self.filename}')
+        if filename is not None:
+            TOMLFile(self.filename).write(doc)
+            print(f'  WROTE: {self.filename}')
+        else: 
+            print(f'  PLEASE PROVIDE FILE NAME IN ORDER TO WRITE')
 
     def get_umi_pattern_forward(self):
         """Get forward UMI regex pattern"""
@@ -64,7 +72,6 @@ class Cfg:
 
 
 ##########STOPPED HERE#####
-### Need to fix this error bc when run tests script its giving string error
 ### Next need to finish 
 
 
@@ -83,6 +90,7 @@ class Cfg:
         # Adding the table to the document
         doc.add("owner", owner)
         
+        # This is made into an array
         #regxlist = table()
         doc.add(comment("Edit this list to specify what part of sequence you want to capture."))
         doc.add(comment("Named patterns/groups captured  will be saved in a .csv file. Ex: (?P<UMI>.{8})"))
@@ -101,7 +109,9 @@ class Cfg:
 
 
         #regxlist.add("protospacer_pattern", '(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?:GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}')
-        doc['regxlist'].add_line('(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?:GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}')
+        doc['regxlist'].add_line('(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}'
+                                 '(?P<protospacer>.{19,21})'
+                                 '(?P<protospacer2>GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}')
         # pulled apart this variable into 6 parts
         # NOTE THAT THE PROTOSPACER ITSLEF CAN BE A RANGE OR JUST ONE # - WILL NEED TO MAKE THIS SO THAT IT TESTS APPROPRIATELY
         #regxlist.add("pattern_forward_upstream_protospacer", 'TATCTTGTGGAAAGGACGAAACACC')
@@ -132,3 +142,7 @@ class Cfg:
 
     def __str__(self):
         return self.doc.as_string()
+
+
+
+ # Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.
