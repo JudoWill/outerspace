@@ -1,4 +1,8 @@
 """configuration for defining motifs"""
+
+__copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
+__author__ = "??"
+
 from tomlkit import comment
 from tomlkit import document
 from tomlkit import nl
@@ -86,6 +90,7 @@ class Cfg:
         # Adding the table to the document
         doc.add("owner", owner)
         
+        # This is made into an array
         #regxlist = table()
         doc.add(comment("Edit this list to specify what part of sequence you want to capture."))
         doc.add(comment("Named patterns/groups captured  will be saved in a .csv file. Ex: (?P<UMI>.{8})"))
@@ -104,7 +109,9 @@ class Cfg:
 
 
         #regxlist.add("protospacer_pattern", '(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?:GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}')
-        doc['regxlist'].add_line('(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?:GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}')
+        doc['regxlist'].add_line('(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}'
+                                 '(?P<protospacer>.{19,21})'
+                                 '(?P<protospacer2>GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}')
         # pulled apart this variable into 6 parts
         # NOTE THAT THE PROTOSPACER ITSLEF CAN BE A RANGE OR JUST ONE # - WILL NEED TO MAKE THIS SO THAT IT TESTS APPROPRIATELY
         #regxlist.add("pattern_forward_upstream_protospacer", 'TATCTTGTGGAAAGGACGAAACACC')
@@ -135,3 +142,7 @@ class Cfg:
 
     def __str__(self):
         return self.doc.as_string()
+
+
+
+ # Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.
