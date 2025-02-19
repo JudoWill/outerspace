@@ -1,3 +1,6 @@
 start_day,xm,start_datetime,stop_day,zm,stop_datetime,duration,message, activity, tags
 Tue,PM,2025-02-04 15:00:20.049983,Tue,PM,2025-02-04 17:37:41.329273,2:10:21.279290,Added support for forward UMI regex pattern searching,,
 Wed,AM,2025-02-05 11:59:26.523626,Wed,PM,2025-02-05 17:22:28.303313,5:23:01.779687,Expanding config variable & creating tests for them,,
+Thu,PM,2025-02-13 14:30:15.021924,Thu,PM,2025-02-13 17:30:36.952476,23:36:21.930552,Continuing work on CLI & configuration file via adding tests and read functions respectively,,
+Mon,PM,2025-02-17 14:38:57.080102,Mon,PM,2025-02-17 17:01:15.733691,2:22:18.653589,Worked on creating Search module and test,,
+Tue,PM,2025-02-18 15:06:51.433566,Wed,PM,2025-02-18 17:42:51.324019,21:35:59.890453,added regex compile objects to search module,,
