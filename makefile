@@ -5,8 +5,12 @@ P2 := $(DIR_RB_READS)/409-4_S1_L001_R2_001.fastq.gz
 run:
 	bin/main.py $(P1) $(P2)
 
+files:
+	@ls $(P1)
+	@ls $(P2)
+
 py:
-	find tests grna_extraction bin -name '*.py' -type f | grep -v checkpoint
+	find original tests grna_extraction bin -name '*.py' -type f | grep -v checkpoint
 
 md:
 	find . -type f -name '*.md'

@@ -19,6 +19,8 @@ class Search:
         # cmp= compile
         self.cmps = [regex_compile(p) for p in self.regxlist]
 
+
+
     # Want to write a function that captures names from regxlist
     # Name is within ex. <UMI> 
     # https://pypi.org/project/regex/
@@ -39,6 +41,7 @@ class Search:
             for e in cmp.groupindex:
                 print(f'{idx}AHHH({e})')
         return names
+
 
 
 
