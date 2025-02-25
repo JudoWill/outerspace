@@ -91,7 +91,8 @@ class Cfg:
         # Adding the table to the document
         doc.add("owner", owner)
         doc.add(nl())
-
+        
+        #TODO:add message in here saying warning using one not the other
         self._addregxlist(doc)
         doc.add(nl())
         self._addregxlist1(doc)

@@ -11,9 +11,14 @@ print(f'TTTTTTTT test_search({__name__})')
 
 def test_search():
     """testing config"""
+    # Creating a config object; allows researcher to provide search patterns
+    # Using default configuration file
+    # TODO: may want a default configuration in examples
+    # 
+
     cfg = Cfg()
     doc = cfg.get_doc_default()
-    regxlist = doc['regxlist']
+    regxlist = doc['regxlist1']
     search = Search(regxlist)
     names = search.capture_names()
     print(regxlist)
