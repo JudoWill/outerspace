@@ -17,8 +17,22 @@ class Search:
         # comprehension utilized below instead of for loop across multiple lines
         # evertime loop through p will add an element 
         # cmp= compile
+        # TODO: ?dictionary of compile object with names?
         self.cmps = [regex_compile(p) for p in self.regxlist]
-
+    
+    #this is doing the search on the reads using our compiled (sequence) patterns
+    def get_capture_from_read(self, read):
+        """Searching for provided patterns in the read sequence"""
+        # seq is from biopython not a variable     
+        ret = []
+        sequence = str(read.seq)
+        for cmp in self.cmps:
+            # TODO: ?Why are we only returning one sequence if look for all sequences?
+            result = cmp.findall(sequence)
+            if len(result) == 1:
+                ret.append(result[0])
+        return ret
+    
 
 
     # Want to write a function that captures names from regxlist
