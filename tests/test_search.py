@@ -24,7 +24,8 @@ def test_search():
     assert regxlist
     # print(f'CAPTURED REGXLIST CONSISTS OF: {regxlist}')
     assert names, f'EXPECTED NAMES, GOT: {names}'
-    assert names == ['UMI', 'protospacer', 'protospacer2'], names
+    assert names == [['UMI'], ['protospacer', 'protospacer2']], names
+    print(f' NTO {search.nto._fields}')
     print("TEST PASSED")
     
 
