@@ -4,3 +4,6 @@ Wed,AM,2025-02-05 11:59:26.523626,Wed,PM,2025-02-05 17:22:28.303313,5:23:01.7796
 Thu,PM,2025-02-13 14:30:15.021924,Thu,PM,2025-02-13 17:30:36.952476,23:36:21.930552,Continuing work on CLI & configuration file via adding tests and read functions respectively,,
 Mon,PM,2025-02-17 14:38:57.080102,Mon,PM,2025-02-17 17:01:15.733691,2:22:18.653589,Worked on creating Search module and test,,
 Tue,PM,2025-02-18 15:06:51.433566,Wed,PM,2025-02-18 17:42:51.324019,21:35:59.890453,added regex compile objects to search module,,
+Wed,PM,2025-02-19 12:42:57.028208,Wed,PM,2025-02-19 14:10:20.236107,1:27:23.207899,Created read module and test for fastq paired reads,,
+Thu,PM,2025-02-20 15:11:42.386687,Tue,PM,2025-02-25 15:09:29.704384,4 days, 23:57:47.317697,updated config file so that it can do specific searches on 1st and 2nd read or both reads; updated test for config file; started test package so that we do not have to repeat code,,
+Tue,PM,2025-02-25 15:00:00,Tue,PM,2025-02-25 17:43:54.073356,2:43:54.073356,To search file added function get_capture_from_read and updated it; updated test for this; updated a comment on config file,,
