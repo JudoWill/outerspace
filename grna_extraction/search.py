@@ -51,9 +51,11 @@ class Search:
             #print(dir(cmp))
             # search empty string ""
             #mtch = cmp.search("")
-            print(f'{idx}EHHHH, {cmp.groupindex} {cmp.named_lists} {cmp.pattern}')
-            for e in cmp.groupindex:
-                print(f'{idx}AHHH({e})')
+            # print(f'{idx}EHHHH, {cmp.groupindex} {cmp.named_lists} {cmp.pattern}')
+            # looping cmp.groupindex into name so researcher provided capture group names then get added 
+            for name in cmp.groupindex:
+                # print(f'{idx}AHHH({name})')
+                names.append(name)
         return names
 
 

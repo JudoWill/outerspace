@@ -21,8 +21,10 @@ def test_search():
     regxlist = doc['regxlist1']
     search = Search(regxlist)
     names = search.capture_names()
-    print(regxlist)
-    print(names)
+    assert regxlist
+    # print(f'CAPTURED REGXLIST CONSISTS OF: {regxlist}')
+    assert names, f'EXPECTED NAMES, GOT: {names}'
+    assert names == ['UMI', 'protospacer', 'protospacer2'], names
     print("TEST PASSED")
     
 
