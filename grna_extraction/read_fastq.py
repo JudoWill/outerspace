@@ -16,18 +16,26 @@ from Bio import SeqIO
 
 class ReadPairedFastq:
     """Reading in & parsing the fastq paired reads"""
-    def __init__(self, search):
-        self.search = search
+    # TODO: Need search 1, search 2, search all 
+    def __init__(self, search1):
+        self.search1 = search1
 
     def run(self, file1, file2):
         """Actually reading & parsing the fastq paired reads from given files"""
         #def extract_from_paired_reads(read1_path, read2_path, forward_reg, proto_reg, reverse_reg):
         total = 0
         missed = 0
+        names1 = self.search1.capture_names()
         
         #enumerate starting at 1
         for total, (read1, read2) in enumerate(tqdm(self._iterate_readpairs(file1, file2)),1):
-            pass
+            # search is getting the capture from read1, calling it match1
+            matches1 = self.search1.get_capture_from_read(read1)
+
+            #function call, definition below for _process_matches
+            self._process_matches(1, read1, total, names1, matches1)
+            if total > 10:
+                break
         ####        foward_umi = get_capture_from_read(forward_reg, read1)
         ####        protospacer = get_capture_from_read(proto_reg, read1)
         ####        reverse_umi = get_capture_from_read(reverse_reg, read2)
@@ -41,6 +49,11 @@ class ReadPairedFastq:
         ####        else:
         ####            missed += 1
         print(f'Total sequences: {total:,}\nMissed sequences: {missed}')
+
+    @staticmethod
+    def _process_matches(r1_2, read, readnum, names, matches):
+        pass
+
 
     @staticmethod
     def _iterate_reads(path):

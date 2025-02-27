@@ -19,8 +19,12 @@ def test_read_fastq():
     fq2 = "/data/share/nonn-lab/rachel-test-crispr/reads/409-4_S1_L001_R2_001.fastq.gz"
     cfg = Cfg()
     doc = cfg.get_doc_default()
-    regxlist = doc['regxlist']
-    search = Search(regxlist)
+    regxlist1 = doc['regxlist1']
+    search = Search(regxlist1)
+    
+    print(f'NAMES1: {search.capture_names()}')
+    assert search.capture_names()
+    assert search.cmps
     reader = ReadPairedFastq(search)
 
     assert exists(fq1)

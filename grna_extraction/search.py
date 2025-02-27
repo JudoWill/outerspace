@@ -3,7 +3,10 @@
 __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
 __author__ = "SC Barrera"
 
+from itertools import chain
+from collections import namedtuple
 from regex import compile as regex_compile
+
 
 
 # creating class that will do the searching
@@ -19,18 +22,27 @@ class Search:
         # cmp= compile
         # TODO: ?dictionary of compile object with names?
         self.cmps = [regex_compile(p) for p in self.regxlist]
+        self.nto = namedtuple('GroupNames', list(chain.from_iterable(self.capture_names())))
     
     #this is doing the search on the reads using our compiled (sequence) patterns
     def get_capture_from_read(self, read):
         """Searching for provided patterns in the read sequence"""
-        # seq is from biopython not a variable     
         ret = []
+        # seq is from biopython not a variable     
+        names = self.capture_names()
+        # assert len(names) == len(self.cmps)
+        print('')
         sequence = str(read.seq)
-        for cmp in self.cmps:
-            # TODO: ?Why are we only returning one sequence if look for all sequences?
+        for idx, cmp in enumerate(self.cmps):
+            # TODO: Revisit user interface bc works for us but not world ?Why are we only returning one sequence if look for all sequences?
+            # Findall if there were less or more than 1 match we didn't want them- expect only one
+            
             result = cmp.findall(sequence)
+            print(f'SEARCH RESULT{idx}: {result}')
             if len(result) == 1:
+                print(f'search result{idx}: {result}')
                 ret.append(result[0])
+            print(f'RETURN RESULT{idx}: {result}')
         return ret
     
 
@@ -51,12 +63,15 @@ class Search:
             #print(dir(cmp))
             # search empty string ""
             #mtch = cmp.search("")
-            print(f'{idx}EHHHH, {cmp.groupindex} {cmp.named_lists} {cmp.pattern}')
-            for e in cmp.groupindex:
-                print(f'{idx}AHHH({e})')
+            # print(f'{idx}EHHHH, {cmp.groupindex} {cmp.named_lists} {cmp.pattern}')
+            # looping cmp.groupindex into name so researcher provided capture group names then get added 
+            #TODO: want to use their index for list
+            names.append(list(cmp.groupindex.keys()))
         return names
 
 
+    # def _init_nto(self):
+        
 
 
 # Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.
