@@ -27,12 +27,15 @@ class Search:
         # TODO: Add functionality & tests for multiply nested capture patterns
         self.names = self.capture_names()
         # This is flattened into a list - output - names & patterns
-        self.nto = namedtuple('GroupNames', list(chain.from_iterable(self.names)))
+        # self.nto = namedtuple('GroupNames', list(chain.from_iterable(self.names)))
+        # Make a set once of the names from each compile bc change from iterable is expensive
+        self.nameset = set(chain.from_iterable(self.names))
 
     #this is doing the search on the reads using our compiled (sequence) patterns
     def get_capture_from_read(self, read):
         """Searching for provided patterns in the read sequence"""
-        ret = []
+        #TODO FOR RACHEL: add read2
+        read_dict = {}
         # seq is from biopython not a variable
         # assert len(names) == len(self.cmps)
         print('')
@@ -41,14 +44,38 @@ class Search:
         # Makig sure lists are the same length so that if length are unequal the longer one would not be dropped
         assert len(self.names) == len(self.cmps)
         for idx, (name, cmp) in enumerate(zip(self.names, self.cmps)):
+            # TODO FIRST: Add findall option to check we don't have multiple matches, search gives back first match
             # TODO: Revisit user interface bc works for us but not world ?Why are we only returning one sequence if look for all sequences?
-            # Findall if there were less or more than 1 match we didn't want them- expect only one
+            # Search if there was a pattern or not- looking for the first pattern
+            #Match utiliing search
+            mtch = cmp.search(sequence)
+            # print(f'SEARCH  RESULT{idx}: {mtch}')
+            # If search for pattern successful then return object; if no pattern found none is returned 
+            if mtch is not None:
+                #adding search items found (key & value) into dictionary
+                for key, val in mtch.groupdict().items():
+                    read_dict[key] = val
+                # read_dict.append(self._name_to_captured(name, mtch)
+                # print(f'SEARCHDICT      cmp{idx}:  {mtch.groupdict()}')
+                # print(f'SEARCH   GROUP0-cmp{idx}:  {mtch.group(0)}')
+                # print(f'SEARCH   GROUP1-cmp{idx}:  {mtch.group(1)}')
+        print(f'CHECKED DICTIONARY:  {read_dict}')        
+        # TODO:we are only reporting if we found everything but that is not what the world will expect- we need to report if anything was found 
+        # set is used to check between 2 lists; printing if something was returned
+        if self.nameset == set(read_dict.keys()):
+            read_dict['read_id'] = read.id
+            print(f'RETURN DICTIONARY: {read_dict}')
+        return read_dict
 
-            result = cmp.findall(sequence)
-            print(f'FINDALL  RESULT{idx}: {result}')
-            if len(result) == 1:
-                ret.append(self._name_to_captured(name, result[0]))
-                print(f'RETURN   RESULT{idx}:  {result[0]}')
+    # This is for findall not search
+    # Findall if there were less or more than 1 match we didn't want them- expect only one
+    def _run_findall_(self, ret, idx, cmp, sequence, name):
+        # TODO FIRST: Add findall option to check we don't have multiple matches, search gives back first match
+        find_list = cmp.findall(sequence)
+        print(f'FINDALL  RESULT{idx}: {find_list}')
+        if len(find_list) == 1:
+            ret.append(self._name_to_captured(name, find_list[0]))
+            print(f'RETURN   RESULT{idx}:  {find_list[0]}')
         return ret
 
 
@@ -56,6 +83,7 @@ class Search:
     # adding key values to dictionary name : result
     # zipping together the name and result if result has 2 values or more; Ex. protospacer 1 & 2
     # TODO: what if capture patterns are nested
+    @staticmethod
     def _name_to_captured(self, name, result):
         ret = {}
         print(f'MATCHING:{name}, RESULT: {result}')
@@ -65,7 +93,7 @@ class Search:
         else:
             for nam, res in zip(name, result):
                 ret[nam] = res
-        return ret 
+        return ret
 
 
 
