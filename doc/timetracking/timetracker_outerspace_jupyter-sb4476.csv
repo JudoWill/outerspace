@@ -10,3 +10,4 @@ Tue,PM,2025-02-25 15:00:00,Tue,PM,2025-02-25 17:43:54.073356,2:43:54.073356,To s
 Wed,PM,2025-02-26 14:28:18.062292,Wed,PM,2025-02-26 16:43:51.730182,2:15:33.667890,Search function is beginning to connect names to search patterns,,
 Thu,PM,2025-02-27 15:00:00,Thu,PM,2025-02-27 16:30:00,1:30:00,updated search file to create dict; add key values; ran test for read_fastq file,,
 Fri,PM,2025-02-28 14:30:00,Fri,PM,2025-02-28 16:43:18.979727,2:13:18.979727,updated search file; get_capture_from_read function; collected search results from named capture groups,,
+Tue,PM,2025-03-04 15:00:08.393925,Tue,PM,2025-03-04 17:18:08.393925,0:10:00,capturing sequences and writing to csv- Great job!,,
