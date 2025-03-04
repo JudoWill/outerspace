@@ -1,3 +1,4 @@
+/outdir/
 *.ipynb
 git remove-v
 .timetracker/start_*.txt
