@@ -25,11 +25,20 @@ class Search:
         self.cmps = [regex_compile(p) for p in self.regxlist]
         # Storing names - multi dimensional list- input
         # TODO: Add functionality & tests for multiply nested capture patterns
-        self.names = self.capture_names()
+        self.capturednames = self.capture_names()
         # This is flattened into a list - output - names & patterns
-        # self.nto = namedtuple('GroupNames', list(chain.from_iterable(self.names)))
+        # self.nto = namedtuple('GroupNames', list(chain.from_iterable(self.capturednames)))
         # Make a set once of the names from each compile bc change from iterable is expensive
-        self.nameset = set(chain.from_iterable(self.names))
+        # this is flat list that retains order
+        self.names = list(chain.from_iterable(self.capturednames))
+        # This is set for for checking existance bc sets do not retain order
+        self.nameset = set(self.names)
+
+
+    def get_csvheaders(self):
+        """These are the headers for the csv containing output search results"""
+        # This is what is being written into csv
+        return ['read_id'] + self.names
 
     #this is doing the search on the reads using our compiled (sequence) patterns
     def get_capture_from_read(self, read):
@@ -42,8 +51,8 @@ class Search:
         sequence = str(read.seq)
         # 2 groups of names and 2 compiled objects being zipped together
         # Makig sure lists are the same length so that if length are unequal the longer one would not be dropped
-        assert len(self.names) == len(self.cmps)
-        for idx, (name, cmp) in enumerate(zip(self.names, self.cmps)):
+        assert len(self.capturednames) == len(self.cmps)
+        for idx, (name, cmp) in enumerate(zip(self.capturednames, self.cmps)):
             # TODO FIRST: Add findall option to check we don't have multiple matches, search gives back first match
             # TODO: Revisit user interface bc works for us but not world ?Why are we only returning one sequence if look for all sequences?
             # Search if there was a pattern or not- looking for the first pattern
@@ -65,7 +74,8 @@ class Search:
         if self.nameset == set(read_dict.keys()):
             read_dict['read_id'] = read.id
             print(f'RETURN DICTIONARY: {read_dict}')
-        return read_dict
+            return read_dict
+        return None
 
     # This is for findall not search
     # Findall if there were less or more than 1 match we didn't want them- expect only one
