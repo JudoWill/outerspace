@@ -4,6 +4,7 @@ __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reser
 __author__ = "SC Barrera"
 
 ## ####from os.path import join
+from sys import exit as sys_exit
 import gzip
 from tqdm import tqdm
 from Bio import SeqIO
@@ -12,7 +13,7 @@ from Bio import SeqIO
 ## ####from Bio.Seq import reverse_complement
 ## ####
 ## ####import regex
-## import csv
+import csv
 
 class ReadPairedFastq:
     """Reading in & parsing the fastq paired reads"""
@@ -20,7 +21,7 @@ class ReadPairedFastq:
     def __init__(self, search1):
         self.search1 = search1
 
-    def run(self, file1, file2):
+    def _extract_from_paired_reads(self, file1, file2):
         """Actually reading & parsing the fastq paired reads from given files"""
         #def extract_from_paired_reads(read1_path, read2_path, forward_reg, proto_reg, reverse_reg):
         total = 0
@@ -33,7 +34,12 @@ class ReadPairedFastq:
             matches1 = self.search1.get_capture_from_read(read1)
 
             #function call, definition below for _process_matches
-            self._process_matches(1, read1, total, names1, matches1)
+            # self._process_matches(1, read1, total, names1, matches1)
+            if matches1:
+                yield matches1
+            else:
+                missed +=1
+
             if total > 10:
                 break
         ####        foward_umi = get_capture_from_read(forward_reg, read1)
@@ -80,15 +86,25 @@ class ReadPairedFastq:
 ## ####    if len(result) == 1:
 ## ####        return result[0]
 ## ####
-## def process_paired_read_file(outpath, path1, path2, forward_umi_reg, protospacer_reg, reverse_umi_reg):
-##
-##     with open(outpath, mode='w') as handle:
-##         fieldnames = ['read_id', 'forward_umi', 'protospacer', 'reverse_umi']
-##         writer = csv.DictWriter(handle, fieldnames)
-##         writer.writeheader()
-##
-##         stream = extract_from_paired_reads(path1, path2, forward_umi_reg, protospacer_reg, reverse_umi_reg)
-##         #writer.writerows(stream)
+    # Function takes headers  and writes them
+    def process_paired_read_file(self, outpath, path1, path2):
+        """Function takes headers  and writes them"""
+        fieldnames = self.search1.get_csvheaders()
+        print(f'CAPTURED FIELD NAMES: {fieldnames}')
+        if not fieldnames:
+            print(f'NO CAPTURE NAMES IN SEARCH PATTERNS')
+            # TODO: want to make log file with various mesages for ppl 
+            # Exit if no capture names
+            sys_exit(0)
+
+        with open(outpath, mode='w') as handle:
+            # Access the search object and get names
+            writer = csv.DictWriter(handle, fieldnames)
+            writer.writeheader()
+            stream = self._extract_from_paired_reads(path1, path2)
+            writer.writerows(stream)
+            print(f' FILE WRITTEN: {outpath}')
+            #TODO: Add print statement of how many total reads processed and how may did not have pattern
 ##
 ## ####forward_umi_reg = regex.compile('(?P<UMI>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}', flags=regex.BESTMATCH)
 ## ####protospacer_reg = regex.compile('(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?:GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}',
