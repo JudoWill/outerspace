@@ -18,20 +18,21 @@ import csv
 class ReadPairedFastq:
     """Reading in & parsing the fastq paired reads"""
     # TODO: Need search 1, search 2, search all 
-    def __init__(self, search1):
-        self.search1 = search1
+    def __init__(self, topsearch):
+        self.topsearch = topsearch
 
     def _extract_from_paired_reads(self, file1, file2):
         """Actually reading & parsing the fastq paired reads from given files"""
         #def extract_from_paired_reads(read1_path, read2_path, forward_reg, proto_reg, reverse_reg):
         total = 0
         missed = 0
-        names1 = self.search1.capture_names()
         
         #enumerate starting at 1
+        search1 = self.topsearch.get_objsearch('read1')
+        search2 = self.topsearch.get_objsearch('read2')
         for total, (read1, read2) in enumerate(tqdm(self._iterate_readpairs(file1, file2)),1):
             # search is getting the capture from read1, calling it match1
-            matches1 = self.search1.get_capture_from_read(read1)
+            matches1 = search1.get_capture_from_read(read1)
 
             #function call, definition below for _process_matches
             # self._process_matches(1, read1, total, names1, matches1)
@@ -89,7 +90,7 @@ class ReadPairedFastq:
     # Function takes headers  and writes them
     def process_paired_read_file(self, outpath, path1, path2):
         """Function takes headers  and writes them"""
-        fieldnames = self.search1.get_csvheaders()
+        fieldnames = self.topsearch.get_objsearch('read1').get_csvheaders()
         print(f'CAPTURED FIELD NAMES: {fieldnames}')
         if not fieldnames:
             print(f'NO CAPTURE NAMES IN SEARCH PATTERNS')
