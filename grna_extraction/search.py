@@ -15,17 +15,18 @@ class Search:
 
     def __init__(self, regxlist=None):
         """making the regxlist accessible so that all the functions inside this class can see it"""
+        # saving a copy of the orignial list of strings
         self.regxlist = regxlist if regxlist is not None else []
         # p is pattern
         # comprehension utilized below instead of for loop across multiple lines
         # evertime loop through p will add an element
         # cmp= compile
         # TODO: ?dictionary of compile object with names?
-        # Getting list and compiling it into object that contains various pieces including  compiled state machine - this is expensive so we are doing it once and then saving
+        # Creating a list and compiling it into object that contains various pieces including  compiled state machine - this is expensive so we are doing it once and then saving
         self.cmps = [regex_compile(p) for p in self.regxlist]
         # Storing names - multi dimensional list- input
         # TODO: Add functionality & tests for multiply nested capture patterns
-        self.capturednames = self.capture_names()
+        self.capturednames = self._init_capturednames()
         # This is flattened into a list - output - names & patterns
         # self.nto = namedtuple('GroupNames', list(chain.from_iterable(self.capturednames)))
         # Make a set once of the names from each compile bc change from iterable is expensive
@@ -111,7 +112,7 @@ class Search:
     # Name is within ex. <UMI>
     # https://pypi.org/project/regex/
     # names of functions/datamembers returned included: 'findall', 'finditer', 'flags', 'fullmatch', 'groupindex', 'groups', 'match', 'named_lists', 'pattern', 'scanner'
-    def capture_names(self):
+    def _init_capturednames(self):
         """Get names from regxlist to use as column headers"""
         # IMPORTANT FOR USER EXPERIENCE:
         # TODO: Account for 2 capture names being the same in one regex pattern
