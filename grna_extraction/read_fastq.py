@@ -17,7 +17,6 @@ import csv
 
 class ReadPairedFastq:
     """Reading in & parsing the fastq paired reads"""
-    # TODO: Need search 1, search 2, search all 
     def __init__(self, topsearch):
         self.topsearch = topsearch
 
@@ -26,18 +25,17 @@ class ReadPairedFastq:
         #def extract_from_paired_reads(read1_path, read2_path, forward_reg, proto_reg, reverse_reg):
         total = 0
         missed = 0
-        
+
         #enumerate starting at 1
-        search1 = self.topsearch.get_objsearch('read1')
-        search2 = self.topsearch.get_objsearch('read2')
+        topsearch = self.topsearch
         for total, (read1, read2) in enumerate(tqdm(self._iterate_readpairs(file1, file2)),1):
-            # search is getting the capture from read1, calling it match1
-            matches1 = search1.get_capture_from_read(read1)
+            # topsearch is getting the capture from read1 and read2, calling it matches
+            matches = topsearch.get_capture_from_readpair(read1,read2)
 
             #function call, definition below for _process_matches
             # self._process_matches(1, read1, total, names1, matches1)
-            if matches1:
-                yield matches1
+            if matches:
+                yield matches
             else:
                 missed +=1
 
@@ -94,7 +92,7 @@ class ReadPairedFastq:
         print(f'CAPTURED FIELD NAMES: {fieldnames}')
         if not fieldnames:
             print(f'NO CAPTURE NAMES IN SEARCH PATTERNS')
-            # TODO: want to make log file with various mesages for ppl 
+            # TODO: want to make log file with various mesages for ppl
             # Exit if no capture names
             sys_exit(0)
 
