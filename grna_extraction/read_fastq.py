@@ -86,9 +86,9 @@ class ReadPairedFastq:
 ## ####        return result[0]
 ## ####
     # Function takes headers  and writes them
-    def process_paired_read_file(self, outpath, path1, path2):
+    def process_paired_read_file(self, outpath, path1, path2, do_break=False):
         """Function takes headers  and writes them"""
-        fieldnames = self.topsearch.get_objsearch('read1').get_csvheaders()
+        fieldnames = self.topsearch.get_names_readpair()
         print(f'CAPTURED FIELD NAMES: {fieldnames}')
         if not fieldnames:
             print(f'NO CAPTURE NAMES IN SEARCH PATTERNS')
@@ -100,7 +100,8 @@ class ReadPairedFastq:
             # Access the search object and get names
             writer = csv.DictWriter(handle, fieldnames)
             writer.writeheader()
-            stream = self._extract_from_paired_reads(path1, path2)
+            # dobreak is passing whatever the value is that is passed into function
+            stream = self._extract_from_paired_reads(path1, path2, do_break)
             writer.writerows(stream)
             print(f' FILE WRITTEN: {outpath}')
             #TODO: Add print statement of how many total reads processed and how may did not have pattern
