@@ -19,12 +19,16 @@ def test_read_fastq():
     """testing config"""
     # TODO: replace with test data
     # Output path and out file name
+    # Setting a variable to what will be the name
     fcsv = join(mk_outdir('outdir'), 'out.csv') 
     # Input path
     fq1 = "/data/share/nonn-lab/rachel-test-crispr/reads/409-4_S1_L001_R1_001.fastq.gz"
     fq2 = "/data/share/nonn-lab/rachel-test-crispr/reads/409-4_S1_L001_R2_001.fastq.gz"
     
+    # Creating configuration object
+    # Reads configuration files and loads that info into dictionary and delivers that back to you
     cfg = Cfg()
+    # 
     search = TopSearch(cfg.get_doc_default())
     
     # Is there anything in list
