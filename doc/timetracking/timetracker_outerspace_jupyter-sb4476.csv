@@ -12,3 +12,4 @@ Thu,PM,2025-02-27 15:00:00,Thu,PM,2025-02-27 16:30:00,1:30:00,updated search fil
 Fri,PM,2025-02-28 14:30:00,Fri,PM,2025-02-28 16:43:18.979727,2:13:18.979727,updated search file; get_capture_from_read function; collected search results from named capture groups,,
 Tue,PM,2025-03-04 15:00:08.393925,Tue,PM,2025-03-04 17:18:08.393925,0:10:00,capturing sequences and writing to csv- Great job!,,
 Wed,PM,2025-03-05 15:00:00,Wed,PM,2025-03-05 17:02:39.006780,2:02:39.006780, Adding support for read2 via incoporating top search file,,
+Thu,PM,2025-03-06 15:12:43.485972,Thu,PM,2025-03-06 17:00:00,1:47:16.514028,updated topsearch to include read2 and single reads,,

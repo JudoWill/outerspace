@@ -22,17 +22,36 @@ class TopSearch:
         """Obtaining captured pattern from both reads"""
         match1 = self.srch1.get_capture_from_read(read1)
         match2 = self.srch2.get_capture_from_read(read2)
-        # If math1 exists and match2 exists, FININSH THIS
+        # If match1 exists, adding read id & return match1 
         if match1:
+            # If match1 & match2 exists, add match2 to match1
             if match2:
                 for key,val in match2.items():
                     match1[key] = val
+                self._check_readids(read1.id, read2.id)
+            match1['read_id'] = read1.id
             return match1
+        # if match1 does not exist does match2 exist, if so return match2
+        if match2:
+            match2['read_id'] = read2.id
         return match2
+    #TODO: Think about worlds case when they want partial matches returned, ex. want match any or match all: Rachel=match all
 
     def get_capture_from_singleread(self, read):
         """Obtaining captured pattern from both reads"""
-        return self.srch.get_capture_from_read(read)
+        mtch = self.srch.get_capture_from_read(read)
+        if mtch:
+            mtch['read_id'] = read.id
+        return mtch
+
+    @staticmethod
+    def _check_readids(read1_id, read2_id):
+        if read1_id == read2_id:
+            return True
+        # TODO: Write this to a log file
+        # TODO: Summarize mismatched reads to STDOUT
+        print(f'ERROR: read1 id not equal to read2 id \n read1: {read1_id}\n read2: {read2_id}')
+        return False
 
     # read_desc is actual name given
     def get_objsearch(self, read_desc):

@@ -5,6 +5,7 @@ __author__ = "SC Barrera"
 
 from itertools import chain
 from collections import namedtuple
+from logging import debug
 from regex import compile as regex_compile
 
 
@@ -44,11 +45,15 @@ class Search:
     #this is doing the search on the reads using our compiled (sequence) patterns
     def get_capture_from_read(self, read):
         """Searching for provided patterns in the read sequence"""
+        # if no capture patterns found don't return an empty dictionary
+        if not self.names:
+            return None
         #TODO FOR RACHEL: add read2
         read_dict = {}
         # seq is from biopython not a variable
         # assert len(names) == len(self.cmps)
-        print('')
+        # debug is used instead of print but can turn it on or off from any file, ex turned off in test
+        debug('')
         sequence = str(read.seq)
         # 2 groups of names and 2 compiled objects being zipped together
         # Makig sure lists are the same length so that if length are unequal the longer one would not be dropped
@@ -69,12 +74,12 @@ class Search:
                 # print(f'SEARCHDICT      cmp{idx}:  {mtch.groupdict()}')
                 # print(f'SEARCH   GROUP0-cmp{idx}:  {mtch.group(0)}')
                 # print(f'SEARCH   GROUP1-cmp{idx}:  {mtch.group(1)}')
-        print(f'CHECKED DICTIONARY:  {read_dict}')        
+        debug(f'CHECKED DICTIONARY:  {read_dict}')        
         # TODO:we are only reporting if we found everything but that is not what the world will expect- we need to report if anything was found 
         # set is used to check between 2 lists; printing if something was returned
         if self.nameset == set(read_dict.keys()):
-            read_dict['read_id'] = read.id
-            print(f'RETURN DICTIONARY: {read_dict}')
+            # read_dict['read_id'] = read.id
+            debug(f'RETURN DICTIONARY: {read_dict}')
             return read_dict
         return None
 

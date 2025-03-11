@@ -20,7 +20,7 @@ class ReadPairedFastq:
     def __init__(self, topsearch):
         self.topsearch = topsearch
 
-    def _extract_from_paired_reads(self, file1, file2):
+    def _extract_from_paired_reads(self, file1, file2, do_break=False):
         """Actually reading & parsing the fastq paired reads from given files"""
         #def extract_from_paired_reads(read1_path, read2_path, forward_reg, proto_reg, reverse_reg):
         total = 0
@@ -38,8 +38,8 @@ class ReadPairedFastq:
                 yield matches
             else:
                 missed +=1
-
-            if total > 10:
+            # if doing break and more than 10 reads then breaking
+            if do_break and total > 10:
                 break
         ####        foward_umi = get_capture_from_read(forward_reg, read1)
         ####        protospacer = get_capture_from_read(proto_reg, read1)
