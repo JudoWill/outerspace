@@ -28,7 +28,7 @@ class Cfg:
     def read_file(self):
         """Read the file specified"""
         print(f'  READ: {self.filename}')
-        return TOMLFile(self.filename).read() if filename is not None else None
+        return TOMLFile(self.filename).read() if self.filename is not None else None
 
 
     def write_file(self):
@@ -38,42 +38,9 @@ class Cfg:
             TOMLFile(self.filename).write(doc)
             print(f'  WROTE: {self.filename}')
         else:
-            print(f'  PLEASE PROVIDE FILE NAME IN ORDER TO WRITE')
+            print('  PLEASE PROVIDE FILE NAME IN ORDER TO WRITE')
         return doc
 
-    def get_umi_pattern_forward(self):
-        """Get forward UMI regex pattern"""
-        return ('(?P<UMI>.{'
-            f"{self.doc['define_motifs']['umi_pattern_forward_num_umi_nt']}"
-            '})(?:'
-            f"{self.doc['define_motifs']['umi_pattern_forward_pattern_nt']}"
-            '){s<='
-            f"{self.doc['define_motifs']['umi_pattern_forward_mismatch_max_nt']}"
-            '}')
-
-    def get_protospacer_forward(self):
-        """Get forward protospacer pattern"""
-        return ('(?:'
-            f"{self.doc['define_motifs']['pattern_forward_upstream_protospacer']}"
-            '){s<='
-            f"{self.doc['define_motifs']['pattern_forward_upstream_protospacer_mismatch_max_nt']}"
-            '}(?P<protospacer>.{'
-            f"{self.doc['define_motifs']['pattern_forward_num_protospacer_nt_range_from']}"
-            ','
-            f"{self.doc['define_motifs']['pattern_forward_num_protospacer_nt_range_to']}"
-            '})(?:'
-            f"{self.doc['define_motifs']['pattern_forward_downstream_protospacer']}"
-            '){s<='
-            f"{self.doc['define_motifs']['pattern_forward_protospacer_mismatch_max_nt']}"
-            '}')
-
-    def get_umi_pattern_forward_downstream_nt(self):
-        """Get downstream forward UMI regex pattern"""
-        return f"{self.doc['define_motifs']['umi_pattern_forward_downstream_nt']}"
-
-
-##########STOPPED HERE#####
-### Next need to finish
 
 
     def get_doc_default(self):
