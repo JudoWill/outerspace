@@ -21,9 +21,14 @@ def test_grna_extraction():
     # Output path and out file name
     # Setting a variable to what will be the name
     fcsv = join(mk_outdir('outdir'), 'out.csv')
+    # TODO: fq1 needs to be copied over again- messed it up
     # Input path
-    fq1 = "/data/share/nonn-lab/rachel-test-crispr/reads/409-4_S1_L001_R1_001.fastq.gz"
-    fq2 = "/data/share/nonn-lab/rachel-test-crispr/reads/409-4_S1_L001_R2_001.fastq.gz"
+    # fq1 = "/data/share/nonn-lab/rachel-test-crispr/reads/409-4_S1_L001_R1_001.fastq.gz"
+    # fq2 = "/data/share/nonn-lab/rachel-test-crispr/reads/409-4_S1_L001_R2_001.fastq.gz"
+    fq1 = get_filename("reads_sample/409-4_S1_L002_R1_001.fastq.gz")
+    fq2 = get_filename("reads_sample/409-4_S1_L002_R2_001.fastq.gz")
+    assert exists(fq1)
+    assert exists(fq2)
     cfg_filename = get_filename("tests/configs/grnaquery.cfg")
     assert exists(cfg_filename)
     
@@ -32,14 +37,14 @@ def test_grna_extraction():
     if exists(fcsv):
         remove(fcsv)
     assert not exists(fcsv)
-    obj.run(fq1, fq2, fcsv)
+    obj.run(fcsv, fq1, fq2, do_break=True)
     # Creating configuration object
     # Reads configuration files and loads that info into dictionary and delivers that back to you
 
     assert obj.search.srch.regxlist == []
     assert obj.search.srch1.regxlist == [
         '(?P<UMI_5prime>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}',
-        '(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?P<protospacer2>GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}'
+        '(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?P<downstreamof_protospacer>GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}'
         ]
     assert obj.search.srch2.regxlist ==  ['(?P<UMI_3prime>.{8})(?:TTCCACACCCTAACTGACACAC){s<=4}']
 
