@@ -14,13 +14,15 @@ class TopSearch:
     # srch1 hold patterns for read 1 or paired read
     # srch2 hold patterns for read 2 or paired read
     def __init__(self, regxdct=None):
+        # TODO: Include regxlist in searches for read1 & read2
         self.srch = Search(regxdct['regxlist'])
-        self.srch1 = Search(regxdct['regxlist'] + regxdct['regxlist1'])
-        self.srch2 = Search(regxdct['regxlist'] + regxdct['regxlist2'])
+        self.srch1 = Search(regxdct['regxlist1'])
+        self.srch2 = Search(regxdct['regxlist2'])
 
     def get_capture_from_readpair(self, read1, read2):
         """Obtaining captured pattern from both reads"""
         match1 = self.srch1.get_capture_from_read(read1)
+        # TODO: Allow for case where match1 or match2 do not have patterns
         # If match1 exists, adding read id & return match1 
         if match1:
             # If match1 & match2 exists, add match2 to match1

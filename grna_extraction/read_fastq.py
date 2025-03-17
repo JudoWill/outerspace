@@ -74,9 +74,9 @@ class ReadPairedFastq:
                     yield read
 
     def _iterate_readpairs(self, path1, path2):
+        #TODO: If file is not a gzip file - error message should include filename
         for r1, r2 in zip(self._iterate_reads(path1), self._iterate_reads(path2)):
             yield r1, r2
-
 ## ####def get_capture_from_read(reg_exp, read):
 ## ####
 ## ####    sequence = str(read.seq)
