@@ -121,7 +121,7 @@ class Cfg:
         doc['regxlist2'] = arr
 
     def __str__(self):
-        return self.doc.as_string()
+        return f'Cfg({self.filename})'
 
 
 
