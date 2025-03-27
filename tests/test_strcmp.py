@@ -11,7 +11,7 @@ from grna_extraction.strcmp import get_outputfname
 from grna_extraction.strcmp import get_readpair_files
 
 
-def test_strcmp():
+def test_strcmp(pat=r'^(.*)(_R(1|2)_)(.*)$'):
     """Test finding read pairs"""
     files = [
         "a_R1_z.fq.gz",
@@ -21,7 +21,7 @@ def test_strcmp():
 
     # Test a list of files that has one read pair
     assert is_readpair(*files)
-    act = get_readpairs(files)
+    act = get_readpairs(files, pat)
     exp = [tuple(files)]
     assert act == exp
     fcsv = get_outputfname(*act[0])
@@ -29,12 +29,13 @@ def test_strcmp():
     assert fcsv == 'a_Rp_z.csv', fcsv
 
     # Add files that are not read pairs
-    files.append("a_RX_z.fq")
+    files.append("a_R1_32.fq")
+    files.append("a_R1_34.fq")
     files.append("apa")
     _prt_sorted(files)
 
     _run_readpairs(files)
-    act = get_readpairs(files)
+    act = get_readpairs(files, pat)
     ntreadpairs = get_readpair_files(act)
     _prt_result(ntreadpairs)
     assert act == exp
@@ -48,11 +49,13 @@ def test_strcmp():
     ]
     files.extend(r12)
     exp.append(tuple(r12))
+    files.append("a_R2_32.fq")
+    files.append("a_R2_34.fq")
     _prt_sorted(files)
 
 
-    act = get_readpairs(files)
-    assert act == exp
+    act = get_readpairs(files, pat)
+    assert act == exp, f'\nACT: {act}\nEXP: {exp}'
     print(f'ACT: {act}')
     print(f'EXP: {exp}')
     ntreadpairs = get_readpair_files(act)
