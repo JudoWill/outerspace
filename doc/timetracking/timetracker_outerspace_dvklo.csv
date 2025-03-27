@@ -1,2 +1,3 @@
-start_day,xm,start_datetime,stop_day,zm,stop_datetime,duration,message, activity, tags
-Tue,PM,2025-02-04 15:00:20.049983,Tue,PM,2025-02-04 17:10:41.329273,2:10:21.279290,Added support for forward UMI regex pattern searching,,
+start_datetime,duration,activity,message,tags
+2025-02-04 15:00:20.049983,2:10:21.279290,,Added support for forward UMI regex pattern searching,
+2025-03-27 03:00:00,2:54:00.404411,,Implemented code to find read pairs in a file list and generate an output csv filename,
