@@ -3,8 +3,18 @@
 __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
 __author__ = "DV Klopfenstein, PhD"
 
-# TODO1: from collections import namedtuple
+from os.path import basename
+from collections import namedtuple
 
+def get_readpair_files(readpairs):
+    """Get the base csv filename for each readpair"""
+    nto = namedtuple('ReadPairs', 'fcsv fread1 fread2')
+    nts = []
+    for frd1, frd2 in readpairs:
+        # TODO3: make robust if this is NOT a readpair
+        fcsv = get_outputfname(frd1, frd2)
+        nts.append(nto(fcsv=fcsv, fread1=frd1, fread2=frd2))
+    return nts
 
 def get_readpairs(files):
     """Return the files, grouped by read pairs, which differ by '1' vs '2'"""
@@ -32,7 +42,19 @@ def is_readpair(filename1, filename2):
     if len(res) != 1:
         return None
     res = res[0]
-    return res if set(res[1:]) == {'1', '2'} else None
+    return res[0] if set(res[1:]) == {'1', '2'} else None
+
+def get_outputfname(filename1, filename2):
+    """Get the output file name given a read pair"""
+    # TODO3: make robust if this is NOT a readpair
+    pt0 = is_readpair(filename1, filename2)
+    fcsv = basename(filename1)
+    # TODO4: Ensure this is really an extension
+    ptz = fcsv.find('.')
+    if ptz != -1:
+        fcsv = fcsv[:ptz]
+    return f'{fcsv[:pt0]}p{fcsv[pt0+1:]}.csv'
+
 
 
 # Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.
