@@ -35,3 +35,5 @@ clobber:
 	make clean
 	rm -rf outdir
 
+RB:
+	findseq rb.cfg -1 reads_sample/409-4_S1_L002_R1_001.fastq.gz -2 reads_sample/409-4_S1_L002_R2_001.fastq.gz -o 409-4_S1_L002_R1_R2_output.csv

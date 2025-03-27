@@ -11,6 +11,11 @@ from os.path import exists
 from argparse import ArgumentParser
 from grna_extraction.grna_extraction import TopLevel
 
+def main():
+    """Main runs outerspace"""
+    cli=Cli()
+    cli.run()
+
 class Cli:
     """The command line interface argument requirements"""
     def __init__(self, args=None):
@@ -22,10 +27,19 @@ class Cli:
     
     def run(self):
         """running if there are reads"""
+        if self.args.config_filename is None:
+            print('please provide a config filename')
+            sys_exit(0)
+        if self.args.read1_filename is not None and \
+           self.args.read2_filename is not None and \
+           self.args.output_filename is not None:
+            self._run1read(self.args.read1_filename,self.args.read2_filename)
+        
+    def _run1read(self, read1_filename,read2_filename):    
         # there are four conditions 2 reads, no reads, read 1 and not read 2, read 2 and not read1
-        if self.args.read1_filename is not None and self.args.read2_filename is not None:
+        if read1_filename is not None and read2_filename is not None:
             self._runpairedreads()
-        elif self.args.read1_filename is not None and self.args.read2_filename is None:
+        elif read1_filename is not None and read2_filename is None:
             self._runsingleread()
         else:
             self._runnone()
@@ -40,7 +54,7 @@ class Cli:
         raise NotImplementedError("TIME TO IMPLEMENT RUNNING SINGLE READ")
     
     def _runnone(self):
-        raise NotImplementedError("TIME TO EXIT - NO READ FILES")
+        print("TODO: make exit friendly")
         
     @staticmethod
     def _init_parser():
@@ -57,6 +71,11 @@ class Cli:
             help='zipped fastq file for read 2, or a single read')
         parser.add_argument('-o', '--output_filename',
             help='captured read file name output csv')
+        parser.add_argument('--fastqfiles', nargs='*',
+            help='directory containing paired fastq read files')
+            # TODO: add option to specify single reads vs paired reads
+        parser.add_argument('--outdir',
+            help='output directory for processed files')
         return parser
 
     @staticmethod
@@ -81,7 +100,7 @@ class Cli:
         filenamecfg = self.args.config_filename
         if filenamecfg is None:
             # TODO: give researcher explicit instructions how to generate a config file - give hints or examples
-            print("Provide configuration file name")
+#            print("Provide configuration file name")
             return None
         if exists(filenamecfg):
             return TopLevel(filenamecfg)
