@@ -1,3 +1,5 @@
+409*.csv
+reads_sample/
 /outdir/
 *.ipynb
 git remove-v
