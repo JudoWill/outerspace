@@ -22,6 +22,7 @@ def test_strcmp(pat=r'^(.*)(_R(1|2)_)(.*)$'):
     ]
     _prt_sorted(files)
 
+    # ------------------------------------------------------------
     # Test a list of files that has one read pair
     assert is_readpair(*files)
     act = get_readpairs(files, pat)
@@ -33,6 +34,7 @@ def test_strcmp(pat=r'^(.*)(_R(1|2)_)(.*)$'):
     print(f'CSV({fcsv}) from readpair {files[0]} {files[1]}')
     assert fcsv == 'a_Rp_z.csv', fcsv
 
+    # ------------------------------------------------------------
     # Add files that are not read pairs
     print(f'{SEP}TEST 2) Add files unrelated to reads')
     files.append("a_R1_32.fq")
@@ -48,6 +50,7 @@ def test_strcmp(pat=r'^(.*)(_R(1|2)_)(.*)$'):
     print(f'ACT: {act}')
     print(f'EXP: {exp}')
 
+    # ------------------------------------------------------------
     # Add files that are read pairs
     print(f'{SEP}TEST 3) Add another read pair')
 

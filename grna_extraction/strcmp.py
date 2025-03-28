@@ -27,11 +27,11 @@ def is_readpair(filename1, filename2):
     """Is a readpair if there is one difference between two files & it is '1' vs '2'"""
     if len(filename1) != len(filename2):
         return None
-    res = [(i, a, b) for i, (a, b) in enumerate(zip(filename1, filename2)) if a != b]
+    res = [(i, (a, b)) for i, (a, b) in enumerate(zip(filename1, filename2)) if a != b]
     if len(res) != 1:
         return None
-    res = res[0]
-    return res[0] if set(res[1:]) == {'1', '2'} else None
+    idx, set12 = res[0]
+    return idx if set(set12) == {'1', '2'} else None
 
 def get_outputfname(filename1, filename2):
     """Get the output file name given a read pair"""
