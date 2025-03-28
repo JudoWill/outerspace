@@ -12,7 +12,7 @@ from argparse import ArgumentParser
 from grna_extraction.grna_extraction import TopLevel
 
 def main():
-    """Main runs outerspace"""
+    """Main runs outerspace- run from setup.py console scripts """
     cli=Cli()
     cli.run()
 

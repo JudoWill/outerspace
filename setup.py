@@ -21,6 +21,7 @@ def get_long_description():
     with open(join(dir_cur, 'README.md'), 'rb') as ifstrm:
         return ifstrm.read().decode("UTF-8")
 
+# These are executables on left and module name:function name
 CONSOLE_SCRIPTS = [
     'findseq=grna_extraction.cli:main'
 ]
