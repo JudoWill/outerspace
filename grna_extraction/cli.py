@@ -3,13 +3,18 @@
 __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
 __author__ = "RE Berman"
 
-from sys import argv
+# from sys import argv
 from sys import exit as sys_exit
 from os.path import isdir
 from os.path import isfile
 from os.path import exists
+from os.path import join
 from argparse import ArgumentParser
+from timeit import default_timer
+from datetime import timedelta
 from grna_extraction.grna_extraction import TopLevel
+from grna_extraction.strcmp import get_readpair_files
+from grna_extraction.strcmp import get_readpairs
 
 def main():
     """Main runs outerspace- run from setup.py console scripts """
@@ -20,9 +25,9 @@ class Cli:
     """The command line interface argument requirements"""
     def __init__(self, args=None):
         self.parser = self._init_parser()
-        print(f'ARGV: {argv}')
+        # print(f'ARGV: {argv}')
         self.args = self.parser.parse_args(args)
-        print(f'ARGS: {self.args}')
+        self._prt_args()
         self.top = self._init_top()
     
     def run(self):
@@ -33,9 +38,38 @@ class Cli:
         if self.args.read1_filename is not None and \
            self.args.read2_filename is not None and \
            self.args.output_filename is not None:
-            self._run1read(self.args.read1_filename,self.args.read2_filename)
-        
-    def _run1read(self, read1_filename,read2_filename):    
+            self._run_reads_one(self.args.read1_filename,self.args.read2_filename)
+        if self.args.fastqfiles and self.args.outdir:
+            self._run_pairedreads_all(self.args.fastqfiles,self.args.outdir)
+    
+    def _toprun(self, outputfile, read1file, read2file):
+        """putting in a clause that will make this work even if theres an error"""
+        try:
+            self.top.run(outputfile, read1file, read2file)
+        except ValueError as err:
+            print(f'Failed analyzing read pair: {read1file} {read2file}')
+            
+    def _run_pairedreads_all(self, fastqfiles, outdir):
+        """running if there is a directory with all the paired reads you intend to run"""
+        # testing to see if outdir exists
+        if not exists(outdir) or not isdir(outdir):
+            print('Output directory either does not exist or is not a directory:({outdir})')
+            sys_exit(0)
+        if not fastqfiles:
+            print('No fastq files were found with --fastqfiles {fastqfiles}')
+            sys_exit(0)
+        tic = default_timer()
+        readpairs = get_readpairs(fastqfiles)
+        # TODO: check that we have nts (to check that we have readpairs)
+        nts = get_readpair_files(readpairs)
+        len_nts = len(nts)
+        for idx,ntd in enumerate(nts,1):
+            hms = timedelta(seconds = default_timer() - tic)
+            print(f'hours:mins:secs {hms} -- {idx:4} of {len_nts} readpair {ntd}')
+            output = join(outdir, ntd.fcsv)
+            self._toprun(output, ntd.fread1, ntd.fread2)
+
+    def _run_reads_one(self, read1_filename,read2_filename):    
         # there are four conditions 2 reads, no reads, read 1 and not read 2, read 2 and not read1
         if read1_filename is not None and read2_filename is not None:
             self._runpairedreads()
@@ -106,6 +140,17 @@ class Cli:
             return TopLevel(filenamecfg)
         print(f'Configuration file does not exist: {filenamecfg}')
         return None
+    
+    def _prt_args(self):
+        """shortening the output of args to summarize input r1 r2 files, output file or dir, and/or the amount of files found in the input dir"""
+        txt = []
+        for key,val in vars(self.args).items():
+            if key != 'fastqfiles':
+                txt.append(f'{key}={val}')
+            else:
+                txt.append(f'{key}[{0 if val is None else len(val)}]')
+        txt = ', '.join(txt)
+        print(f'ARGS: {txt}')
     
 
 # Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.

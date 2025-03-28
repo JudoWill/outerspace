@@ -18,6 +18,8 @@ class TopSearch:
         self.srch = Search(regxdct['regxlist'])
         self.srch1 = Search(regxdct['regxlist1'])
         self.srch2 = Search(regxdct['regxlist2'])
+        print(f'captured names for read1: {self.srch1.capturednames}')
+        print(f'captured names for read2: {self.srch2.capturednames}')
 
     def get_capture_from_readpair(self, read1, read2):
         """Obtaining captured pattern from both reads"""

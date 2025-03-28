@@ -89,9 +89,7 @@ class ReadPairedFastq:
     def process_paired_read_file(self, outpath, path1, path2, do_break=False):
         """Function takes headers  and writes them"""
         fieldnames = self.topsearch.get_names_readpair()
-        print(f'CAPTURED FIELD NAMES: {fieldnames}')
         if not fieldnames:
-            print(f'NO CAPTURE NAMES IN SEARCH PATTERNS')
             # TODO: want to make log file with various mesages for ppl
             # Exit if no capture names
             sys_exit(0)
