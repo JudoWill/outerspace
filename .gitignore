@@ -1,5 +1,6 @@
 409*.csv
 reads_sample/
+build/
 /outdir/
 *.ipynb
 git remove-v
