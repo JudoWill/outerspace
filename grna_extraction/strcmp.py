@@ -22,21 +22,6 @@ def get_readpairs(files, pat=r'^(.*)(_R(1|2)_)(.*)$', seq=None):
     """Return the files, grouped by read pairs, which differ by '1' vs '2'"""
     obj = FastqSort(pat, seq)
     return obj.get_readpairs(files)
-    ####if not files:
-    ####    return None
-    ####files = _regex_sort(files)
-    ####readpairs = []
-    ##### TODO1: other = []
-    ##### TODO1: return files that were not readpairs
-    ##### TODO1: nto = namedtuple('ReadPairs', 'readpairs other')
-    ####last = files[0]
-    ####for curr in files[1:]:
-    ####    # TODO2: Optimize when a read pair is found
-    ####    if is_readpair(last, curr):
-    ####        readpairs.append((last, curr))
-    ####    last = curr
-    ##### TODO1: return nto(readpairs=readpairs, other=other)
-    ####return readpairs
 
 def is_readpair(filename1, filename2):
     """Is a readpair if there is one difference between two files & it is '1' vs '2'"""
@@ -50,10 +35,10 @@ def is_readpair(filename1, filename2):
 
 def get_outputfname(filename1, filename2):
     """Get the output file name given a read pair"""
-    # TODO3: make robust if this is NOT a readpair
+    # TODO: make robust if this is NOT a readpair
     pt0 = is_readpair(filename1, filename2)
     fcsv = basename(filename1)
-    # TODO4: Ensure this is really an extension
+    # TODO: Ensure this is really an extension
     ptz = fcsv.find('.')
     if ptz != -1:
         fcsv = fcsv[:ptz]
@@ -63,14 +48,21 @@ def get_outputfname(filename1, filename2):
 class FastqSort:
     """Sort fastq files such that read1 and read2 files are next to each other"""
 
-    dampier_default = r'^(.*)(_R(1|2)_)(.*)$'
+    # TODO: Make this work for the world, not just Dampier
+    default_dampier_pat = r'^(.*)(_R(1|2)_)(.*)$'
+    default_dampier_seq = [0, 3, 1]
+    default_sort_nomatch = ()
+
 
     def __init__(self, pat=r'^(.*)(_R(1|2)_)(.*)$', seq=None):
-        print(f'PPPPPPPPPPPPPP {pat}')
+        # TODO: Make more robust for various patterns and sequences
+        self.pat = pat
+        self.seq = self._init_seq(pat, seq)
         self.cmp = re.compile(pat)
-        self.getter = itemgetter(*self._init_seq(pat, seq))
+        self.getter = itemgetter(*self.seq)
 
     def get_sorted(self, files):
+        """Get files sorted to match paired reads together"""
         return sorted(files, key=self._key)
 
     def get_readpairs(self, files):
@@ -92,17 +84,14 @@ class FastqSort:
         return readpairs
 
     def _key(self, item):
-        mtch = self.cmp.search(item)
-        if mtch:
-            print('MMMMMMMMMMMMMMMMMMM', mtch.groups())
-            ret = self.getter(mtch.groups())
-            print('RRRRRRRRRRRRRRRRRRR', ret)
-        return item
+        if mtch := self.cmp.search(item):
+            return self.getter(mtch.groups())
+        return self.default_sort_nomatch
 
     def _init_seq(self, pat, seq):
         if seq is None:
-            if pat == self.dampier_default:
-                return [0, 3, 1]
+            if pat == self.default_dampier_pat:
+                return self.default_dampier_seq
             raise RuntimeError("Please provide correct sequence for regex pat({pat})")
         # TODO: Check that seq is a list (or tuple)
         return seq

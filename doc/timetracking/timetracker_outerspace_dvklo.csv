@@ -1,3 +1,4 @@
 start_datetime,duration,activity,message,tags
 2025-02-04 15:00:20.049983,2:10:21.279290,,Added support for forward UMI regex pattern searching,
 2025-03-27 03:00:00,2:54:00.404411,,Implemented code to find read pairs in a file list and generate an output csv filename,
+2025-03-27 13:50:00,3:30:00,,Rachel added args for reading multiple files *.fq and outputing to a directory,
