@@ -22,9 +22,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--key-column", required=True, help="Column to group by")
     parser.add_argument("--sep", default=",", help="CSV separator (default: ',')")
     parser.add_argument("--row-limit", type=int, help="Process only the first N rows (for testing)")
+    parser.add_argument("--allowed-list", help="Text file containing allowed keys (one per line)")
     return parser.parse_args()
 
-def get_barcodes_per_key(filepath: str, barcode_col: str, key_col: str, sep: str, row_limit: int = None) -> Dict[str, Set[str]]:
+def read_allowed_keys(filepath: str) -> Set[str]:
+    """Read allowed keys from a text file"""
+    allowed_keys = set()
+    with open(filepath, 'r') as f:
+        for line in f:
+            key = line.strip()
+            if key:  # Skip empty lines
+                allowed_keys.add(key)
+    return allowed_keys
+
+def get_barcodes_per_key(filepath: str, barcode_col: str, key_col: str, sep: str, row_limit: int = None, allowed_keys: Set[str] = None) -> Dict[str, Set[str]]:
     """Get unique barcodes for each key value"""
     barcodes_by_key = defaultdict(set)
     
@@ -44,6 +55,10 @@ def get_barcodes_per_key(filepath: str, barcode_col: str, key_col: str, sep: str
             key = str(row[key_col])
             barcode = str(row[barcode_col])
             
+            # Skip if key is not in allowed list
+            if allowed_keys and key not in allowed_keys:
+                continue
+                
             if key and barcode:  # Skip empty values
                 barcodes_by_key[key].add(barcode)
     
@@ -61,6 +76,12 @@ def main():
     args = parse_args()
     
     try:
+        # Read allowed keys if specified
+        allowed_keys = None
+        if args.allowed_list:
+            allowed_keys = read_allowed_keys(args.allowed_list)
+            print(f"Loaded {len(allowed_keys)} allowed keys from {args.allowed_list}", file=sys.stderr)
+        
         # Get barcode counts per key
         if args.row_limit:
             print(f"Processing first {args.row_limit} rows", file=sys.stderr)
@@ -70,7 +91,8 @@ def main():
             args.barcode_column, 
             args.key_column, 
             args.sep, 
-            args.row_limit
+            args.row_limit,
+            allowed_keys
         )
         
         # Print summary
