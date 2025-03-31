@@ -29,7 +29,8 @@ CONSOLE_SCRIPTS = [
 REQUIRES = [
     'tomlkit',
     'tqdm',
-    'Bio'
+    'Bio',
+    'regex'
 ]
 
 #KEYWORDS = [
