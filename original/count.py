@@ -90,6 +90,25 @@ def write_counts(barcodes_by_key: Dict[str, Set[str]], filepath: str, sep: str, 
             for key, barcodes in sorted(barcodes_by_key.items()):
                 writer.writerow([key, len(barcodes)])
 
+def gini_coefficient(counts: List[int]) -> float:
+    """Calculate the Gini coefficient for a list of counts.
+    
+    The Gini coefficient measures the inequality of distribution.
+    Returns a value between 0 (perfect equality) and 1 (perfect inequality).
+    """
+
+    if not counts:
+        return 0.0
+    
+    # Sort counts in ascending order
+    sorted_counts = sorted(counts)
+    n = len(sorted_counts)
+    
+    # Calculate the Lorenz curve
+    index = list(range(1, n + 1))
+    return ((2 * sum(i * y for i, y in zip(index, sorted_counts))) / 
+            (n * sum(sorted_counts))) - ((n + 1) / n)
+
 def process_single_file(input_file: str, output_file: str, barcode_col: str, key_col: str,
                        sep: str, row_limit: int, allowed_keys: Set[str], detailed: bool,
                        downsample: float = None) -> Dict[str, Any]:
@@ -114,17 +133,30 @@ def process_single_file(input_file: str, output_file: str, barcode_col: str, key
     # Calculate summary statistics
     total_keys = len(barcodes_by_key)
     total_barcodes = sum(len(barcodes) for barcodes in barcodes_by_key.values())
+    barcode_counts = [len(barcodes) for barcodes in barcodes_by_key.values()]
+    gini = gini_coefficient(barcode_counts)
+    
+    stats = {
+        'file_stats': {
+            'total_keys': total_keys,
+            'total_barcodes': total_barcodes,
+            'average_barcodes_per_key': total_barcodes / total_keys if total_keys > 0 else 0,
+            'gini_coefficient': gini
+        }
+    }
+    
+    # Add missing barcode information if allowed_keys is provided
+    if allowed_keys:
+        missing_keys = allowed_keys - set(barcodes_by_key.keys())
+        stats['missing_keys'] = {
+            'total_missing': len(missing_keys),
+            'missing_keys_list': sorted(list(missing_keys))
+        }
     
     # Write output
     write_counts(barcodes_by_key, output_file, sep, detailed)
     
-    return {
-        'file_stats': {
-            'total_keys': total_keys,
-            'total_barcodes': total_barcodes,
-            'average_barcodes_per_key': total_barcodes / total_keys if total_keys > 0 else 0
-        }
-    }
+    return stats
 
 def main():
     args = parse_args()
@@ -171,8 +203,17 @@ def main():
                 print(f"\nStatistics for {os.path.basename(input_file)}:", file=sys.stderr)
                 for category, values in stats.items():
                     print(f"\n{category}:", file=sys.stderr)
-                    for key, value in values.items():
-                        print(f"  {key}: {value:.1f}" if isinstance(value, float) else f"  {key}: {value}", file=sys.stderr)
+                    if category == 'missing_keys':
+                        print(f"  Total missing keys: {values['total_missing']}", file=sys.stderr)
+                        if values['total_missing'] > 0 and args.detailed:
+                            print("  Missing keys:", file=sys.stderr)
+                            for key in values['missing_keys_list'][:10]:  # Show first 10 missing keys
+                                print(f"    {key}", file=sys.stderr)
+                            if len(values['missing_keys_list']) > 10:
+                                print(f"    ... and {len(values['missing_keys_list']) - 10} more", file=sys.stderr)
+                    else:
+                        for key, value in values.items():
+                            print(f"  {key}: {value:.3f}" if isinstance(value, float) else f"  {key}: {value}", file=sys.stderr)
                 
             except Exception as e:
                 print(f"Error processing {input_file}: {e}", file=sys.stderr)
