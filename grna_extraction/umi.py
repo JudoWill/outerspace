@@ -87,6 +87,31 @@ class UMI:
                 self._corrected_counts[corrected] = self._corrected_counts.get(corrected, 0) + count
         return self._corrected_counts
     
+    def gini_coefficient(self, use_corrected: bool = True) -> float:
+        """Calculate the Gini coefficient for the UMI counts.
+        
+        The Gini coefficient measures the inequality of distribution.
+        Returns a value between 0 (perfect equality) and 1 (perfect inequality).
+        
+        Args:
+            use_corrected: If True, use corrected counts. If False, use original counts.
+            
+        Returns:
+            Gini coefficient
+        """
+        counts = self.corrected_counts if use_corrected else self._counts
+        if not counts:
+            return 0.0
+        
+        # Sort counts in ascending order
+        sorted_counts = sorted(counts.values())
+        n = len(sorted_counts)
+        
+        # Calculate the Lorenz curve
+        index = list(range(1, n + 1))
+        return ((2 * sum(i * y for i, y in zip(index, sorted_counts))) / 
+                (n * sum(sorted_counts))) - ((n + 1) / n)
+    
     @classmethod
     def from_csv(cls, filepath: Union[str, Path], column: str, 
                  mismatches: int = 2, method: str = "adjacency",

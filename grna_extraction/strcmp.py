@@ -49,6 +49,8 @@ class FastqSort:
     """Sort fastq files such that read1 and read2 files are next to each other"""
 
     # TODO: Make this work for the world, not just Dampier
+    # TODO: Making work for the world is as easy as sorting them by filename and them in consecutive pairs
+
     default_dampier_pat = r'^(.*)(_R(1|2)_)(.*)$'
     default_dampier_seq = [0, 3, 1]
     default_sort_nomatch = ()

@@ -8,13 +8,14 @@ __license__ = "MIT"
 
 import argparse
 import csv
-from collections import Counter, defaultdict
+from collections import defaultdict
 from typing import List, Dict, Any, Set
 import sys
 from tqdm import tqdm
 import os
 import glob
 import random
+from grna_extraction.umi import UMI
 
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments"""
@@ -41,13 +42,16 @@ def read_allowed_keys(filepath: str) -> Set[str]:
                 allowed_keys.add(key)
     return allowed_keys
 
-def get_barcodes_per_key(filepath: str, barcode_col: str, key_col: str, sep: str, 
-                        row_limit: int = None, allowed_keys: Set[str] = None,
-                        downsample: float = None) -> Dict[str, Set[str]]:
-    """Get unique barcodes for each key value"""
-    barcodes_by_key = defaultdict(set)
+def process_single_file(input_file: str, output_file: str, barcode_col: str, key_col: str,
+                       sep: str, row_limit: int, allowed_keys: Set[str], detailed: bool,
+                       downsample: float = None) -> Dict[str, Any]:
+    """Process a single CSV file and return summary statistics"""
+    # Create UMI object for this file
+    umi = UMI()
     
-    with open(filepath, 'r') as f:
+    # Read rows and collect barcodes per key
+    barcodes_by_key = defaultdict(set)
+    with open(input_file, 'r') as f:
         reader = csv.DictReader(f, delimiter=sep)
         headers = reader.fieldnames
         
@@ -73,68 +77,12 @@ def get_barcodes_per_key(filepath: str, barcode_col: str, key_col: str, sep: str
                 
             if key and barcode:  # Skip empty values
                 barcodes_by_key[key].add(barcode)
-    
-    return barcodes_by_key
-
-def write_counts(barcodes_by_key: Dict[str, Set[str]], filepath: str, sep: str, detailed: bool = False):
-    """Write barcode counts per key to CSV file"""
-    with open(filepath, 'w', newline='') as f:
-        if detailed:
-            writer = csv.writer(f, delimiter=sep)
-            writer.writerow(['key', 'unique_barcodes', 'barcode_count'])
-            for key, barcodes in sorted(barcodes_by_key.items()):
-                writer.writerow([key, ','.join(sorted(barcodes)), len(barcodes)])
-        else:
-            writer = csv.writer(f, delimiter=sep)
-            writer.writerow(['key', 'barcode_count'])
-            for key, barcodes in sorted(barcodes_by_key.items()):
-                writer.writerow([key, len(barcodes)])
-
-def gini_coefficient(counts: List[int]) -> float:
-    """Calculate the Gini coefficient for a list of counts.
-    
-    The Gini coefficient measures the inequality of distribution.
-    Returns a value between 0 (perfect equality) and 1 (perfect inequality).
-    """
-
-    if not counts:
-        return 0.0
-    
-    # Sort counts in ascending order
-    sorted_counts = sorted(counts)
-    n = len(sorted_counts)
-    
-    # Calculate the Lorenz curve
-    index = list(range(1, n + 1))
-    return ((2 * sum(i * y for i, y in zip(index, sorted_counts))) / 
-            (n * sum(sorted_counts))) - ((n + 1) / n)
-
-def process_single_file(input_file: str, output_file: str, barcode_col: str, key_col: str,
-                       sep: str, row_limit: int, allowed_keys: Set[str], detailed: bool,
-                       downsample: float = None) -> Dict[str, Any]:
-    """Process a single CSV file and return summary statistics"""
-    # Get barcode counts per key
-    if row_limit:
-        print(f"Processing first {row_limit} rows of {input_file}", file=sys.stderr)
-    
-    if downsample is not None:
-        print(f"Downsampling with probability {downsample}", file=sys.stderr)
-    
-    barcodes_by_key = get_barcodes_per_key(
-        input_file, 
-        barcode_col, 
-        key_col, 
-        sep, 
-        row_limit,
-        allowed_keys,
-        downsample
-    )
+                umi.consume(barcode)
     
     # Calculate summary statistics
     total_keys = len(barcodes_by_key)
     total_barcodes = sum(len(barcodes) for barcodes in barcodes_by_key.values())
-    barcode_counts = [len(barcodes) for barcodes in barcodes_by_key.values()]
-    gini = gini_coefficient(barcode_counts)
+    gini = umi.gini_coefficient()
     
     stats = {
         'file_stats': {
@@ -157,6 +105,20 @@ def process_single_file(input_file: str, output_file: str, barcode_col: str, key
     write_counts(barcodes_by_key, output_file, sep, detailed)
     
     return stats
+
+def write_counts(barcodes_by_key: Dict[str, Set[str]], filepath: str, sep: str, detailed: bool = False):
+    """Write barcode counts per key to CSV file"""
+    with open(filepath, 'w', newline='') as f:
+        if detailed:
+            writer = csv.writer(f, delimiter=sep)
+            writer.writerow(['key', 'unique_barcodes', 'barcode_count'])
+            for key, barcodes in sorted(barcodes_by_key.items()):
+                writer.writerow([key, ','.join(sorted(barcodes)), len(barcodes)])
+        else:
+            writer = csv.writer(f, delimiter=sep)
+            writer.writerow(['key', 'barcode_count'])
+            for key, barcodes in sorted(barcodes_by_key.items()):
+                writer.writerow([key, len(barcodes)])
 
 def main():
     args = parse_args()

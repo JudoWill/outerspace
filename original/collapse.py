@@ -8,13 +8,13 @@ __license__ = "MIT"
 
 import argparse
 import csv
-from umi_tools import UMIClusterer
 from collections import Counter
 from typing import List, Dict, Any, Tuple
 import sys
 from tqdm import tqdm
 import os
 import glob
+from grna_extraction.umi import UMI
 
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments"""
@@ -33,18 +33,12 @@ def parse_columns(columns_str: str) -> List[str]:
     """Parse comma-separated column string into list of column names"""
     return [col.strip() for col in columns_str.split(",")]
 
-def read_csv_headers(filepath: str, sep: str) -> List[str]:
-    """Read CSV headers from file"""
-    with open(filepath, 'r') as f:
-        reader = csv.reader(f, delimiter=sep)
-        return next(reader)
-
-def get_barcode_counts(filepath: str, columns: List[str], sep: str, row_limit: int = None) -> Tuple[Dict[bytes, int], List[Dict[str, str]]]:
-    """Get counts of barcodes from specified columns and return all rows"""
-    counter = Counter()
+def process_single_file(input_file: str, output_file: str, columns: List[str], 
+                       mismatches: int, sep: str, row_limit: int, method: str) -> Dict[str, Any]:
+    """Process a single CSV file and return metrics"""
+    # Read all rows first
     rows = []
-    
-    with open(filepath, 'r') as f:
+    with open(input_file, 'r') as f:
         reader = csv.DictReader(f, delimiter=sep)
         headers = reader.fieldnames
         
@@ -56,42 +50,31 @@ def get_barcode_counts(filepath: str, columns: List[str], sep: str, row_limit: i
         for i, row in enumerate(tqdm(reader, desc="Reading rows")):
             if row_limit and i >= row_limit:
                 break
-                
             rows.append(row)
-            # Join multiple columns if specified
-            if len(columns) > 1:
-                combined_bc = "".join(str(row[col]) for col in columns)
-            else:
-                combined_bc = str(row[columns[0]])
-            
-            if combined_bc:  # Skip empty values
-                counter[bytes(combined_bc, 'ascii')] += 1
     
-    return counter, rows
-
-def make_clusters(counter_dict: Dict[bytes, int], mismatches: int = 3, method: str = "adjacency") -> Dict[bytes, bytes]:
-    """Create clusters of similar barcodes using UMI-tools
+    if row_limit:
+        print(f"Processing first {row_limit} rows of {input_file}", file=sys.stderr)
     
-    Args:
-        counter_dict: Dictionary of barcode counts
-        mismatches: Number of mismatches allowed
-        method: Clustering method to use (cluster, adjacency, or directional)
-    """
-    clusterer = UMIClusterer(cluster_method=method)
-    clusters = clusterer(counter_dict, mismatches)
+    # Create UMI object and process barcodes
+    umi = UMI(mismatches=mismatches, method=method)
     
-    cluster_dict = {}
-    for cluster in clusters:
-        key = cluster[0]
-        for item in cluster:
-            cluster_dict[item] = key
+    # Add barcodes to UMI object
+    for row in rows:
+        # Join multiple columns if specified
+        if len(columns) > 1:
+            combined_bc = "".join(str(row[col]) for col in columns)
+        else:
+            combined_bc = str(row[columns[0]])
+        if combined_bc:  # Skip empty values
+            umi.consume(combined_bc)
     
-    return cluster_dict
-
-def correct_barcodes(rows: List[Dict[str, str]], columns: List[str], cluster_mapping: Dict[bytes, bytes]) -> List[Dict[str, str]]:
-    """Correct barcodes in the rows using the cluster mapping"""
+    # Create mapping
+    print(f"Creating clusters from {len(umi._counts)} unique barcodes from {len(rows)} rows with {mismatches} mismatches using {method} method", file=sys.stderr)
+    umi.create_mapping()
+    
+    # Correct barcodes in rows
     corrected_rows = []
-    
+    key = "_".join(columns) + "_corrected"
     for row in tqdm(rows, desc="Correcting barcodes"):
         corrected_row = row.copy()
         
@@ -104,34 +87,31 @@ def correct_barcodes(rows: List[Dict[str, str]], columns: List[str], cluster_map
         # Create corrected column
         if combined_bc:
             try:
-                corrected = cluster_mapping[bytes(combined_bc, 'ascii')]
-                corrected_row["_".join(columns) + "_corrected"] = corrected.decode('ascii')
+                corrected = umi[combined_bc]
+                corrected_row[key] = corrected.decode('ascii')
             except KeyError:
-                corrected_row["_".join(columns) + "_corrected"] = combined_bc
+                corrected_row[key] = combined_bc
         else:
-            corrected_row["_".join(columns) + "_corrected"] = ""
+            corrected_row[key] = ""
         
         corrected_rows.append(corrected_row)
     
-    return corrected_rows
-
-def generate_metrics(
-    original_counts: Dict[bytes, int],
-    cluster_mapping: Dict[bytes, bytes],
-    corrected_counts: Dict[bytes, int]
-) -> Dict[str, Any]:
-    """Generate metrics from barcode correction results"""
+    # Generate metrics
     metrics = {
         'barcode_counts': {
-            'unique_barcodes_before': len(original_counts),
-            'unique_barcodes_after': len(corrected_counts),
-            'total_reads': sum(original_counts.values())
+            'unique_barcodes_before': len(umi._counts),
+            'unique_barcodes_after': len(umi.corrected_counts),
+            'total_reads': sum(umi._counts.values())
         },
         'correction_details': {
-            'clusters_formed': len(set(cluster_mapping.values())),
-            'barcodes_corrected': len(cluster_mapping) - len(corrected_counts)
+            'clusters_formed': len(set(umi._mapping.values())),
+            'barcodes_corrected': len(umi._mapping) - len(umi.corrected_counts)
         }
     }
+    
+    # Write output
+    write_csv(corrected_rows, output_file, sep)
+    
     return metrics
 
 def write_csv(rows: List[Dict[str, str]], filepath: str, sep: str):
@@ -143,36 +123,6 @@ def write_csv(rows: List[Dict[str, str]], filepath: str, sep: str):
         writer = csv.DictWriter(f, fieldnames=rows[0].keys(), delimiter=sep)
         writer.writeheader()
         writer.writerows(rows)
-
-def process_single_file(input_file: str, output_file: str, columns: List[str], 
-                       mismatches: int, sep: str, row_limit: int, method: str) -> Dict[str, Any]:
-    """Process a single CSV file and return metrics"""
-    # Get barcode counts and read all rows
-    barcode_counts, rows = get_barcode_counts(input_file, columns, sep, row_limit)
-    
-    if row_limit:
-        print(f"Processing first {row_limit} rows of {input_file}", file=sys.stderr)
-    
-    # Create clusters
-    print(f"Creating clusters from {len(barcode_counts)} unique barcodes from {len(rows)} rows with {mismatches} mismatches using {method} method", file=sys.stderr)
-    cluster_mapping = make_clusters(barcode_counts, mismatches, method)
-    
-    # Calculate corrected counts
-    corrected_counts = {}
-    for orig_bc, count in barcode_counts.items():
-        corrected = cluster_mapping[orig_bc]
-        corrected_counts[corrected] = corrected_counts.get(corrected, 0) + count
-    
-    # Correct barcodes in rows
-    corrected_rows = correct_barcodes(rows, columns, cluster_mapping)
-    
-    # Generate metrics
-    metrics = generate_metrics(barcode_counts, cluster_mapping, corrected_counts)
-    
-    # Write output
-    write_csv(corrected_rows, output_file, sep)
-    
-    return metrics
 
 def main():
     args = parse_args()
