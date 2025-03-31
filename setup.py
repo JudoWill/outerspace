@@ -30,7 +30,8 @@ REQUIRES = [
     'tomlkit',
     'tqdm',
     'Bio',
-    'regex'
+    'regex',
+    'umi_tools'
 ]
 
 #KEYWORDS = [
