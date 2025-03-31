@@ -14,6 +14,7 @@ import sys
 from tqdm import tqdm
 import os
 import glob
+import random
 
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments"""
@@ -26,6 +27,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--row-limit", type=int, help="Process only the first N rows (for testing)")
     parser.add_argument("--allowed-list", help="Text file containing allowed keys (one per line)")
     parser.add_argument("--detailed", action="store_true", help="Include barcode lists in output (default: False)")
+    parser.add_argument("--downsample", type=float, help="Randomly sample reads with probability between 0 and 1")
+    parser.add_argument("--random-seed", type=int, help="Random seed for downsampling")
     return parser.parse_args()
 
 def read_allowed_keys(filepath: str) -> Set[str]:
@@ -38,7 +41,9 @@ def read_allowed_keys(filepath: str) -> Set[str]:
                 allowed_keys.add(key)
     return allowed_keys
 
-def get_barcodes_per_key(filepath: str, barcode_col: str, key_col: str, sep: str, row_limit: int = None, allowed_keys: Set[str] = None) -> Dict[str, Set[str]]:
+def get_barcodes_per_key(filepath: str, barcode_col: str, key_col: str, sep: str, 
+                        row_limit: int = None, allowed_keys: Set[str] = None,
+                        downsample: float = None) -> Dict[str, Set[str]]:
     """Get unique barcodes for each key value"""
     barcodes_by_key = defaultdict(set)
     
@@ -54,6 +59,10 @@ def get_barcodes_per_key(filepath: str, barcode_col: str, key_col: str, sep: str
         for i, row in enumerate(tqdm(reader, desc="Reading rows")):
             if row_limit and i >= row_limit:
                 break
+                
+            # Apply downsampling if specified
+            if downsample is not None and random.random() > downsample:
+                continue
                 
             key = str(row[key_col])
             barcode = str(row[barcode_col])
@@ -82,11 +91,15 @@ def write_counts(barcodes_by_key: Dict[str, Set[str]], filepath: str, sep: str, 
                 writer.writerow([key, len(barcodes)])
 
 def process_single_file(input_file: str, output_file: str, barcode_col: str, key_col: str,
-                       sep: str, row_limit: int, allowed_keys: Set[str], detailed: bool) -> Dict[str, Any]:
+                       sep: str, row_limit: int, allowed_keys: Set[str], detailed: bool,
+                       downsample: float = None) -> Dict[str, Any]:
     """Process a single CSV file and return summary statistics"""
     # Get barcode counts per key
     if row_limit:
         print(f"Processing first {row_limit} rows of {input_file}", file=sys.stderr)
+    
+    if downsample is not None:
+        print(f"Downsampling with probability {downsample}", file=sys.stderr)
     
     barcodes_by_key = get_barcodes_per_key(
         input_file, 
@@ -94,7 +107,8 @@ def process_single_file(input_file: str, output_file: str, barcode_col: str, key
         key_col, 
         sep, 
         row_limit,
-        allowed_keys
+        allowed_keys,
+        downsample
     )
     
     # Calculate summary statistics
@@ -116,6 +130,14 @@ def main():
     args = parse_args()
     
     try:
+        # Validate downsampling parameter if provided
+        if args.downsample is not None:
+            if not 0 < args.downsample <= 1:
+                raise ValueError("Downsample probability must be between 0 and 1")
+            if args.random_seed is not None:
+                random.seed(args.random_seed)
+                print(f"Using random seed: {args.random_seed}", file=sys.stderr)
+        
         # Create output directory if it doesn't exist
         os.makedirs(args.output_dir, exist_ok=True)
         
@@ -142,7 +164,7 @@ def main():
                 stats = process_single_file(
                     input_file, output_file, args.barcode_column,
                     args.key_column, args.sep, args.row_limit,
-                    allowed_keys, args.detailed
+                    allowed_keys, args.detailed, args.downsample
                 )
                 
                 # Print statistics for this file
@@ -150,7 +172,7 @@ def main():
                 for category, values in stats.items():
                     print(f"\n{category}:", file=sys.stderr)
                     for key, value in values.items():
-                        print(f"  {key}: {value}", file=sys.stderr)
+                        print(f"  {key}: {value:.1f}" if isinstance(value, float) else f"  {key}: {value}", file=sys.stderr)
                 
             except Exception as e:
                 print(f"Error processing {input_file}: {e}", file=sys.stderr)
