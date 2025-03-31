@@ -11,3 +11,5 @@ __pycache__
 ?.txt
 tmp*
 /*.cfg
+*egg-info
+venv
