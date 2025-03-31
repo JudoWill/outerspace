@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Script to correct barcodes in a CSV file using UMI-tools clustering"""
+"""Script to correct barcodes in CSV files using UMI-tools clustering"""
 
 __author__ = "Will Dampier"
 __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
@@ -13,12 +13,14 @@ from collections import Counter
 from typing import List, Dict, Any, Tuple
 import sys
 from tqdm import tqdm
+import os
+import glob
 
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments"""
-    parser = argparse.ArgumentParser(description="Correct barcodes in a CSV file using UMI-tools clustering")
-    parser.add_argument("input", help="Input CSV file containing barcodes")
-    parser.add_argument("output", help="Output CSV file for corrected barcodes")
+    parser = argparse.ArgumentParser(description="Correct barcodes in CSV files using UMI-tools clustering")
+    parser.add_argument("input_dir", help="Input directory containing CSV files")
+    parser.add_argument("output_dir", help="Output directory for corrected CSV files")
     parser.add_argument("--columns", required=True, help="Column(s) containing barcodes to correct. Can be a single column or comma-separated list")
     parser.add_argument("--mismatches", type=int, default=2, help="Number of mismatches allowed for clustering")
     parser.add_argument("--sep", default=",", help="CSV separator (default: ',')")
@@ -142,43 +144,77 @@ def write_csv(rows: List[Dict[str, str]], filepath: str, sep: str):
         writer.writeheader()
         writer.writerows(rows)
 
+def process_single_file(input_file: str, output_file: str, columns: List[str], 
+                       mismatches: int, sep: str, row_limit: int, method: str) -> Dict[str, Any]:
+    """Process a single CSV file and return metrics"""
+    # Get barcode counts and read all rows
+    barcode_counts, rows = get_barcode_counts(input_file, columns, sep, row_limit)
+    
+    if row_limit:
+        print(f"Processing first {row_limit} rows of {input_file}", file=sys.stderr)
+    
+    # Create clusters
+    print(f"Creating clusters from {len(barcode_counts)} unique barcodes from {len(rows)} rows with {mismatches} mismatches using {method} method", file=sys.stderr)
+    cluster_mapping = make_clusters(barcode_counts, mismatches, method)
+    
+    # Calculate corrected counts
+    corrected_counts = {}
+    for orig_bc, count in barcode_counts.items():
+        corrected = cluster_mapping[orig_bc]
+        corrected_counts[corrected] = corrected_counts.get(corrected, 0) + count
+    
+    # Correct barcodes in rows
+    corrected_rows = correct_barcodes(rows, columns, cluster_mapping)
+    
+    # Generate metrics
+    metrics = generate_metrics(barcode_counts, cluster_mapping, corrected_counts)
+    
+    # Write output
+    write_csv(corrected_rows, output_file, sep)
+    
+    return metrics
+
 def main():
     args = parse_args()
     
     try:
+        # Create output directory if it doesn't exist
+        os.makedirs(args.output_dir, exist_ok=True)
+        
         # Parse columns argument
         columns = parse_columns(args.columns)
         
-        # Get barcode counts and read all rows
-        barcode_counts, rows = get_barcode_counts(args.input, columns, args.sep, args.row_limit)
+        # Get list of CSV files in input directory
+        input_files = glob.glob(os.path.join(args.input_dir, "*.csv"))
+        if not input_files:
+            print(f"No CSV files found in {args.input_dir}", file=sys.stderr)
+            sys.exit(1)
         
-        if args.row_limit:
-            print(f"Processing first {args.row_limit} rows", file=sys.stderr)
+        print(f"Found {len(input_files)} CSV files to process", file=sys.stderr)
         
-        # Create clusters
-        print(f"Creating clusters from {len(barcode_counts)} unique barcodes from {len(rows)} rows with {args.mismatches} mismatches using {args.method} method", file=sys.stderr)
-        cluster_mapping = make_clusters(barcode_counts, args.mismatches, args.method)
+        # Process each file
+        for input_file in tqdm(input_files, desc="Processing files"):
+            # Create output filename
+            output_file = os.path.join(args.output_dir, os.path.basename(input_file))
+            
+            try:
+                metrics = process_single_file(
+                    input_file, output_file, columns, args.mismatches,
+                    args.sep, args.row_limit, args.method
+                )
+                
+                # Print metrics for this file
+                print(f"\nMetrics for {os.path.basename(input_file)}:", file=sys.stderr)
+                for category, values in metrics.items():
+                    print(f"\n{category}:", file=sys.stderr)
+                    for key, value in values.items():
+                        print(f"  {key}: {value}", file=sys.stderr)
+                
+            except Exception as e:
+                print(f"Error processing {input_file}: {e}", file=sys.stderr)
+                continue
         
-        # Calculate corrected counts
-        corrected_counts = {}
-        for orig_bc, count in barcode_counts.items():
-            corrected = cluster_mapping[orig_bc]
-            corrected_counts[corrected] = corrected_counts.get(corrected, 0) + count
-        
-        # Correct barcodes in rows
-        corrected_rows = correct_barcodes(rows, columns, cluster_mapping)
-        
-        # Generate and print metrics
-        metrics = generate_metrics(barcode_counts, cluster_mapping, corrected_counts)
-        print("\nCorrection metrics:", file=sys.stderr)
-        for category, values in metrics.items():
-            print(f"\n{category}:", file=sys.stderr)
-            for key, value in values.items():
-                print(f"  {key}: {value}", file=sys.stderr)
-        
-        # Write output
-        write_csv(corrected_rows, args.output, args.sep)
-        print(f"\nCorrected data written to: {args.output}", file=sys.stderr)
+        print(f"\nProcessing complete. Corrected files written to: {args.output_dir}", file=sys.stderr)
         
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
