@@ -54,6 +54,9 @@ def process_single_file(input_file: str, output_file: str, barcode_col: str, key
     
     # Read rows and collect barcodes per key
     barcodes_by_key = defaultdict(set)
+    total_rows = 0
+    rows_with_allowed_key = 0
+    
     with open(input_file, 'r') as f:
         reader = csv.DictReader(f, delimiter=sep)
         headers = reader.fieldnames
@@ -71,16 +74,21 @@ def process_single_file(input_file: str, output_file: str, barcode_col: str, key
             if downsample is not None and random.random() > downsample:
                 continue
                 
+            total_rows += 1
             key = str(row[key_col])
             barcode = str(row[barcode_col])
             
             # Skip if key is not in allowed list
-            if allowed_keys and key not in allowed_keys:
-                continue
-                
-            if key and barcode:  # Skip empty values
-                barcodes_by_key[key].add(barcode)
-                umi.consume(barcode)
+            if allowed_keys:
+                if key in allowed_keys:
+                    rows_with_allowed_key += 1
+                    if key and barcode:  # Skip empty values
+                        barcodes_by_key[key].add(barcode)
+                        umi.consume(barcode)
+            else:
+                if key and barcode:  # Skip empty values
+                    barcodes_by_key[key].add(barcode)
+                    umi.consume(barcode)
     
     # Calculate summary statistics
     total_keys = len(barcodes_by_key)
@@ -98,6 +106,7 @@ def process_single_file(input_file: str, output_file: str, barcode_col: str, key
     
     stats = {
         'file_stats': {
+            'total_rows_scanned': total_rows,
             'total_keys': total_keys,
             'total_barcodes': total_barcodes,
             'average_barcodes_per_key': total_barcodes / total_keys if total_keys > 0 else 0,
@@ -106,8 +115,9 @@ def process_single_file(input_file: str, output_file: str, barcode_col: str, key
         }
     }
     
-    # Add missing barcode information if allowed_keys is provided
+    # Add allowed list statistics if allowed_keys is provided
     if allowed_keys:
+        stats['file_stats']['rows_with_allowed_key'] = rows_with_allowed_key
         missing_keys = allowed_keys - set(barcodes_by_key.keys())
         stats['missing_keys'] = {
             'total_missing': len(missing_keys),
