@@ -5,6 +5,14 @@ P2 := $(DIR_RB_READS)/409-4_S1_L001_R2_001.fastq.gz
 run:
 	bin/main.py $(P1) $(P2)
 
+test:
+	pytest
+
+venv:
+	# Create a new conda environment in the venv directory
+	conda create -p ./venv python=3.10 pytest
+	conda run -p ./venv pip install .
+
 files:
 	@ls $(P1)
 	@ls $(P2)
@@ -35,6 +43,7 @@ clean:
 clobber:
 	make clean
 	rm -rf outdir
+	rm -rf venv
 
 RB:
 	findseq rb.cfg -1 reads_sample/409-4_S1_L002_R1_001.fastq.gz -2 reads_sample/409-4_S1_L002_R2_001.fastq.gz -o 409-4_S1_L002_R1_R2_output.csv

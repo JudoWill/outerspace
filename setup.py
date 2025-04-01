@@ -29,7 +29,10 @@ CONSOLE_SCRIPTS = [
 REQUIRES = [
     'tomlkit',
     'tqdm',
-    'Bio'
+    'Bio',
+    'regex',
+    'umi_tools',
+    'pyyaml'
 ]
 
 #KEYWORDS = [
