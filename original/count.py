@@ -15,6 +15,8 @@ from tqdm import tqdm
 import os
 import glob
 import random
+import yaml
+from pathlib import Path
 from grna_extraction.umi import UMI
 
 def parse_args() -> argparse.Namespace:
@@ -30,6 +32,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--detailed", action="store_true", help="Include barcode lists in output (default: False)")
     parser.add_argument("--downsample", type=float, help="Randomly sample reads with probability between 0 and 1")
     parser.add_argument("--random-seed", type=int, help="Random seed for downsampling")
+    parser.add_argument("--metrics", help="Output YAML file for metrics")
     return parser.parse_args()
 
 def read_allowed_keys(filepath: str) -> Set[str]:
@@ -120,6 +123,11 @@ def write_counts(barcodes_by_key: Dict[str, Set[str]], filepath: str, sep: str, 
             for key, barcodes in sorted(barcodes_by_key.items()):
                 writer.writerow([key, len(barcodes)])
 
+def write_metrics(metrics: Dict[str, Any], filepath: str):
+    """Write metrics to YAML file"""
+    with open(filepath, 'w') as f:
+        yaml.dump(metrics, f, default_flow_style=False)
+
 def main():
     args = parse_args()
     
@@ -149,6 +157,9 @@ def main():
         
         print(f"Found {len(input_files)} CSV files to process", file=sys.stderr)
         
+        # Collect metrics for all files
+        all_metrics = {}
+        
         # Process each file
         for input_file in tqdm(input_files, desc="Processing files"):
             # Create output filename
@@ -160,6 +171,9 @@ def main():
                     args.key_column, args.sep, args.row_limit,
                     allowed_keys, args.detailed, args.downsample
                 )
+                
+                # Store metrics for this file
+                all_metrics[os.path.basename(input_file)] = stats
                 
                 # Print statistics for this file
                 print(f"\nStatistics for {os.path.basename(input_file)}:", file=sys.stderr)
@@ -180,6 +194,11 @@ def main():
             except Exception as e:
                 print(f"Error processing {input_file}: {e}", file=sys.stderr)
                 continue
+        
+        # Write metrics to YAML file if specified
+        if args.metrics:
+            write_metrics(all_metrics, args.metrics)
+            print(f"\nMetrics written to: {args.metrics}", file=sys.stderr)
         
         print(f"\nProcessing complete. Barcode counts written to: {args.output_dir}", file=sys.stderr)
         

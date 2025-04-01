@@ -31,7 +31,8 @@ REQUIRES = [
     'tqdm',
     'Bio',
     'regex',
-    'umi_tools'
+    'umi_tools',
+    'pyyaml'
 ]
 
 #KEYWORDS = [

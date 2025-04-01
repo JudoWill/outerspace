@@ -143,3 +143,76 @@ def test_invalid_input():
             UMI.from_csv(temp_file, column='barcode')
     finally:
         os.unlink(temp_file)
+
+
+def test_gini_perfect_equality():
+    """Test Gini coefficient calculation for perfectly equal distribution"""
+    umi = UMI(mismatches=0)
+    
+    # Add 10 UMIs with equal counts using sequences that won't merge
+    sequences = [
+        "AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG",
+        "ATATAT", "TATATA", "CGCGCG", "GCGCGC",
+        "ACACAC", "TGTGTG"
+    ]
+    
+    for seq in sequences:
+        umi.consume(seq)
+    
+    umi.create_mapping()
+    
+    # Gini coefficient should be 0 for perfect equality
+    assert abs(umi.gini_coefficient()) < 0.0001
+
+
+def test_gini_perfect_inequality():
+    """Test Gini coefficient calculation for perfectly unequal distribution"""
+    umi = UMI(mismatches=0)
+    
+    # Add 10 UMIs with highly unequal distribution
+    # One UMI has 100 counts, others have 1
+    sequences = [
+        "AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG",
+        "ATATAT", "TATATA", "CGCGCG", "GCGCGC",
+        "ACACAC", "TGTGTG"
+    ]
+    
+    # Add 100 counts of the first sequence
+    for _ in range(100):
+        umi.consume(sequences[0])
+    
+    # Add 1 count of each other sequence
+    for seq in sequences[1:]:
+        umi.consume(seq)
+    
+    umi.create_mapping()
+    
+    # Gini coefficient should be close to 1 for perfect inequality
+    assert 0.8 < umi.gini_coefficient() < 1.0
+
+
+def test_gini_moderate_inequality():
+    """Test Gini coefficient calculation for moderately unequal distribution"""
+    umi = UMI(mismatches=0)
+    
+    # Add 10 UMIs with moderate inequality
+    # Distribution: 1, 2, 3, 4, 5, 5, 4, 3, 2, 1
+    sequences = [
+        "AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG",
+        "ATATAT", "TATATA", "CGCGCG", "GCGCGC",
+        "ACACAC", "TGTGTG"
+    ]
+    counts = [1, 2, 3, 4, 5, 5, 4, 3, 2, 1]
+    
+    for seq, count in zip(sequences, counts):
+        for _ in range(count):
+            umi.consume(seq)
+    
+    umi.create_mapping()
+    
+    # Gini coefficient should be between 0 and 1
+    gini = umi.gini_coefficient()
+    assert 0 <= gini < 1
+    
+    # For this specific distribution, Gini should be around 0.2-0.3
+    assert 0.2 < gini < 0.3
