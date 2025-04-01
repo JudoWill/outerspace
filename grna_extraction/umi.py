@@ -40,6 +40,12 @@ class UMI:
         if not self._counts:
             return
             
+        # If no mismatches allowed, each barcode maps to itself
+        if self.mismatches == 0:
+            self._mapping = {bc: bc for bc in self._counts.keys()}
+            self._corrected_counts = self._counts.copy()
+            return
+            
         # Create clusters
         clusters = self.clusterer(self._counts, self.mismatches)
         
@@ -49,6 +55,12 @@ class UMI:
             key = cluster[0]  # Use first barcode in cluster as representative
             for item in cluster:
                 self._mapping[item] = key
+        
+        # Update corrected counts
+        self._corrected_counts = {}
+        for orig_bc, count in self._counts.items():
+            corrected = self._mapping.get(orig_bc, orig_bc)
+            self._corrected_counts[corrected] = self._corrected_counts.get(corrected, 0) + count
     
     def __getitem__(self, umi: Union[str, bytes]) -> bytes:
         """Get corrected UMI for a given UMI
@@ -81,36 +93,58 @@ class UMI:
     def corrected_counts(self) -> Dict[bytes, int]:
         """Get counts of corrected barcodes"""
         if self._corrected_counts is None:
-            self._corrected_counts = {}
-            for orig_bc, count in self._counts.items():
-                corrected = self._mapping.get(orig_bc, orig_bc)
-                self._corrected_counts[corrected] = self._corrected_counts.get(corrected, 0) + count
+            # If no mapping exists, use original counts
+            if not self._mapping:
+                self._corrected_counts = self._counts.copy()
+            else:
+                # Create corrected counts from mapping
+                self._corrected_counts = {}
+                for orig_bc, count in self._counts.items():
+                    corrected = self._mapping.get(orig_bc, orig_bc)
+                    self._corrected_counts[corrected] = self._corrected_counts.get(corrected, 0) + count
         return self._corrected_counts
     
-    def gini_coefficient(self, use_corrected: bool = True) -> float:
+    def gini_coefficient(self, use_corrected: bool = True, allowed_list: Optional[List[str]] = None) -> Optional[float]:
         """Calculate the Gini coefficient for the UMI counts.
         
         The Gini coefficient measures the inequality of distribution.
         Returns a value between 0 (perfect equality) and 1 (perfect inequality).
+        Returns None if there are no counts or all keys are missing.
         
         Args:
             use_corrected: If True, use corrected counts. If False, use original counts.
+            allowed_list: Optional list of allowed keys. If provided, missing keys will be
+                         treated as having zero counts in the calculation.
             
         Returns:
-            Gini coefficient
+            Gini coefficient or None if no data available
         """
         counts = self.corrected_counts if use_corrected else self._counts
-        if not counts:
-            return 0.0
+        
+        if allowed_list:
+            # Create a dictionary with all allowed keys, using 0 for missing ones
+            # Convert string keys to bytes for lookup
+            all_counts = {key.encode('ascii'): counts.get(key.encode('ascii'), 0) for key in allowed_list}
+        else:
+            all_counts = counts
+            
+        if not all_counts:
+            return None
         
         # Sort counts in ascending order
-        sorted_counts = sorted(counts.values())
+        sorted_counts = sorted(all_counts.values())
         n = len(sorted_counts)
+        
+        # If all counts are zero, return None (no data to measure inequality)
+        total = sum(sorted_counts)
+        if total == 0:
+            return None
+            
         
         # Calculate the Lorenz curve
         index = list(range(1, n + 1))
         return ((2 * sum(i * y for i, y in zip(index, sorted_counts))) / 
-                (n * sum(sorted_counts))) - ((n + 1) / n)
+                (n * total)) - ((n + 1) / n)
     
     @classmethod
     def from_csv(cls, filepath: Union[str, Path], column: str, 

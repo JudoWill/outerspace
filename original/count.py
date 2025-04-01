@@ -50,7 +50,7 @@ def process_single_file(input_file: str, output_file: str, barcode_col: str, key
                        downsample: float = None) -> Dict[str, Any]:
     """Process a single CSV file and return summary statistics"""
     # Create UMI object for this file
-    umi = UMI()
+    umi = UMI(mismatches=0)
     
     # Read rows and collect barcodes per key
     barcodes_by_key = defaultdict(set)
@@ -85,14 +85,24 @@ def process_single_file(input_file: str, output_file: str, barcode_col: str, key
     # Calculate summary statistics
     total_keys = len(barcodes_by_key)
     total_barcodes = sum(len(barcodes) for barcodes in barcodes_by_key.values())
-    gini = umi.gini_coefficient()
+    
+    # Calculate Gini coefficient for barcodes (using UMI class)
+    barcode_gini = umi.gini_coefficient()
+    
+    # Calculate Gini coefficient for keys using a new UMI instance
+    key_umi = UMI(mismatches=0)  # No mismatches since keys are already corrected
+    for key, barcodes in barcodes_by_key.items():
+        key_umi.consume(key)
+    key_umi.create_mapping()
+    key_gini = key_umi.gini_coefficient(allowed_list=list(allowed_keys) if allowed_keys else None)
     
     stats = {
         'file_stats': {
             'total_keys': total_keys,
             'total_barcodes': total_barcodes,
             'average_barcodes_per_key': total_barcodes / total_keys if total_keys > 0 else 0,
-            'gini_coefficient': gini
+            'barcode_gini_coefficient': barcode_gini,
+            'key_gini_coefficient': key_gini
         }
     }
     
@@ -165,35 +175,31 @@ def main():
             # Create output filename
             output_file = os.path.join(args.output_dir, os.path.basename(input_file))
             
-            try:
-                stats = process_single_file(
-                    input_file, output_file, args.barcode_column,
-                    args.key_column, args.sep, args.row_limit,
-                    allowed_keys, args.detailed, args.downsample
-                )
-                
-                # Store metrics for this file
-                all_metrics[os.path.basename(input_file)] = stats
-                
-                # Print statistics for this file
-                print(f"\nStatistics for {os.path.basename(input_file)}:", file=sys.stderr)
-                for category, values in stats.items():
-                    print(f"\n{category}:", file=sys.stderr)
-                    if category == 'missing_keys':
-                        print(f"  Total missing keys: {values['total_missing']}", file=sys.stderr)
-                        if values['total_missing'] > 0 and args.detailed:
-                            print("  Missing keys:", file=sys.stderr)
-                            for key in values['missing_keys_list'][:10]:  # Show first 10 missing keys
-                                print(f"    {key}", file=sys.stderr)
-                            if len(values['missing_keys_list']) > 10:
-                                print(f"    ... and {len(values['missing_keys_list']) - 10} more", file=sys.stderr)
-                    else:
-                        for key, value in values.items():
-                            print(f"  {key}: {value:.3f}" if isinstance(value, float) else f"  {key}: {value}", file=sys.stderr)
-                
-            except Exception as e:
-                print(f"Error processing {input_file}: {e}", file=sys.stderr)
-                continue
+            # Process file and raise any errors
+            stats = process_single_file(
+                input_file, output_file, args.barcode_column,
+                args.key_column, args.sep, args.row_limit,
+                allowed_keys, args.detailed, args.downsample
+            )
+            
+            # Store metrics for this file
+            all_metrics[os.path.basename(input_file)] = stats
+            
+            # Print statistics for this file
+            print(f"\nStatistics for {os.path.basename(input_file)}:", file=sys.stderr)
+            for category, values in stats.items():
+                print(f"\n{category}:", file=sys.stderr)
+                if category == 'missing_keys':
+                    print(f"  Total missing keys: {values['total_missing']}", file=sys.stderr)
+                    if values['total_missing'] > 0 and args.detailed:
+                        print("  Missing keys:", file=sys.stderr)
+                        for key in values['missing_keys_list'][:10]:  # Show first 10 missing keys
+                            print(f"    {key}", file=sys.stderr)
+                        if len(values['missing_keys_list']) > 10:
+                            print(f"    ... and {len(values['missing_keys_list']) - 10} more", file=sys.stderr)
+                else:
+                    for key, value in values.items():
+                        print(f"  {key}: {value:.3f}" if isinstance(value, float) else f"  {key}: {value}", file=sys.stderr)
         
         # Write metrics to YAML file if specified
         if args.metrics:
