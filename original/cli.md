@@ -161,7 +161,7 @@ def main():
 
 ```bash
 # Extract sequences
-outerspace find config.yaml -1 read1.fastq -2 read2.fastq -o output.csv
+outerspace find config.toml -1 read1.fastq -2 read2.fastq -o output.csv
 
 # Correct barcodes
 outerspace collapse input_dir output_dir --columns barcode --mismatches 2
