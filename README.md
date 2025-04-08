@@ -1,4 +1,5 @@
 # gRNA EXTRACTION PROJECT  
+* [Documentation](docs/README.md)
 * [definitions](doc/definitions.md)
 * [snapgene dna fragment file](doc/indexed_lib_grna_query_umi.dna)
     - open in snapgene
