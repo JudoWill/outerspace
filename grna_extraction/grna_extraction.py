@@ -25,7 +25,7 @@ class TopLevel:
     def __init__(self, file_pathname_cfg):
 
         # Output path and out file name, Setting a variable to what will be the name
-        assert exists(file_pathname_cfg)
+        assert exists(file_pathname_cfg), file_pathname_cfg
 
         # Creating configuration object
         # Reads configuration files and loads that info into dictionary and delivers that back to you
@@ -46,7 +46,7 @@ class TopLevel:
     def run(self, filename_csv, file_pathname_fastq1, file_pathname_fastq2, do_break=False):
         """Parse reads, find user-given patterns, save sequence matches to csv."""
         # TODO: Make this nicer - used as a communication tool
-        assert exists(file_pathname_fastq1)
+        assert exists(file_pathname_fastq1), file_pathname_fastq1
 
         # We are writing out to the csv file, and we are using both reads
         # Setting output and giving files that contain fastq giving it to reader so that it iterates through them one by one

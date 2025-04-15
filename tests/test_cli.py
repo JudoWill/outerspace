@@ -28,8 +28,9 @@ def test_cfg():
     filenamecfg = get_filename("tests/configs/grnaquery.cfg")
     args = [
         filenamecfg,
-        '-1', get_filename("reads_sample/409-4_S1_L002_R1_001.fastq.gz"),
-        '-2', get_filename("reads_sample/409-4_S1_L002_R2_001.fastq.gz"),
+        '-1', get_filename("tests/data/409-4_S1_L002_R1_001.fastq.gz"),
+        '-2', get_filename("tests/data/409-4_S1_L002_R2_001.fastq.gz"),
+        # TODO: consider putting output to tests in a working directory that will be deleted
         '-o', get_filename("409-4_S1_L002_R1_R2_output.csv")
     ]
     cli = Cli(args)
