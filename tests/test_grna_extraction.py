@@ -25,8 +25,8 @@ def test_grna_extraction():
     # Input path
     # fq1 = "/data/share/nonn-lab/rachel-test-crispr/reads/409-4_S1_L001_R1_001.fastq.gz"
     # fq2 = "/data/share/nonn-lab/rachel-test-crispr/reads/409-4_S1_L001_R2_001.fastq.gz"
-    fq1 = get_filename("reads_sample/409-4_S1_L002_R1_001.fastq.gz")
-    fq2 = get_filename("reads_sample/409-4_S1_L002_R2_001.fastq.gz")
+    fq1 = get_filename("tests/data/409-4_S1_L002_R1_001.fastq.gz")
+    fq2 = get_filename("tests/data/409-4_S1_L002_R2_001.fastq.gz")
     assert exists(fq1)
     assert exists(fq2)
     cfg_filename = get_filename("tests/configs/grnaquery.cfg")
