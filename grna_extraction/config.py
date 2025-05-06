@@ -111,7 +111,7 @@ class Cfg:
 
         doc['regxlist1'].add_line('(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}'
                                  '(?P<protospacer>.{19,21})'
-                                 '(?P<protospacer2>GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}')
+                                 '(?P<downstreamof_protospacer>GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}')
 
     @staticmethod
     def _addregxlist2(doc):

@@ -23,8 +23,10 @@ def test_read_fastq():
     # Setting a variable to what will be the name
     fcsv = join(mk_outdir('outdir'), 'out.csv')
     # Input path
-    fq1 = "/data/share/nonn-lab/rachel-test-crispr/reads/409-4_S1_L001_R1_001.fastq.gz"
-    fq2 = "/data/share/nonn-lab/rachel-test-crispr/reads/409-4_S1_L001_R2_001.fastq.gz"
+    # fq1 = "/data/share/nonn-lab/rachel-test-crispr/reads/409-4_S1_L001_R1_001.fastq.gz"
+    # fq2 = "/data/share/nonn-lab/rachel-test-crispr/reads/409-4_S1_L001_R2_001.fastq.gz"
+    fq1 = "tests/data/409-4_S1_L002_R1_001.fastq.gz"
+    fq2 = "tests/data/409-4_S1_L002_R2_001.fastq.gz"
     cfg_filename = get_filename("tests/configs/grnaquery.cfg")
     assert exists(cfg_filename)
 
@@ -34,13 +36,14 @@ def test_read_fastq():
     doc = cfg.read_file()
     print(doc)
 
-    #
+    # Searching...
     search = TopSearch(doc)
+    
 
     assert search.srch.regxlist == []
     assert search.srch1.regxlist == [
         '(?P<UMI_5prime>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}',
-        '(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?P<protospacer2>GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}'
+        '(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?P<downstreamof_protospacer>GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}'
         ]
     assert search.srch2.regxlist ==  ['(?P<UMI_3prime>.{8})(?:TTCCACACCCTAACTGACACAC){s<=4}']
 
