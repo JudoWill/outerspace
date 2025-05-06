@@ -20,12 +20,13 @@ def test_search():
     doc = cfg.get_doc_default()
     regxlist = doc['regxlist1']
     search = Search(regxlist)
-    names = search.capture_names()
+    names = search.capturednames
     assert regxlist
-    # print(f'CAPTURED REGXLIST CONSISTS OF: {regxlist}')
+    print(f'CAPTURED REGXLIST CONSISTS OF: {regxlist}')
     assert names, f'EXPECTED NAMES, GOT: {names}'
-    assert names == [['UMI'], ['protospacer', 'protospacer2']], names
-    print(f' NTO {search.nto._fields}')
+    assert names == [['UMI'], ['protospacer', 'downstreamof_protospacer']], names
+    print(f' NAMES: {search.names}')
+   
     print("TEST PASSED")
     
 

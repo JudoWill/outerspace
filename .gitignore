@@ -13,3 +13,4 @@ tmp*
 /*.cfg
 *egg-info
 venv
+.coverage

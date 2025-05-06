@@ -47,3 +47,11 @@ clobber:
 
 RB:
 	findseq rb.cfg -1 reads_sample/409-4_S1_L002_R1_001.fastq.gz -2 reads_sample/409-4_S1_L002_R2_001.fastq.gz -o 409-4_S1_L002_R1_R2_output.csv
+    
+# Running coverage on pytest test scripts
+# Do this first- then report below
+coverage:
+	coverage run -m pytest tests/test_*.py
+
+report: 
+	coverage report -m
