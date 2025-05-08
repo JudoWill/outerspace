@@ -16,9 +16,9 @@ from grna_extraction.grna_extraction import TopLevel
 from grna_extraction.strcmp import get_readpair_files
 from grna_extraction.strcmp import get_readpairs
 
-def main():
+def main(args=None):
     """Main runs outerspace- run from setup.py console scripts """
-    cli=Cli()
+    cli=Cli(args)
     cli.run()
 
 class Cli:
@@ -127,6 +127,7 @@ class Cli:
             for name in not_exists:
                 print(f'DOES NOT EXIST: {name}')
             print(f'EXITING: {len(not_exists)} FASTQ FILE/DIR NOT EXIST')
+            #TODO:consider if want sys_exit(0); report to log file
             sys_exit(1)
 
     def _init_top(self):

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """testing cli"""
+from sys import argv
 from os.path import exists
 from logging import debug
 from logging import DEBUG
@@ -7,6 +8,7 @@ from logging import basicConfig
 # basicConfig (level = DEBUG)
 from pytest import raises
 from grna_extraction.cli import Cli
+from grna_extraction.cli import main
 from tests.pkgtest.utils import get_filename
 
 # cdef test_cli_empty():
@@ -42,6 +44,15 @@ def test_cfg():
     # did the filename get transferred into the object
     assert filenamecfg == cli.top.cfg.filename
     
+def test_main():
+    """testing main"""
+    print(f'ARGV: {argv}')
+    with raises(SystemExit) as excinfo:
+        main(args=[])
+        assert excinfo.value.code == 0 
+
+
 if __name__ == '__main__':
     #test_cli()
-    test_cfg()
+    #test_cfg()  # TODO: Uncomment this after test
+    test_main()
