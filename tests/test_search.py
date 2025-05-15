@@ -4,8 +4,8 @@
 __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
 __author__ = "??"
 
-from grna_extraction.config import Cfg
-from grna_extraction.search import Search
+from outerspace.config import Cfg
+from outerspace.search import Search
 print(f'TTTTTTTT test_search({__name__})')
 
 

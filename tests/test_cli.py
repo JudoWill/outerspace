@@ -7,8 +7,8 @@ from logging import DEBUG
 from logging import basicConfig
 # basicConfig (level = DEBUG)
 from pytest import raises
-from grna_extraction.cli import Cli
-from grna_extraction.cli import main
+from outerspace.cli import Cli
+from outerspace.cli import main
 from tests.pkgtest.utils import get_filename
 
 # cdef test_cli_empty():

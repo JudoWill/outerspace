@@ -8,9 +8,9 @@ __author__ = "??"
 from os import remove
 from os.path import exists
 from os.path import join
-from grna_extraction.config import Cfg
-from grna_extraction.top_search import TopSearch
-from grna_extraction.read_fastq import ReadPairedFastq
+from outerspace.config import Cfg
+from outerspace.top_search import TopSearch
+from outerspace.read_fastq import ReadPairedFastq
 from tests.pkgtest.utils import mk_outdir
 from tests.pkgtest.utils import get_filename
 print(f'TTTTTTTT test_search({__name__})')

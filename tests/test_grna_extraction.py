@@ -8,14 +8,14 @@ __author__ = "??"
 from os import remove
 from os.path import exists
 from os.path import join
-from grna_extraction.grna_extraction import TopLevel
-from grna_extraction.read_fastq import ReadPairedFastq
+from outerspace.outerspace import TopLevel
+from outerspace.read_fastq import ReadPairedFastq
 from tests.pkgtest.utils import mk_outdir
 from tests.pkgtest.utils import get_filename
 print(f'TTTTTTTT test_search({__name__})')
 
 #Testing the file that runs all the modules
-def test_grna_extraction():
+def test_outerspace():
     """testing config"""
     # TODO: replace with test data
     # Output path and out file name
@@ -66,7 +66,7 @@ def test_grna_extraction():
 
 
 if __name__ == '__main__':
-    test_grna_extraction()
+    test_outerspace()
 
 
 # Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.

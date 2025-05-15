@@ -5,7 +5,7 @@ from os.path import exists
 from os.path import join  
 from os.path import dirname
 from os.path import normpath
-from grna_extraction.config import Cfg
+from outerspace.config import Cfg
 print(f'TTTTTTTT test_config({__name__})')
 
 def get_filename(fname):

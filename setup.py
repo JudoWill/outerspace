@@ -10,7 +10,7 @@ from os.path import dirname
 from setuptools import setup
 
 PACKAGES = [
-    'grna_extraction'
+    'outerspace'
 ]
 
 PACKAGE_DIRS = {p:join(*p.split('.')) for p in PACKAGES}
@@ -23,7 +23,7 @@ def get_long_description():
 
 # These are executables on left and module name:function name
 CONSOLE_SCRIPTS = [
-    'findseq=grna_extraction.cli:main'
+    'findseq=outerspace.cli:main'
 ]
 
 REQUIRES = [
