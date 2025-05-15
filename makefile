@@ -18,16 +18,16 @@ files:
 	@ls $(P2)
 
 py:
-	find original tests grna_extraction bin -name '*.py' -type f | grep -v checkpoint
+	find original tests outerspace bin -name '*.py' -type f | grep -v checkpoint
 
 md:
 	find . -type f -name '*.md'
 
 vim:
-	vim -p grna_extraction/extraction_attempt.py bin/main.py
+	vim -p outerspace/extraction_attempt.py bin/main.py
 
 run_script:
-	cd grna_extraction; python extraction_attempt.py
+	cd outerspace; python extraction_attempt.py
 
 reads:
 	find $(DIR_RB_READS)/reads
@@ -36,7 +36,7 @@ hello:
 	ls -l $(DIR_RB_READS)
 
 clean:
-	rm -f grna_extraction/.ipynb_checkpoints/extraction_attempt-checkpoint.py
+	rm -f outerspace/.ipynb_checkpoints/extraction_attempt-checkpoint.py
 	rm -f testing.cfg
 	rm -rf outerspace.egg-info
 
