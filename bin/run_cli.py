@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """running cli"""
-from grna_extraction.cli import get_args
+from outerspace.cli import get_args
 
 def main():
     """running cli"""

@@ -17,7 +17,7 @@ import glob
 import random
 import yaml
 from pathlib import Path
-from grna_extraction.umi import UMI
+from outerspace.umi import UMI
 
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments"""

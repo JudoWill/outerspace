@@ -12,7 +12,7 @@ from os.path import exists
 from argparse import ArgumentParser
 
 from Bio.Seq import reverse_complement
-from grna_extraction.cli import get_args   ###RB
+from outerspace.cli import get_args   ###RB
 
 
 import regex

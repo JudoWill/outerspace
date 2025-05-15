@@ -3,7 +3,7 @@
 __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
 __author__ = "SC Barrera"
 
-from grna_extraction.search import Search
+from outerspace.search import Search
 
 
 # creating class that manages/holds search objects

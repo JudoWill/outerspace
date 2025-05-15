@@ -1,7 +1,7 @@
 """Tests for UMI clustering and correction"""
 
 import pytest
-from grna_extraction.umi import UMI
+from outerspace.umi import UMI
 from pathlib import Path
 import tempfile
 import csv

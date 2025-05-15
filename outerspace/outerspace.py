@@ -5,9 +5,9 @@ __author__ = "SC Barrera"
 
 
 from os.path import exists
-from grna_extraction.config import Cfg
-from grna_extraction.top_search import TopSearch
-from grna_extraction.read_fastq import ReadPairedFastq
+from outerspace.config import Cfg
+from outerspace.top_search import TopSearch
+from outerspace.read_fastq import ReadPairedFastq
 
 
 # This function runs through all package modules to parse the reads, compiles patterns using regx, finds requested patterns within sequences, then writes to a csv file

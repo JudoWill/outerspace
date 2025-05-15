@@ -14,7 +14,7 @@ import sys
 from tqdm import tqdm
 import os
 import glob
-from grna_extraction.umi import UMI
+from outerspace.umi import UMI
 
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments"""

@@ -9,7 +9,7 @@ __license__ = "MIT"
 import argparse
 import csv
 import sys
-from grna_extraction.umi import UMI
+from outerspace.umi import UMI
 from pathlib import Path
 
 

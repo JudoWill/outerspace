@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """testing config"""
 
-from grna_extraction.config import Cfg
+from outerspace.config import Cfg
 from tests.pkgtest.utils import get_filename
 print(f'TTTTTTTT test_config({__name__})')
 
@@ -19,14 +19,14 @@ def test_config():
 
     return
     # TODO: Adjust tests below
-    # Asserting variable is equal to what is defined in grna_extraction/config.py
+    # Asserting variable is equal to what is defined in outerspace/config.py
     assert cfg.get_umi_pattern_forward() == (
         '(?P<UMI>.{8})'
         '(?:CTTGGCTTTATATATCTTGTGG)'
         '{s<=4}')
     print(cfg.get_umi_pattern_forward())
 
-    # Asserting variable is equal to what is defined in grna_extraction/config.py
+    # Asserting variable is equal to what is defined in outerspace/config.py
     assert cfg.get_protospacer_forward() == (
         '(?:TATCTTGTGGAAAGGACGAAACACC)'
         '{s<=4}'
@@ -35,7 +35,7 @@ def test_config():
         '{s<=4}')
     print(cfg.get_protospacer_forward())
 
-    #Asserting variable is equal to what is defined in grna_extraction/config.py
+    #Asserting variable is equal to what is defined in outerspace/config.py
     exp_pat = 'gtgtgtcagttagggtgtggaa'
     assert cfg.get_umi_pattern_forward_downstream_nt() == exp_pat,(
             f'\nACTUAL: {cfg.get_umi_pattern_forward_downstream_nt()}\n'
@@ -43,7 +43,7 @@ def test_config():
             
     print(cfg.get_umi_pattern_forward_downstream_nt())
 
-    #Asserting variable is equal to what is defined in grna_extraction/config.py
+    #Asserting variable is equal to what is defined in outerspace/config.py
     
 
         

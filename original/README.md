@@ -34,7 +34,7 @@ The project has evolved through several key stages:
 
 ## UMI Class
 
-The `UMI` class (in `grna_extraction/umi.py`) provides core functionality for UMI handling:
+The `UMI` class (in `outerspace/umi.py`) provides core functionality for UMI handling:
 
 ### Key Features
 - UMI clustering with configurable mismatch tolerance
@@ -307,4 +307,3 @@ This test verifies the Gini coefficient calculation with allowed lists, which is
 4. It verifies proper handling of edge cases with all missing keys
 
 These tests ensure the reliability of the UMI clustering and Gini coefficient calculations, which are critical for accurate barcode analysis and distribution measurements.
-

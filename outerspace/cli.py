@@ -12,9 +12,9 @@ from os.path import join
 from argparse import ArgumentParser
 from timeit import default_timer
 from datetime import timedelta
-from grna_extraction.grna_extraction import TopLevel
-from grna_extraction.strcmp import get_readpair_files
-from grna_extraction.strcmp import get_readpairs
+from outerspace.outerspace import TopLevel
+from outerspace.strcmp import get_readpair_files
+from outerspace.strcmp import get_readpairs
 
 def main(args=None):
     """Main runs outerspace- run from setup.py console scripts """
@@ -94,7 +94,7 @@ class Cli:
     def _init_parser():
         """cli for entering the reads"""
         parser = ArgumentParser(
-                        prog='grna_extraction',
+                        prog='outerspace',
                         description='Get protospacers and UMIs',
                         epilog='Created by ThreeBlindMice - See how they run code')
         parser.add_argument('config_filename', nargs='?',

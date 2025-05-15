@@ -5,11 +5,11 @@ __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reser
 __author__ = "DV Klopfenstein, PhD"
 
 from itertools import permutations
-from grna_extraction.strcmp import is_readpair
-from grna_extraction.strcmp import get_readpairs
-from grna_extraction.strcmp import get_outputfname
-from grna_extraction.strcmp import get_readpair_files
-from grna_extraction.strcmp import FastqSort
+from outerspace.strcmp import is_readpair
+from outerspace.strcmp import get_readpairs
+from outerspace.strcmp import get_outputfname
+from outerspace.strcmp import get_readpair_files
+from outerspace.strcmp import FastqSort
 
 SEP = f"\n{'-'*80}\n"
 
