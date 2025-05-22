@@ -20,9 +20,15 @@ class CollapseCommand(BaseCommand):
         """Initialize command-specific argument parser"""
         parser = subparsers.add_parser('collapse',
             help='Correct barcodes in CSV files using UMI-tools clustering')
-        parser.add_argument('input_dir',
-            help='Input directory containing CSV files')
-        parser.add_argument('output_dir',
+        input_group = parser.add_mutually_exclusive_group(required=True)
+        input_group.add_argument('--input-file',
+            help='Input CSV file to process')
+        input_group.add_argument('--input-dir',
+            help='Input directory containing CSV files to process')
+        output_group = parser.add_mutually_exclusive_group(required=True)
+        output_group.add_argument('--output-file',
+            help='Output CSV file for corrected barcodes')
+        output_group.add_argument('--output-dir',
             help='Output directory for corrected CSV files')
         parser.add_argument('--columns', required=True,
             help='Column(s) containing barcodes to correct. Can be a single column or comma-separated list')
@@ -136,18 +142,55 @@ class CollapseCommand(BaseCommand):
     def run(self):
         """Run the collapse command"""
         # Validate required arguments
-        if not self.args.input_dir:
-            raise ValueError("Please provide an input directory")
-        if not self.args.output_dir:
-            raise ValueError("Please provide an output directory")
         if not self.args.columns:
             raise ValueError("Please provide columns to correct")
 
-        # Create output directory if it doesn't exist
-        os.makedirs(self.args.output_dir, exist_ok=True)
-        
         # Parse columns argument
         columns = self._parse_columns(self.args.columns)
+        
+        # Validate input/output arguments
+        if not self.args.input_file and not self.args.input_dir:
+            raise ValueError("Please provide either --input-file or --input-dir")
+        if not self.args.output_file and not self.args.output_dir:
+            raise ValueError("Please provide either --output-file or --output-dir")
+        
+        # Handle single file case
+        if self.args.input_file:
+            if not self.args.output_file:
+                raise ValueError("Please provide an output file when using --input-file")
+            if not os.path.exists(self.args.input_file):
+                raise ValueError(f"Input file not found: {self.args.input_file}")
+            
+            # Create output directory if needed
+            os.makedirs(os.path.dirname(self.args.output_file), exist_ok=True)
+            
+            try:
+                metrics = self._process_single_file(
+                    self.args.input_file, self.args.output_file, columns,
+                    self.args.mismatches, self.args.sep, self.args.row_limit,
+                    self.args.method
+                )
+                
+                # Print metrics
+                print(f"\nMetrics for {os.path.basename(self.args.input_file)}:", file=sys.stderr)
+                for category, values in metrics.items():
+                    print(f"\n{category}:", file=sys.stderr)
+                    for key, value in values.items():
+                        print(f"  {key}: {value}", file=sys.stderr)
+                
+            except Exception as e:
+                print(f"Error processing {self.args.input_file}: {e}", file=sys.stderr)
+                raise e
+            
+            print(f"\nProcessing complete. Corrected file written to: {self.args.output_file}", file=sys.stderr)
+            return
+        
+        # Handle directory case
+        if not os.path.exists(self.args.input_dir):
+            raise ValueError(f"Input directory not found: {self.args.input_dir}")
+        
+        # Create output directory if it doesn't exist
+        os.makedirs(self.args.output_dir, exist_ok=True)
         
         # Get list of CSV files in input directory
         input_files = glob.glob(os.path.join(self.args.input_dir, "*.csv"))

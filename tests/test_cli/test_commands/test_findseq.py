@@ -7,98 +7,81 @@ import pytest
 import os
 import tempfile
 import csv
-from argparse import Namespace
-from outerspace.cli.commands.findseq import FindSeqCommand
+from outerspace.cli.main import Cli 
 
 def test_findseq_initialization():
     """Test that findseq command initializes correctly"""
-    args = Namespace(
-        command='findseq',
-        config_filename='test_config.toml',
-        read1_filename='test_r1.fastq',
-        read2_filename='test_r2.fastq',
-        output_filename='test_output.csv',
-        fastqfiles=None,
-        outdir=None
-    )
-    cmd = FindSeqCommand(args)
-    assert cmd.args == args
+    args = [
+        'findseq',
+        'test_config.toml',
+        '-1', 'test_r1.fastq',
+        '-2', 'test_r2.fastq',
+        '-o', 'test_output.csv'
+    ]
+    cli = Cli(args)
+    assert cli.args.config_filename == 'test_config.toml'
+    assert cli.args.read1_filename == 'test_r1.fastq'
+    assert cli.args.read2_filename == 'test_r2.fastq'
+    assert cli.args.output_filename == 'test_output.csv'
 
-def test_findseq_missing_config(capsys):
+def test_findseq_missing_config():
     """Test that findseq command handles missing config file"""
-    args = Namespace(
-        command='findseq',
-        config_filename=None,
-        read1_filename='test_r1.fastq',
-        read2_filename='test_r2.fastq',
-        output_filename='test_output.csv',
-        fastqfiles=None,
-        outdir=None
-    )
-    cmd = FindSeqCommand(args)
+    args = [
+        'findseq',
+        '-1', 'test_r1.fastq',
+        '-2', 'test_r2.fastq',
+        '-o', 'test_output.csv'
+    ]
+    cli = Cli(args)
     with pytest.raises(ValueError):
-        cmd.run()
+        cli.run()
 
-def test_findseq_missing_reads(capsys):
+def test_findseq_missing_reads():
     """Test that findseq command handles missing read files"""
-    args = Namespace(
-        command='findseq',
-        config_filename='test_config.toml',
-        read1_filename=None,
-        read2_filename=None,
-        output_filename=None,
-        fastqfiles=None,
-        outdir=None
-    )
-    cmd = FindSeqCommand(args)  
+    args = [
+        'findseq',
+        'test_config.toml',
+        '-o', 'test_output.csv'
+    ]
+    cli = Cli(args)
     with pytest.raises(ValueError):
-        cmd.run()
+        cli.run()
 
 def test_findseq_single_read_not_implemented():
     """Test that single read processing is not implemented"""
-    args = Namespace(
-        command='findseq',
-        config_filename='test_config.toml',
-        read1_filename='test_r1.fastq',
-        read2_filename=None,
-        output_filename='test_output.csv',
-        fastqfiles=None,
-        outdir=None
-    )
-    cmd = FindSeqCommand(args)
+    args = [
+        'findseq',
+        'test_config.toml',
+        '-1', 'test_r1.fastq',
+        '-o', 'test_output.csv'
+    ]
+    cli = Cli(args)
     with pytest.raises(NotImplementedError):
-        cmd.run()
+        cli.run()
 
-def test_findseq_no_reads(capsys):
+def test_findseq_no_reads():
     """Test that findseq command handles no reads case"""
-    args = Namespace(
-        command='findseq',
-        config_filename='test_config.toml',
-        read1_filename=None,
-        read2_filename=None,
-        output_filename='test_output.csv',
-        fastqfiles=None,
-        outdir=None
-    )
-    cmd = FindSeqCommand(args)
+    args = [
+        'findseq',
+        'test_config.toml',
+        '-o', 'test_output.csv'
+    ]
+    cli = Cli(args)
     with pytest.raises(ValueError):
-        cmd.run()
+        cli.run()
 
 def test_findseq_with_example_data():
     """Test findseq command with real example data"""
-    
     with tempfile.TemporaryDirectory() as temp_dir:
-        args = Namespace(
-            command='findseq',
-            config_filename='tests/configs/grnaquery.cfg',
-            read1_filename='tests/data/409-4_S1_L002_R1_001.fastq.gz',
-            read2_filename='tests/data/409-4_S1_L002_R2_001.fastq.gz',
-            output_filename=os.path.join(temp_dir, 'shuffle.csv'),
-            fastqfiles=None,
-            outdir=None
-        )
-        cmd = FindSeqCommand(args)
-        cmd.run()
+        args = [
+            'findseq',
+            'tests/configs/grnaquery.cfg',
+            '-1', 'tests/data/409-4_S1_L002_R1_001.fastq.gz',
+            '-2', 'tests/data/409-4_S1_L002_R2_001.fastq.gz',
+            '-o', os.path.join(temp_dir, 'shuffle.csv')
+        ]
+        cli = Cli(args)
+        cli.run()
     
         # Verify output file exists and has content
         assert os.path.exists(os.path.join(temp_dir, 'shuffle.csv'))

@@ -6,166 +6,167 @@ __author__ = "WND"
 import pytest
 import os
 import tempfile
-from argparse import Namespace
-from outerspace.cli.commands.count import CountCommand
+from outerspace.cli.main import Cli
 
 def test_count_initialization():
     """Test that count command initializes correctly"""
-    args = Namespace(
-        command='count',
-        input_dir='test_input',
-        output_dir='test_output',
-        barcode_column='umi3_umi5_corrected',
-        key_column='protospacer',
-        sep=',',
-        row_limit=None,
-        allowed_list=None,
-        detailed=False,
-        downsample=None,
-        random_seed=None,
-        metrics=None
-    )
-    cmd = CountCommand(args)
-    assert cmd.args == args
+    args = [
+        'count',
+        '--input-dir', 'test_input',
+        '--output-dir', 'test_output',
+        '--barcode-column', 'umi3_umi5_corrected',
+        '--key-column', 'protospacer'
+    ]
+    cli = Cli(args)
+    assert cli.args.input_dir == 'test_input'
+    assert cli.args.output_dir == 'test_output'
+    assert cli.args.barcode_column == 'umi3_umi5_corrected'
+    assert cli.args.key_column == 'protospacer'
+    assert cli.args.sep == ','
+    assert cli.args.detailed is False
 
-def test_count_missing_input_dir():
-    """Test that count command handles missing input directory"""
-    args = Namespace(
-        command='count',
-        input_dir=None,
-        output_dir='test_output',
-        barcode_column='umi3_umi5_corrected',
-        key_column='protospacer',
-        sep=',',
-        row_limit=None,
-        allowed_list=None,
-        detailed=False,
-        downsample=None,
-        random_seed=None,
-        metrics=None
-    )
-    cmd = CountCommand(args)
-    with pytest.raises(ValueError):
-        cmd.run()
+def test_count_missing_input():
+    """Test that count command handles missing input"""
+    args = [
+        'count',
+        '--output-dir', 'test_output',
+        '--barcode-column', 'umi3_umi5_corrected',
+        '--key-column', 'protospacer'
+    ]
+    with pytest.raises(SystemExit) as excinfo:
+        cli = Cli(args)
+    assert excinfo.value.code == 2
 
-def test_count_missing_output_dir():
-    """Test that count command handles missing output directory"""
-    args = Namespace(
-        command='count',
-        input_dir='test_input',
-        output_dir=None,
-        barcode_column='umi3_umi5_corrected',
-        key_column='protospacer',
-        sep=',',
-        row_limit=None,
-        allowed_list=None,
-        detailed=False,
-        downsample=None,
-        random_seed=None,
-        metrics=None
-    )
-    cmd = CountCommand(args)
-    with pytest.raises(ValueError):
-        cmd.run()
+def test_count_missing_output():
+    """Test that count command handles missing output"""
+    args = [
+        'count',
+        '--input-dir', 'test_input',
+        '--barcode-column', 'umi3_umi5_corrected',
+        '--key-column', 'protospacer'
+    ]
+    with pytest.raises(SystemExit) as excinfo:
+        cli = Cli(args)
+    assert excinfo.value.code == 2
 
 def test_count_missing_barcode_column():
     """Test that count command handles missing barcode column"""
-    args = Namespace(
-        command='count',
-        input_dir='test_input',
-        output_dir='test_output',
-        barcode_column=None,
-        key_column='protospacer',
-        sep=',',
-        row_limit=None,
-        allowed_list=None,
-        detailed=False,
-        downsample=None,
-        random_seed=None,
-        metrics=None
-    )
-    cmd = CountCommand(args)
-    with pytest.raises(ValueError):
-        cmd.run()
+    args = [
+        'count',
+        '--input-dir', 'test_input',
+        '--output-dir', 'test_output',
+        '--key-column', 'protospacer'
+    ]
+    with pytest.raises(SystemExit) as excinfo:
+        cli = Cli(args)
+    assert excinfo.value.code == 2
 
 def test_count_missing_key_column():
     """Test that count command handles missing key column"""
-    args = Namespace(
-        command='count',
-        input_dir='test_input',
-        output_dir='test_output',
-        barcode_column='umi3_umi5_corrected',
-        key_column=None,
-        sep=',',
-        row_limit=None,
-        allowed_list=None,
-        detailed=False,
-        downsample=None,
-        random_seed=None,
-        metrics=None
-    )
-    cmd = CountCommand(args)
-    with pytest.raises(ValueError):
-        cmd.run()
+    args = [
+        'count',
+        '--input-dir', 'test_input',
+        '--output-dir', 'test_output',
+        '--barcode-column', 'umi3_umi5_corrected'
+    ]
+    with pytest.raises(SystemExit) as excinfo:
+        cli = Cli(args)
+    assert excinfo.value.code == 2
 
 def test_count_invalid_downsample():
     """Test that count command handles invalid downsample value"""
-    args = Namespace(
-        command='count',
-        input_dir='test_input',
-        output_dir='test_output',
-        barcode_column='umi3_umi5_corrected',
-        key_column='protospacer',
-        sep=',',
-        row_limit=None,
-        allowed_list=None,
-        detailed=False,
-        downsample=-1,
-        random_seed=None,
-        metrics=None
-    )
-    cmd = CountCommand(args)
+    args = [
+        'count',
+        '--input-dir', 'test_input',
+        '--output-dir', 'test_output',
+        '--barcode-column', 'umi3_umi5_corrected',
+        '--key-column', 'protospacer',
+        '--downsample', '-1'
+    ]
+    cli = Cli(args)
     with pytest.raises(ValueError):
-        cmd.run()
+        cli.run()
 
 def test_count_nonexistent_input_dir():
     """Test that count command handles nonexistent input directory"""
-    args = Namespace(
-        command='count',
-        input_dir='nonexistent_dir',
-        output_dir='test_output',
-        barcode_column='umi3_umi5_corrected',
-        key_column='protospacer',
-        sep=',',
-        row_limit=None,
-        allowed_list=None,
-        detailed=False,
-        downsample=None,
-        random_seed=None,
-        metrics=None
-    )
-    cmd = CountCommand(args)
+    args = [
+        'count',
+        '--input-dir', 'nonexistent_dir',
+        '--output-dir', 'test_output',
+        '--barcode-column', 'umi3_umi5_corrected',
+        '--key-column', 'protospacer'
+    ]
+    cli = Cli(args)
     with pytest.raises(ValueError):
-        cmd.run()
+        cli.run()
 
 def test_count_empty_input_dir():
     """Test that count command handles empty input directory"""
     with tempfile.TemporaryDirectory() as temp_dir:
-        args = Namespace(
-            command='count',
-            input_dir=temp_dir,
-            output_dir='test_output',
-            barcode_column='umi3_umi5_corrected',
-            key_column='protospacer',
-            sep=',',
-            row_limit=None,
-            allowed_list=None,
-            detailed=False,
-            downsample=None,
-            random_seed=None,
-            metrics=None
-        )
-        cmd = CountCommand(args)
+        args = [
+            'count',
+            '--input-dir', temp_dir,
+            '--output-dir', 'test_output',
+            '--barcode-column', 'umi3_umi5_corrected',
+            '--key-column', 'protospacer'
+        ]
+        cli = Cli(args)
         with pytest.raises(ValueError):
-            cmd.run()
+            cli.run()
+
+def test_count_single_file_missing_output_file():
+    """Test that count command handles missing output file for single file mode"""
+    args = [
+        'count',
+        '--input-file', 'test_input.csv',
+        '--barcode-column', 'umi3_umi5_corrected',
+        '--key-column', 'protospacer'
+    ]
+    with pytest.raises(SystemExit) as excinfo:
+        cli = Cli(args)
+    assert excinfo.value.code == 2
+
+def test_count_single_file_nonexistent_input():
+    """Test that count command handles nonexistent input file in single file mode"""
+    args = [
+        'count',
+        '--input-file', 'nonexistent.csv',
+        '--output-file', 'test_output.csv',
+        '--barcode-column', 'umi3_umi5_corrected',
+        '--key-column', 'protospacer'
+    ]
+    cli = Cli(args)
+    with pytest.raises(ValueError):
+        cli.run()
+
+def test_count_single_file_basic():
+    """Test basic single file counting functionality"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create test input file
+        input_file = os.path.join(temp_dir, 'test.csv')
+        with open(input_file, 'w') as f:
+            f.write('protospacer,umi3_umi5_corrected\n')
+            f.write('key1,bar1\n')
+            f.write('key1,bar2\n')
+            f.write('key2,bar3\n')
+        
+        # Create output file path
+        output_file = os.path.join(temp_dir, 'output.csv')
+        
+        args = [
+            'count',
+            '--input-file', input_file,
+            '--output-file', output_file,
+            '--barcode-column', 'umi3_umi5_corrected',
+            '--key-column', 'protospacer'
+        ]
+        cli = Cli(args)
+        cli.run()
+        
+        # Verify output file exists and has correct content
+        assert os.path.exists(output_file)
+        with open(output_file, 'r') as f:
+            content = f.read()
+            assert 'key1,2' in content
+            assert 'key2,1' in content
 

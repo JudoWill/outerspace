@@ -22,9 +22,15 @@ class CountCommand(BaseCommand):
         """Initialize command-specific argument parser"""
         parser = subparsers.add_parser('count',
             help='Count unique barcodes per key value in CSV files')
-        parser.add_argument('input_dir',
-            help='Input directory containing CSV files')
-        parser.add_argument('output_dir',
+        input_group = parser.add_mutually_exclusive_group(required=True)
+        input_group.add_argument('--input-file',
+            help='Input CSV file to process')
+        input_group.add_argument('--input-dir',
+            help='Input directory containing CSV files to process')
+        output_group = parser.add_mutually_exclusive_group(required=True)
+        output_group.add_argument('--output-file',
+            help='Output CSV file for barcode counts')
+        output_group.add_argument('--output-dir',
             help='Output directory for barcode counts')
         parser.add_argument('--barcode-column', required=True,
             help='Column containing barcodes')
@@ -164,14 +170,16 @@ class CountCommand(BaseCommand):
     def run(self):
         """Run the count command"""
         # Validate required arguments
-        if not self.args.input_dir:
-            raise ValueError("Please provide an input directory")
-        if not self.args.output_dir:
-            raise ValueError("Please provide an output directory")
         if not self.args.barcode_column:
             raise ValueError("Please provide a barcode column")
         if not self.args.key_column:
             raise ValueError("Please provide a key column")
+
+        # Validate input/output arguments
+        if not self.args.input_file and not self.args.input_dir:
+            raise ValueError("Please provide either --input-file or --input-dir")
+        if not self.args.output_file and not self.args.output_dir:
+            raise ValueError("Please provide either --output-file or --output-dir")
 
         # Validate downsampling parameter if provided
         if self.args.downsample is not None:
@@ -181,14 +189,62 @@ class CountCommand(BaseCommand):
                 random.seed(self.args.random_seed)
                 print(f"Using random seed: {self.args.random_seed}", file=sys.stderr)
         
-        # Create output directory if it doesn't exist
-        os.makedirs(self.args.output_dir, exist_ok=True)
-        
         # Read allowed keys if specified
         allowed_keys = None
         if self.args.allowed_list:
             allowed_keys = self._read_allowed_keys(self.args.allowed_list)
             print(f"Loaded {len(allowed_keys)} allowed keys from {self.args.allowed_list}", file=sys.stderr)
+        
+        # Handle single file case
+        if self.args.input_file:
+            if not os.path.exists(self.args.input_file):
+                raise ValueError(f"Input file not found: {self.args.input_file}")
+            
+            # Create output directory if needed
+            os.makedirs(os.path.dirname(self.args.output_file), exist_ok=True)
+            
+            try:
+                stats = self._process_single_file(
+                    self.args.input_file, self.args.output_file,
+                    self.args.barcode_column, self.args.key_column,
+                    self.args.sep, self.args.row_limit, allowed_keys,
+                    self.args.detailed, self.args.downsample
+                )
+                
+                # Print statistics
+                print(f"\nStatistics for {os.path.basename(self.args.input_file)}:", file=sys.stderr)
+                for category, values in stats.items():
+                    print(f"\n{category}:", file=sys.stderr)
+                    if category == 'missing_keys':
+                        print(f"  Total missing keys: {values['total_missing']}", file=sys.stderr)
+                        if values['total_missing'] > 0 and self.args.detailed:
+                            print("  Missing keys:", file=sys.stderr)
+                            for key in values['missing_keys_list'][:10]:  # Show first 10 missing keys
+                                print(f"    {key}", file=sys.stderr)
+                            if len(values['missing_keys_list']) > 10:
+                                print(f"    ... and {len(values['missing_keys_list']) - 10} more", file=sys.stderr)
+                    else:
+                        for key, value in values.items():
+                            print(f"  {key}: {value:.3f}" if isinstance(value, float) else f"  {key}: {value}", file=sys.stderr)
+                
+                # Write metrics to YAML file if specified
+                if self.args.metrics:
+                    self._write_metrics({os.path.basename(self.args.input_file): stats}, self.args.metrics)
+                    print(f"\nMetrics written to: {self.args.metrics}", file=sys.stderr)
+                
+            except Exception as e:
+                print(f"Error processing {self.args.input_file}: {e}", file=sys.stderr)
+                raise e
+            
+            print(f"\nProcessing complete. Barcode counts written to: {self.args.output_file}", file=sys.stderr)
+            return
+        
+        # Handle directory case
+        if not os.path.exists(self.args.input_dir):
+            raise ValueError(f"Input directory not found: {self.args.input_dir}")
+        
+        # Create output directory if it doesn't exist
+        os.makedirs(self.args.output_dir, exist_ok=True)
         
         # Get list of CSV files in input directory
         input_files = glob.glob(os.path.join(self.args.input_dir, "*.csv"))
@@ -205,31 +261,36 @@ class CountCommand(BaseCommand):
             # Create output filename
             output_file = os.path.join(self.args.output_dir, os.path.basename(input_file))
             
-            # Process file and raise any errors
-            stats = self._process_single_file(
-                input_file, output_file, self.args.barcode_column,
-                self.args.key_column, self.args.sep, self.args.row_limit,
-                allowed_keys, self.args.detailed, self.args.downsample
-            )
-            
-            # Store metrics for this file
-            all_metrics[os.path.basename(input_file)] = stats
-            
-            # Print statistics for this file
-            print(f"\nStatistics for {os.path.basename(input_file)}:", file=sys.stderr)
-            for category, values in stats.items():
-                print(f"\n{category}:", file=sys.stderr)
-                if category == 'missing_keys':
-                    print(f"  Total missing keys: {values['total_missing']}", file=sys.stderr)
-                    if values['total_missing'] > 0 and self.args.detailed:
-                        print("  Missing keys:", file=sys.stderr)
-                        for key in values['missing_keys_list'][:10]:  # Show first 10 missing keys
-                            print(f"    {key}", file=sys.stderr)
-                        if len(values['missing_keys_list']) > 10:
-                            print(f"    ... and {len(values['missing_keys_list']) - 10} more", file=sys.stderr)
-                else:
-                    for key, value in values.items():
-                        print(f"  {key}: {value:.3f}" if isinstance(value, float) else f"  {key}: {value}", file=sys.stderr)
+            try:
+                stats = self._process_single_file(
+                    input_file, output_file, self.args.barcode_column,
+                    self.args.key_column, self.args.sep, self.args.row_limit,
+                    allowed_keys, self.args.detailed, self.args.downsample
+                )
+                
+                # Store metrics for this file
+                all_metrics[os.path.basename(input_file)] = stats
+                
+                # Print statistics for this file
+                print(f"\nStatistics for {os.path.basename(input_file)}:", file=sys.stderr)
+                for category, values in stats.items():
+                    print(f"\n{category}:", file=sys.stderr)
+                    if category == 'missing_keys':
+                        print(f"  Total missing keys: {values['total_missing']}", file=sys.stderr)
+                        if values['total_missing'] > 0 and self.args.detailed:
+                            print("  Missing keys:", file=sys.stderr)
+                            for key in values['missing_keys_list'][:10]:  # Show first 10 missing keys
+                                print(f"    {key}", file=sys.stderr)
+                            if len(values['missing_keys_list']) > 10:
+                                print(f"    ... and {len(values['missing_keys_list']) - 10} more", file=sys.stderr)
+                    else:
+                        for key, value in values.items():
+                            print(f"  {key}: {value:.3f}" if isinstance(value, float) else f"  {key}: {value}", file=sys.stderr)
+                
+            except Exception as e:
+                print(f"Error processing {input_file}: {e}", file=sys.stderr)
+                raise e
+                continue
         
         # Write metrics to YAML file if specified
         if self.args.metrics:

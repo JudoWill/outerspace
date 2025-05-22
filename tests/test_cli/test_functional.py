@@ -8,10 +8,7 @@ import pytest
 import tempfile
 import shutil
 from pathlib import Path
-from argparse import Namespace
-from outerspace.cli.commands.findseq import FindSeqCommand
-from outerspace.cli.commands.collapse import CollapseCommand
-from outerspace.cli.commands.count import CountCommand
+from outerspace.cli.main import Cli
 
 @pytest.fixture
 def temp_workspace():
@@ -55,123 +52,102 @@ def temp_workspace():
 def test_full_workflow(temp_workspace):
     """Test the full workflow from example.sh"""
     # Step 1: Run findseq commands for each sample
-    
     pairs = [('reads/409-4_S1_L002_R1_001.fastq.gz', 'reads/409-4_S1_L002_R2_001.fastq.gz', 'shuffle'),
              ('reads/2-G1L9-M1_S9_L001_R1_001.fastq.gz', 'reads/2-G1L9-M1_S9_L001_R2_001.fastq.gz', 'M1-lib'),
              ('reads/2-G1L9-M2_S12_L001_R1_001.fastq.gz', 'reads/2-G1L9-M2_S12_L001_R2_001.fastq.gz', 'M2-lib')]
-    
+
     for read1, read2, output_name in pairs:
-        findseq_args = Namespace(
-            command='findseq',
-            config_filename=os.path.join(temp_workspace, 'grnaquery.cfg'),
-            read1_filename=os.path.join(temp_workspace, read1),
-            read2_filename=os.path.join(temp_workspace, read2),
-            output_filename=os.path.join(temp_workspace, f'results/extracted/{output_name}.csv')
-        )
-        findseq_cmd = FindSeqCommand(findseq_args)
-        findseq_cmd.run()
-        
+        findseq_args = [
+            'findseq',
+            os.path.join(temp_workspace, 'grnaquery.cfg'),
+            '-1', os.path.join(temp_workspace, read1),
+            '-2', os.path.join(temp_workspace, read2),
+            '-o', os.path.join(temp_workspace, f'results/extracted/{output_name}.csv')
+        ]
+        cli = Cli(findseq_args)
+        cli.run()
+
         # Verify findseq output
-        assert os.path.exists(findseq_args.output_filename)
-    
+        assert os.path.exists(os.path.join(temp_workspace, f'results/extracted/{output_name}.csv'))
+
     # Step 2: Run collapse command
-    
-    collapse_args = Namespace(
-                command='collapse',
-                input_dir=os.path.join(temp_workspace, 'results/extracted'),
-                output_dir=os.path.join(temp_workspace, 'results/collapsed'),
-                columns='UMI_5prime,UMI_3prime',
-                mismatches=2,
-                row_limit=None,
-                method='directional',
-                sep=','
-    )
-    collapse_cmd = CollapseCommand(collapse_args)
-    collapse_cmd.run()
-    
+    collapse_args = [
+        'collapse',
+        '--input-dir', os.path.join(temp_workspace, 'results/extracted'),
+        '--output-dir', os.path.join(temp_workspace, 'results/collapsed'),
+        '--columns', 'UMI_5prime,UMI_3prime',
+        '--mismatches', '2',
+        '--method', 'directional'
+    ]
+    cli = Cli(collapse_args)
+    cli.run()
+
     # Verify collapse output
-    collapsed_files = os.listdir(collapse_args.output_dir)
-    assert len(collapsed_files) > 0
-    
+    for output_name in ['shuffle', 'M1-lib', 'M2-lib']:
+        assert os.path.exists(os.path.join(temp_workspace, f'results/collapsed/{output_name}.csv'))
+
     # Step 3: Run count command
-    count_args = Namespace(
-        command='count',
-        input_dir=os.path.join(temp_workspace, 'results/collapsed'),
-        output_dir=os.path.join(temp_workspace, 'results/counted'),
-        barcode_column='UMI_5prime_UMI_3prime_corrected',
-        key_column='protospacer',
-        metrics=os.path.join(temp_workspace, 'results/counted/counts.yaml'),
-        allowed_list=None,
-        row_limit=None,
-        downsample=None,
-        detailed=False,
-        sep=','
-    )
-    count_cmd = CountCommand(count_args)
-    count_cmd.run()
-    
+    count_args = [
+        'count',
+        '--input-dir', os.path.join(temp_workspace, 'results/collapsed'),
+        '--output-dir', os.path.join(temp_workspace, 'results/counted'),
+        '--barcode-column', 'UMI_5prime_UMI_3prime_corrected',
+        '--key-column', 'protospacer'
+    ]
+    cli = Cli(count_args)
+    cli.run()
+
     # Verify count output
-    assert os.path.exists(count_args.metrics)
-    counted_files = os.listdir(count_args.output_dir)
-    assert len(counted_files) > 0
+    for output_name in ['shuffle', 'M1-lib', 'M2-lib']:
+        assert os.path.exists(os.path.join(temp_workspace, f'results/counted/{output_name}.csv'))
 
 def test_workflow_with_allowed_list(temp_workspace):
     """Test the workflow with an allowed list for counting"""
     # Create allowed list file
     allowed_list_path = os.path.join(temp_workspace, 'library_protospacers.txt')
-    
-    
+
     # Run the workflow steps
     # Step 1: findseq (same as before)
     pairs = [('reads/409-4_S1_L002_R1_001.fastq.gz', 'reads/409-4_S1_L002_R2_001.fastq.gz', 'shuffle'),
              ('reads/2-G1L9-M1_S9_L001_R1_001.fastq.gz', 'reads/2-G1L9-M1_S9_L001_R2_001.fastq.gz', 'M1-lib'),
              ('reads/2-G1L9-M2_S12_L001_R1_001.fastq.gz', 'reads/2-G1L9-M2_S12_L001_R2_001.fastq.gz', 'M2-lib')]
-    
+
     for read1, read2, output_name in pairs:
-        findseq_args = Namespace(
-            command='findseq',
-            config_filename=os.path.join(temp_workspace, 'grnaquery.cfg'),
-            read1_filename=os.path.join(temp_workspace, read1),
-            read2_filename=os.path.join(temp_workspace, read2),
-            output_filename=os.path.join(temp_workspace, f'results/extracted/{output_name}.csv')
-        )
-        findseq_cmd = FindSeqCommand(findseq_args)
-        findseq_cmd.run()
-    
+        findseq_args = [
+            'findseq',
+            os.path.join(temp_workspace, 'grnaquery.cfg'),
+            '-1', os.path.join(temp_workspace, read1),
+            '-2', os.path.join(temp_workspace, read2),
+            '-o', os.path.join(temp_workspace, f'results/extracted/{output_name}.csv')
+        ]
+        cli = Cli(findseq_args)
+        cli.run()
+
     # Step 2: collapse (same as before)
-    collapse_args = Namespace(
-                command='collapse',
-                input_dir=os.path.join(temp_workspace, 'results/extracted'),
-                output_dir=os.path.join(temp_workspace, 'results/collapsed'),
-                columns='UMI_5prime,UMI_3prime',
-                mismatches=2,
-                row_limit=None,
-                method='directional',
-                sep=','
-    )
-    collapse_cmd = CollapseCommand(collapse_args)
-    collapse_cmd.run()
-    
+    collapse_args = [
+        'collapse',
+        '--input-dir', os.path.join(temp_workspace, 'results/extracted'),
+        '--output-dir', os.path.join(temp_workspace, 'results/collapsed'),
+        '--columns', 'UMI_5prime,UMI_3prime',
+        '--mismatches', '2',
+        '--method', 'directional'
+    ]
+    cli = Cli(collapse_args)
+    cli.run()
+
     # Step 3: count with allowed list
-    count_args = Namespace(
-        command='count',
-        input_dir=os.path.join(temp_workspace, 'results/collapsed'),
-        output_dir=os.path.join(temp_workspace, 'results/counted'),
-        barcode_column='UMI_5prime_UMI_3prime_corrected',
-        key_column='protospacer',
-        metrics=os.path.join(temp_workspace, 'results/counted/counts.yaml'),
-        allowed_list=allowed_list_path,
-        row_limit=None,
-        downsample=None,
-        detailed=False,
-        sep=','
-    )
-    
-    count_cmd = CountCommand(count_args)
-    count_cmd.run()
-    
-    # Verify count output with allowed list
-    assert os.path.exists(count_args.metrics)
-    counted_files = os.listdir(count_args.output_dir)
-    assert len(counted_files) > 0
+    count_args = [
+        'count',
+        '--input-dir', os.path.join(temp_workspace, 'results/collapsed'),
+        '--output-dir', os.path.join(temp_workspace, 'results/counted'),
+        '--barcode-column', 'UMI_5prime_UMI_3prime_corrected',
+        '--key-column', 'protospacer',
+        '--allowed-list', allowed_list_path
+    ]
+    cli = Cli(count_args)
+    cli.run()
+
+    # Verify count output
+    for output_name in ['shuffle', 'M1-lib', 'M2-lib']:
+        assert os.path.exists(os.path.join(temp_workspace, f'results/counted/{output_name}.csv'))
 

@@ -21,7 +21,6 @@ class Cli:
             self.args = args
         else:
             self.args = self.parser.parse_args(args)
-        self._prt_args()
         self.command = self._init_command()
 
     def _init_parser(self):

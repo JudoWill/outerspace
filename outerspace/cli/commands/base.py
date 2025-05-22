@@ -10,7 +10,6 @@ class BaseCommand:
     """Base class for all commands"""
     def __init__(self, args=None):
         self.args = args
-        self._prt_args()
 
     def _init_parser(self, subparsers):
         """Initialize command-specific argument parser"""
@@ -20,15 +19,6 @@ class BaseCommand:
         """Execute the command"""
         raise NotImplementedError("Each command must implement run")
 
-    def _prt_args(self):
-        """Print command arguments"""
-        if self.args is None:
-            return
-        txt = []
-        for key, val in vars(self.args).items():
-            if val is not None:  # Only print non-None arguments
-                txt.append(f'{key}={val}')
-        print(f'ARGS: {", ".join(txt)}')
 
     def _chk_exists(self, filenames):
         """Check that files exist"""
