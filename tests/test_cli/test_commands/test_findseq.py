@@ -4,6 +4,9 @@ __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reser
 __author__ = "WND"
 
 import pytest
+import os
+import tempfile
+import csv
 from argparse import Namespace
 from outerspace.cli.commands.findseq import FindSeqCommand
 
@@ -80,3 +83,30 @@ def test_findseq_no_reads(capsys):
     cmd = FindSeqCommand(args)
     with pytest.raises(ValueError):
         cmd.run()
+
+def test_findseq_with_example_data():
+    """Test findseq command with real example data"""
+    
+    with tempfile.TemporaryDirectory() as temp_dir:
+        args = Namespace(
+            command='findseq',
+            config_filename='tests/configs/grnaquery.cfg',
+            read1_filename='tests/data/409-4_S1_L002_R1_001.fastq.gz',
+            read2_filename='tests/data/409-4_S1_L002_R2_001.fastq.gz',
+            output_filename=os.path.join(temp_dir, 'shuffle.csv'),
+            fastqfiles=None,
+            outdir=None
+        )
+        cmd = FindSeqCommand(args)
+        cmd.run()
+    
+        # Verify output file exists and has content
+        assert os.path.exists(os.path.join(temp_dir, 'shuffle.csv'))
+        
+        with open(os.path.join(temp_dir, 'shuffle.csv'), 'r') as f:
+            reader = csv.reader(f)
+            header = next(reader)
+            assert header == ['read_id', 'UMI_5prime', 'protospacer', 'downstreamof_protospacer', 'UMI_3prime']
+            assert len(list(reader)) == 442
+        
+        
