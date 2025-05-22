@@ -42,6 +42,8 @@ class CollapseCommand(BaseCommand):
         parser.add_argument('--method', choices=['cluster', 'adjacency', 'directional'],
             default='directional',
             help='Clustering method to use (default: directional)')
+        parser.add_argument('--metrics',
+            help='Output YAML file for metrics')
         return parser
 
     def _parse_columns(self, columns_str: str) -> List[str]:
@@ -139,6 +141,12 @@ class CollapseCommand(BaseCommand):
             writer.writeheader()
             writer.writerows(rows)
 
+    def _write_metrics(self, metrics: Dict[str, Any], filepath: str):
+        """Write metrics to YAML file"""
+        import yaml
+        with open(filepath, 'w') as f:
+            yaml.dump(metrics, f, default_flow_style=False)
+
     def run(self):
         """Run the collapse command"""
         # Validate required arguments
@@ -178,6 +186,11 @@ class CollapseCommand(BaseCommand):
                     for key, value in values.items():
                         print(f"  {key}: {value}", file=sys.stderr)
                 
+                # Write metrics to YAML file if specified
+                if self.args.metrics:
+                    self._write_metrics({os.path.basename(self.args.input_file): metrics}, self.args.metrics)
+                    print(f"\nMetrics written to: {self.args.metrics}", file=sys.stderr)
+                
             except Exception as e:
                 print(f"Error processing {self.args.input_file}: {e}", file=sys.stderr)
                 raise e
@@ -199,6 +212,9 @@ class CollapseCommand(BaseCommand):
         
         print(f"Found {len(input_files)} CSV files to process", file=sys.stderr)
         
+        # Collect metrics for all files
+        all_metrics = {}
+        
         # Process each file
         for input_file in tqdm(input_files, desc="Processing files"):
             # Create output filename
@@ -209,6 +225,9 @@ class CollapseCommand(BaseCommand):
                     input_file, output_file, columns, self.args.mismatches,
                     self.args.sep, self.args.row_limit, self.args.method
                 )
+                
+                # Store metrics for this file
+                all_metrics[os.path.basename(input_file)] = metrics
                 
                 # Print metrics for this file
                 print(f"\nMetrics for {os.path.basename(input_file)}:", file=sys.stderr)
@@ -221,5 +240,10 @@ class CollapseCommand(BaseCommand):
                 print(f"Error processing {input_file}: {e}", file=sys.stderr)
                 raise e
                 continue
+        
+        # Write metrics to YAML file if specified
+        if self.args.metrics:
+            self._write_metrics(all_metrics, self.args.metrics)
+            print(f"\nMetrics written to: {self.args.metrics}", file=sys.stderr)
         
         print(f"\nProcessing complete. Corrected files written to: {self.args.output_dir}", file=sys.stderr) 

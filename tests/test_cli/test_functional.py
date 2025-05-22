@@ -151,3 +151,98 @@ def test_workflow_with_allowed_list(temp_workspace):
     for output_name in ['shuffle', 'M1-lib', 'M2-lib']:
         assert os.path.exists(os.path.join(temp_workspace, f'results/counted/{output_name}.csv'))
 
+def test_single_file_workflow(temp_workspace):
+    """Test the workflow using single file mode for collapse and count"""
+    # Step 1: Run findseq for a single sample
+    findseq_args = [
+        'findseq',
+        os.path.join(temp_workspace, 'grnaquery.cfg'),
+        '-1', os.path.join(temp_workspace, 'reads/409-4_S1_L002_R1_001.fastq.gz'),
+        '-2', os.path.join(temp_workspace, 'reads/409-4_S1_L002_R2_001.fastq.gz'),
+        '-o', os.path.join(temp_workspace, 'results/extracted/shuffle.csv')
+    ]
+    cli = Cli(findseq_args)
+    cli.run()
+
+    # Verify findseq output
+    assert os.path.exists(os.path.join(temp_workspace, 'results/extracted/shuffle.csv'))
+
+    # Step 2: Run collapse command on single file
+    collapse_args = [
+        'collapse',
+        '--input-file', os.path.join(temp_workspace, 'results/extracted/shuffle.csv'),
+        '--output-file', os.path.join(temp_workspace, 'results/collapsed/shuffle.csv'),
+        '--columns', 'UMI_5prime,UMI_3prime',
+        '--mismatches', '2',
+        '--method', 'directional',
+        '--metrics', os.path.join(temp_workspace, 'results/collapsed/shuffle_metrics.yaml')
+    ]
+    cli = Cli(collapse_args)
+    cli.run()
+
+    # Verify collapse output
+    assert os.path.exists(os.path.join(temp_workspace, 'results/collapsed/shuffle.csv'))
+    assert os.path.exists(os.path.join(temp_workspace, 'results/collapsed/shuffle_metrics.yaml'))
+
+    # Step 3: Run count command on single file
+    count_args = [
+        'count',
+        '--input-file', os.path.join(temp_workspace, 'results/collapsed/shuffle.csv'),
+        '--output-file', os.path.join(temp_workspace, 'results/counted/shuffle.csv'),
+        '--barcode-column', 'UMI_5prime_UMI_3prime_corrected',
+        '--key-column', 'protospacer',
+        '--metrics', os.path.join(temp_workspace, 'results/counted/shuffle_metrics.yaml')
+    ]
+    cli = Cli(count_args)
+    cli.run()
+
+    # Verify count output
+    assert os.path.exists(os.path.join(temp_workspace, 'results/counted/shuffle.csv'))
+    assert os.path.exists(os.path.join(temp_workspace, 'results/counted/shuffle_metrics.yaml'))
+
+def test_single_file_workflow_with_allowed_list(temp_workspace):
+    """Test the single file workflow with an allowed list for counting"""
+    # Create allowed list file
+    allowed_list_path = os.path.join(temp_workspace, 'library_protospacers.txt')
+
+    # Step 1: Run findseq for a single sample
+    findseq_args = [
+        'findseq',
+        os.path.join(temp_workspace, 'grnaquery.cfg'),
+        '-1', os.path.join(temp_workspace, 'reads/409-4_S1_L002_R1_001.fastq.gz'),
+        '-2', os.path.join(temp_workspace, 'reads/409-4_S1_L002_R2_001.fastq.gz'),
+        '-o', os.path.join(temp_workspace, 'results/extracted/shuffle.csv')
+    ]
+    cli = Cli(findseq_args)
+    cli.run()
+
+    # Step 2: Run collapse command on single file
+    collapse_args = [
+        'collapse',
+        '--input-file', os.path.join(temp_workspace, 'results/extracted/shuffle.csv'),
+        '--output-file', os.path.join(temp_workspace, 'results/collapsed/shuffle.csv'),
+        '--columns', 'UMI_5prime,UMI_3prime',
+        '--mismatches', '2',
+        '--method', 'directional',
+        '--metrics', os.path.join(temp_workspace, 'results/collapsed/shuffle_metrics.yaml')
+    ]
+    cli = Cli(collapse_args)
+    cli.run()
+
+    # Step 3: Run count command on single file with allowed list
+    count_args = [
+        'count',
+        '--input-file', os.path.join(temp_workspace, 'results/collapsed/shuffle.csv'),
+        '--output-file', os.path.join(temp_workspace, 'results/counted/shuffle.csv'),
+        '--barcode-column', 'UMI_5prime_UMI_3prime_corrected',
+        '--key-column', 'protospacer',
+        '--allowed-list', allowed_list_path,
+        '--metrics', os.path.join(temp_workspace, 'results/counted/shuffle_metrics.yaml')
+    ]
+    cli = Cli(count_args)
+    cli.run()
+
+    # Verify outputs
+    assert os.path.exists(os.path.join(temp_workspace, 'results/counted/shuffle.csv'))
+    assert os.path.exists(os.path.join(temp_workspace, 'results/counted/shuffle_metrics.yaml'))
+
