@@ -36,18 +36,16 @@ class FindSeqCommand(BaseCommand):
     def run(self):
         """Run the findseq command"""
         if self.args.config_filename is None:
-            print('Please provide a config filename')
-            sys_exit(0)
+            raise ValueError('Please provide a config filename')
 
-        if self.args.read1_filename is not None and \
-           self.args.read2_filename is not None and \
+        if (self.args.read1_filename is not None or \
+           self.args.read2_filename is not None) and \
            self.args.output_filename is not None:
             self._run_reads_one(self.args.read1_filename, self.args.read2_filename)
         elif self.args.fastqfiles and self.args.outdir:
             self._run_pairedreads_all(self.args.fastqfiles, self.args.outdir)
         else:
-            print("Please provide either read1/read2/output files or fastqfiles/outdir")
-            sys_exit(1)
+            raise ValueError("Please provide either read1/read2/output files or fastqfiles/outdir")
 
     def _run_reads_one(self, read1_filename, read2_filename):
         """Run on a single pair of reads"""
@@ -56,7 +54,7 @@ class FindSeqCommand(BaseCommand):
         elif read1_filename is not None and read2_filename is None:
             self._runsingleread()
         else:
-            self._runnone()
+            raise ValueError("No read files provided")
 
     def _runpairedreads(self):
         """Run on paired reads"""
@@ -68,19 +66,13 @@ class FindSeqCommand(BaseCommand):
         """Run on a single read"""
         raise NotImplementedError("Single read processing not implemented")
 
-    def _runnone(self):
-        """Handle case with no reads"""
-        print("No read files provided")
-        sys_exit(1)
 
     def _run_pairedreads_all(self, fastqfiles, outdir):
         """Run on all paired reads in a directory"""
         if not exists(outdir) or not isdir(outdir):
-            print(f'Output directory either does not exist or is not a directory: {outdir}')
-            sys_exit(1)
+            raise ValueError(f'Output directory either does not exist or is not a directory: {outdir}')
         if not fastqfiles:
-            print(f'No fastq files were found with --fastqfiles {fastqfiles}')
-            sys_exit(1)
+            raise ValueError(f'No fastq files were found with --fastqfiles {fastqfiles}')
 
         tic = default_timer()
         readpairs = get_readpairs(fastqfiles)

@@ -3,7 +3,7 @@
 __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
 __author__ = "WND"
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from sys import exit as sys_exit
 
 from outerspace.cli.commands.findseq import FindSeqCommand
@@ -17,7 +17,10 @@ class Cli:
     """The command line interface argument requirements"""
     def __init__(self, args=None):
         self.parser = self._init_parser()
-        self.args = self.parser.parse_args(args)
+        if isinstance(args, Namespace):
+            self.args = args
+        else:
+            self.args = self.parser.parse_args(args)
         self._prt_args()
         self.command = self._init_command()
 
@@ -52,6 +55,14 @@ class Cli:
             'pipeline': PipelineCommand
         }
         return command_map[self.args.command](self.args)
+
+    def _prt_args(self):
+        """Print the command line arguments"""
+        print("ARGS:", end=' ')
+        for key, value in vars(self.args).items():
+            if value is not None:
+                print(f"{key}={value}", end=', ')
+        print()
 
     def run(self):
         """Run the selected command"""
