@@ -4,10 +4,11 @@ __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reser
 __author__ = "WND"
 
 import pytest
+import os
+import tempfile
 from argparse import Namespace
 from outerspace.cli.commands.gini import GiniCommand
 
-@pytest.mark.skip(reason="Not implemented")
 def test_gini_initialization():
     """Test that gini command initializes correctly"""
     args = Namespace(
@@ -22,8 +23,7 @@ def test_gini_initialization():
     cmd = GiniCommand(args)
     assert cmd.args == args
 
-@pytest.mark.skip(reason="Not implemented")
-def test_gini_missing_input_file(capsys):
+def test_gini_missing_input_file():
     """Test that gini command handles missing input file"""
     args = Namespace(
         command='gini',
@@ -35,12 +35,10 @@ def test_gini_missing_input_file(capsys):
         allowed_list=None
     )
     cmd = GiniCommand(args)
-    cmd.run()
-    captured = capsys.readouterr()
-    assert "Please provide an input file" in captured.out
+    with pytest.raises(ValueError):
+        cmd.run()
 
-@pytest.mark.skip(reason="Not implemented")
-def test_gini_missing_column(capsys):
+def test_gini_missing_column():
     """Test that gini command handles missing column"""
     args = Namespace(
         command='gini',
@@ -52,12 +50,10 @@ def test_gini_missing_column(capsys):
         allowed_list=None
     )
     cmd = GiniCommand(args)
-    cmd.run()
-    captured = capsys.readouterr()
-    assert "Please provide a column to calculate Gini coefficient for" in captured.out
+    with pytest.raises(ValueError):
+        cmd.run()
 
-@pytest.mark.skip(reason="Not implemented")
-def test_gini_invalid_scale(capsys):
+def test_gini_invalid_scale():
     """Test that gini command handles invalid scale value"""
     args = Namespace(
         command='gini',
@@ -69,15 +65,14 @@ def test_gini_invalid_scale(capsys):
         allowed_list=None
     )
     cmd = GiniCommand(args)
-    cmd.run()
-    captured = capsys.readouterr()
-    assert "Scale value must be positive" in captured.out
+    with pytest.raises(ValueError):
+        cmd.run()
 
-def test_gini_not_implemented():
-    """Test that gini command is not yet implemented"""
+def test_gini_nonexistent_input_file():
+    """Test that gini command handles nonexistent input file"""
     args = Namespace(
         command='gini',
-        input_file='test_input.csv',
+        input_file='nonexistent.csv',
         column='counts',
         count_column=None,
         scale=None,
@@ -85,5 +80,62 @@ def test_gini_not_implemented():
         allowed_list=None
     )
     cmd = GiniCommand(args)
-    with pytest.raises(NotImplementedError):
-        cmd.run() 
+    with pytest.raises(ValueError):
+        cmd.run()
+
+def test_gini_nonexistent_column():
+    """Test that gini command handles nonexistent column"""
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv') as temp_file:
+        temp_file.write('header1,header2\nvalue1,value2\n')
+        temp_file.flush()
+        
+        args = Namespace(
+            command='gini',
+            input_file=temp_file.name,
+            column='nonexistent',
+            count_column=None,
+            scale=None,
+            sep=',',
+            allowed_list=None
+        )
+        cmd = GiniCommand(args)
+        with pytest.raises(ValueError):
+            cmd.run()
+
+def test_gini_nonexistent_count_column():
+    """Test that gini command handles nonexistent count column"""
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv') as temp_file:
+        temp_file.write('header1,header2\nvalue1,value2\n')
+        temp_file.flush()
+        
+        args = Namespace(
+            command='gini',
+            input_file=temp_file.name,
+            column='header1',
+            count_column='nonexistent',
+            scale=None,
+            sep=',',
+            allowed_list=None
+        )
+        cmd = GiniCommand(args)
+        with pytest.raises(ValueError):
+            cmd.run()
+
+def test_gini_nonexistent_allowed_list():
+    """Test that gini command handles nonexistent allowed list file"""
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv') as temp_file:
+        temp_file.write('header1,header2\nvalue1,value2\n')
+        temp_file.flush()
+        
+        args = Namespace(
+            command='gini',
+            input_file=temp_file.name,
+            column='header1',
+            count_column=None,
+            scale=None,
+            sep=',',
+            allowed_list='nonexistent.txt'
+        )
+        cmd = GiniCommand(args)
+        with pytest.raises(ValueError):
+            cmd.run()

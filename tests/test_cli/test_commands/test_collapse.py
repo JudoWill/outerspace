@@ -4,10 +4,11 @@ __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reser
 __author__ = "WND"
 
 import pytest
+import os
+import tempfile
 from argparse import Namespace
 from outerspace.cli.commands.collapse import CollapseCommand
 
-@pytest.mark.skip(reason="Not implemented")
 def test_collapse_initialization():
     """Test that collapse command initializes correctly"""
     args = Namespace(
@@ -23,8 +24,7 @@ def test_collapse_initialization():
     cmd = CollapseCommand(args)
     assert cmd.args == args
 
-@pytest.mark.skip(reason="Not implemented")
-def test_collapse_missing_input_dir(capsys):
+def test_collapse_missing_input_dir():
     """Test that collapse command handles missing input directory"""
     args = Namespace(
         command='collapse',
@@ -37,12 +37,10 @@ def test_collapse_missing_input_dir(capsys):
         method='directional'
     )
     cmd = CollapseCommand(args)
-    cmd.run()
-    captured = capsys.readouterr()
-    assert "Please provide an input directory" in captured.out
+    with pytest.raises(ValueError):
+        cmd.run()
 
-@pytest.mark.skip(reason="Not implemented")
-def test_collapse_missing_output_dir(capsys):
+def test_collapse_missing_output_dir():
     """Test that collapse command handles missing output directory"""
     args = Namespace(
         command='collapse',
@@ -55,12 +53,10 @@ def test_collapse_missing_output_dir(capsys):
         method='directional'
     )
     cmd = CollapseCommand(args)
-    cmd.run()
-    captured = capsys.readouterr()
-    assert "Please provide an output directory" in captured.out
+    with pytest.raises(ValueError):
+        cmd.run()
 
-@pytest.mark.skip(reason="Not implemented")
-def test_collapse_missing_columns(capsys):
+def test_collapse_missing_columns():
     """Test that collapse command handles missing columns"""
     args = Namespace(
         command='collapse',
@@ -73,12 +69,10 @@ def test_collapse_missing_columns(capsys):
         method='directional'
     )
     cmd = CollapseCommand(args)
-    cmd.run()
-    captured = capsys.readouterr()
-    assert "Please provide columns to correct" in captured.out
+    with pytest.raises(ValueError):
+        cmd.run()
 
-@pytest.mark.skip(reason="Not implemented")
-def test_collapse_invalid_method(capsys):
+def test_collapse_invalid_method():
     """Test that collapse command handles invalid clustering method"""
     args = Namespace(
         command='collapse',
@@ -91,12 +85,44 @@ def test_collapse_invalid_method(capsys):
         method='invalid_method'
     )
     cmd = CollapseCommand(args)
-    cmd.run()
-    captured = capsys.readouterr()
-    assert "Invalid clustering method" in captured.out
+    with pytest.raises(ValueError):
+        cmd.run()
 
-def test_collapse_not_implemented():
-    """Test that collapse command is not yet implemented"""
+def test_collapse_nonexistent_input_dir():
+    """Test that collapse command handles nonexistent input directory"""
+    args = Namespace(
+        command='collapse',
+        input_dir='nonexistent_dir',
+        output_dir='test_output',
+        columns='umi3,umi5',
+        mismatches=2,
+        sep=',',
+        row_limit=None,
+        method='directional'
+    )
+    cmd = CollapseCommand(args)
+    with pytest.raises(ValueError):
+        cmd.run()
+
+def test_collapse_empty_input_dir():
+    """Test that collapse command handles empty input directory"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        args = Namespace(
+            command='collapse',
+            input_dir=temp_dir,
+            output_dir='test_output',
+            columns='umi3,umi5',
+            mismatches=2,
+            sep=',',
+            row_limit=None,
+            method='directional'
+        )
+        cmd = CollapseCommand(args)
+        with pytest.raises(ValueError):
+            cmd.run()
+
+def test_collapse_parse_columns():
+    """Test that column parsing works correctly"""
     args = Namespace(
         command='collapse',
         input_dir='test_input',
@@ -108,5 +134,14 @@ def test_collapse_not_implemented():
         method='directional'
     )
     cmd = CollapseCommand(args)
-    with pytest.raises(NotImplementedError):
-        cmd.run() 
+    columns = cmd._parse_columns(args.columns)
+    assert columns == ['umi3', 'umi5']
+    
+    # Test with spaces
+    columns = cmd._parse_columns('umi3, umi5')
+    assert columns == ['umi3', 'umi5']
+    
+    # Test with single column
+    columns = cmd._parse_columns('umi3')
+    assert columns == ['umi3']
+    

@@ -4,6 +4,8 @@ __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reser
 __author__ = "WND"
 
 import pytest
+import os
+import tempfile
 from argparse import Namespace
 from outerspace.cli.commands.count import CountCommand
 
@@ -26,8 +28,7 @@ def test_count_initialization():
     cmd = CountCommand(args)
     assert cmd.args == args
 
-@pytest.mark.skip(reason="Not implemented")
-def test_count_missing_input_dir(capsys):
+def test_count_missing_input_dir():
     """Test that count command handles missing input directory"""
     args = Namespace(
         command='count',
@@ -44,12 +45,10 @@ def test_count_missing_input_dir(capsys):
         metrics=None
     )
     cmd = CountCommand(args)
-    cmd.run()
-    captured = capsys.readouterr()
-    assert "Please provide an input directory" in captured.out
+    with pytest.raises(ValueError):
+        cmd.run()
 
-@pytest.mark.skip(reason="Not implemented")
-def test_count_missing_output_dir(capsys):
+def test_count_missing_output_dir():
     """Test that count command handles missing output directory"""
     args = Namespace(
         command='count',
@@ -66,12 +65,10 @@ def test_count_missing_output_dir(capsys):
         metrics=None
     )
     cmd = CountCommand(args)
-    cmd.run()
-    captured = capsys.readouterr()
-    assert "Please provide an output directory" in captured.out
+    with pytest.raises(ValueError):
+        cmd.run()
 
-@pytest.mark.skip(reason="Not implemented")
-def test_count_missing_barcode_column(capsys):
+def test_count_missing_barcode_column():
     """Test that count command handles missing barcode column"""
     args = Namespace(
         command='count',
@@ -88,12 +85,10 @@ def test_count_missing_barcode_column(capsys):
         metrics=None
     )
     cmd = CountCommand(args)
-    cmd.run()
-    captured = capsys.readouterr()
-    assert "Please provide a barcode column" in captured.out
+    with pytest.raises(ValueError):
+        cmd.run()
 
-@pytest.mark.skip(reason="Not implemented")
-def test_count_missing_key_column(capsys):
+def test_count_missing_key_column():
     """Test that count command handles missing key column"""
     args = Namespace(
         command='count',
@@ -110,12 +105,10 @@ def test_count_missing_key_column(capsys):
         metrics=None
     )
     cmd = CountCommand(args)
-    cmd.run()
-    captured = capsys.readouterr()
-    assert "Please provide a key column" in captured.out
+    with pytest.raises(ValueError):
+        cmd.run()
 
-@pytest.mark.skip(reason="Not implemented")
-def test_count_invalid_downsample(capsys):
+def test_count_invalid_downsample():
     """Test that count command handles invalid downsample value"""
     args = Namespace(
         command='count',
@@ -132,15 +125,14 @@ def test_count_invalid_downsample(capsys):
         metrics=None
     )
     cmd = CountCommand(args)
-    cmd.run()
-    captured = capsys.readouterr()
-    assert "Downsample value must be positive" in captured.out
+    with pytest.raises(ValueError):
+        cmd.run()
 
-def test_count_not_implemented():
-    """Test that count command is not yet implemented"""
+def test_count_nonexistent_input_dir():
+    """Test that count command handles nonexistent input directory"""
     args = Namespace(
         command='count',
-        input_dir='test_input',
+        input_dir='nonexistent_dir',
         output_dir='test_output',
         barcode_column='umi3_umi5_corrected',
         key_column='protospacer',
@@ -153,5 +145,27 @@ def test_count_not_implemented():
         metrics=None
     )
     cmd = CountCommand(args)
-    with pytest.raises(NotImplementedError):
-        cmd.run() 
+    with pytest.raises(ValueError):
+        cmd.run()
+
+def test_count_empty_input_dir():
+    """Test that count command handles empty input directory"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        args = Namespace(
+            command='count',
+            input_dir=temp_dir,
+            output_dir='test_output',
+            barcode_column='umi3_umi5_corrected',
+            key_column='protospacer',
+            sep=',',
+            row_limit=None,
+            allowed_list=None,
+            detailed=False,
+            downsample=None,
+            random_seed=None,
+            metrics=None
+        )
+        cmd = CountCommand(args)
+        with pytest.raises(ValueError):
+            cmd.run()
+
