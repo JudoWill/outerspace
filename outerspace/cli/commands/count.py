@@ -33,9 +33,11 @@ class CountCommand(BaseCommand):
         parser.add_argument('--sep', default=',',
             help='CSV separator (default: ,)')
         parser.add_argument('--row-limit', type=int,
-            help='Process only the first N rows (for testing)')
+            help='Process only the first N rows (for testing)',
+            default=None)
         parser.add_argument('--allowed-list',
-            help='Text file containing allowed keys (one per line)')
+            help='Text file containing allowed keys (one per line)',
+            default=None)
         parser.add_argument('--detailed', action='store_true',
             help='Include barcode lists in output')
         parser.add_argument('--downsample', type=float,

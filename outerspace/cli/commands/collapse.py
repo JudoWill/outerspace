@@ -6,6 +6,7 @@ __author__ = "WND"
 import csv
 import glob
 import os
+import sys
 from collections import Counter
 from typing import List, Dict, Any
 from tqdm import tqdm
@@ -30,7 +31,8 @@ class CollapseCommand(BaseCommand):
         parser.add_argument('--sep', default=',',
             help='CSV separator (default: ,)')
         parser.add_argument('--row-limit', type=int,
-            help='Process only the first N rows (for testing)')
+            help='Process only the first N rows (for testing)',
+            default=None)
         parser.add_argument('--method', choices=['cluster', 'adjacency', 'directional'],
             default='directional',
             help='Clustering method to use (default: directional)')
@@ -174,6 +176,7 @@ class CollapseCommand(BaseCommand):
                 
             except Exception as e:
                 print(f"Error processing {input_file}: {e}", file=sys.stderr)
+                raise e
                 continue
         
         print(f"\nProcessing complete. Corrected files written to: {self.args.output_dir}", file=sys.stderr) 
