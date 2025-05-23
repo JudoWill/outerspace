@@ -19,7 +19,7 @@ The pipeline command automates all steps in one command. This is the simplest ap
 
 ```bash
 # Create output directories
-mkdir -p tmp/results/{extracted,collapsed,counted}
+mkdir -p tmp/
 
 # Run the pipeline
 outerspace pipeline tests/configs/grnaquery.cfg \
