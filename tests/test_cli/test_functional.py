@@ -246,3 +246,38 @@ def test_single_file_workflow_with_allowed_list(temp_workspace):
     assert os.path.exists(os.path.join(temp_workspace, 'results/counted/shuffle.csv'))
     assert os.path.exists(os.path.join(temp_workspace, 'results/counted/shuffle_metrics.yaml'))
 
+
+def test_pipeline_multi_file_workflow(temp_workspace):
+    """Test the pipeline command processing multiple files"""
+    # Run pipeline for multiple samples
+    pipeline_args = [
+        'pipeline',
+        os.path.join(temp_workspace, 'grnaquery.cfg'),
+        '--input-dir', os.path.join(temp_workspace, 'reads'),
+        '--output-dir', os.path.join(temp_workspace, 'results'),
+        '--barcode-columns', 'UMI_5prime,UMI_3prime',
+        '--key-column', 'protospacer',
+        '--mismatches', '2',
+        '--method', 'directional',
+        '--metrics'
+    ]
+    cli = Cli(pipeline_args)
+    cli.run()
+
+    print(os.listdir(os.path.join(temp_workspace, 'results/extracted')))
+
+    # Verify outputs for all samples
+    expected_files = [
+        '409-4_S1_L002_R1_001p.csv',
+        '2-G1L9-M1_S9_L001_R1_001p.csv',
+        '2-G1L9-M2_S12_L001_R1_001p.csv'
+    ]
+    
+    for filename in expected_files:
+        assert os.path.exists(os.path.join(temp_workspace, f'results/extracted/{filename}'))
+        assert os.path.exists(os.path.join(temp_workspace, f'results/collapsed/{filename}'))
+        assert os.path.exists(os.path.join(temp_workspace, f'results/counted/{filename}'))
+    
+    # Verify metrics files
+    assert os.path.exists(os.path.join(temp_workspace, 'results/collapsed/collapse_metrics.yaml'))
+    assert os.path.exists(os.path.join(temp_workspace, 'results/counted/count_metrics.yaml'))

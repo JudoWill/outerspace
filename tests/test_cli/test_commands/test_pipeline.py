@@ -14,12 +14,3 @@ def test_pipeline_initialization():
     ]
     cli = Cli(args)
     assert cli.args.command == 'pipeline'
-
-def test_pipeline_not_implemented():
-    """Test that pipeline command is not yet implemented"""
-    args = [
-        'pipeline'
-    ]
-    cli = Cli(args)
-    with pytest.raises(NotImplementedError):
-        cli.run() 

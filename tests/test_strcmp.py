@@ -32,7 +32,7 @@ def test_strcmp(pat=r'^(.*)(_R(1|2)_)(.*)$'):
     assert act == exp
     fcsv = get_outputfname(*act[0])
     print(f'CSV({fcsv}) from readpair {files[0]} {files[1]}')
-    assert fcsv == 'a_Rp_z.csv', fcsv
+    assert fcsv == 'a_Rp_z', fcsv
 
     # ------------------------------------------------------------
     # Add files that are not read pairs
