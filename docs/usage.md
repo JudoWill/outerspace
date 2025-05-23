@@ -14,7 +14,7 @@ Check out this [AddGene writeup](https://www.addgene.org/guides/pooled-libraries
 
 The proposed OUTERSPACE workflow helps process and analyze this data through several steps:
 
-1. **Sequence Extraction** (`find`): Extracts gRNA sequences and associated barcodes from FASTQ files using configurable search patterns.
+1. **Sequence Extraction** (`findseq`): Extracts gRNA sequences and associated barcodes from FASTQ files using configurable search patterns.
 
 2. **Barcode Correction** (`collapse`): Corrects sequencing errors in barcodes using UMI-tools algorithms to improve accuracy.
 
@@ -22,33 +22,36 @@ The proposed OUTERSPACE workflow helps process and analyze this data through sev
 
 4. **Distribution Analysis** (`gini`): Calculates Gini coefficients to measure the inequality of barcode distributions. This is useful for diagnostic purposes.
 
-5. **Difference** (`diff`): Calculates the difference between a before/after comparison. Identifying successful gRNAs.
+5. **Visualization** (`visualize`): Creates plots to help interpret the results.
 
-6. **Visualization** (`visualize`): Creates plots to help interpret the results.
-
-his integrated toolset helps researchers accurately measure changes in gRNA abundance between conditions, identify hits from their screens, and ensure data quality through multiple analysis steps.
+This integrated toolset helps researchers accurately measure changes in gRNA abundance between conditions, identify hits from their screens, and ensure data quality through multiple analysis steps.
 
 ### Usage Story
 
 ```bash
 # Extract sequences
-outerspace find config.toml -1 ctrl_r1.fastq -2 ctrl_r2.fastq -o ctrl_output.csv
-outerspace find config.toml -1 exp_r1.fastq -2 exp_r2.fastq -o exp_output.csv
+outerspace findseq config.toml -1 ctrl_r1.fastq.gz -2 ctrl_r2.fastq.gz -o ctrl_output.csv
+outerspace findseq config.toml -1 exp_r1.fastq.gz -2 exp_r2.fastq.gz -o exp_output.csv
 
 # Correct barcodes
-outerspace collapse --columns umi3,umi5 --mismatches 2 ctrl_output.csv ctrl_output_collapsed.csv
-outerspace collapse --columns umi3,umi5 --mismatches 2 exp_output.csv exp_output_collapsed.csv
+outerspace collapse --input-file ctrl_output.csv --output-file ctrl_output_collapsed.csv \
+    --columns umi3,umi5 --mismatches 2 --method directional
+outerspace collapse --input-file exp_output.csv --output-file exp_output_collapsed.csv \
+    --columns umi3,umi5 --mismatches 2 --method directional
 
 # Count barcodes
-outerspace count --barcode-column umi3_umi5_corrected --key-column protospacer ctrl_output_collapsed.csv ctrl_counts.csv
-outerspace count --barcode-column umi3_umi5_corrected --key-column protospacer exp_output_collapsed.csv exp_counts.csv 
+outerspace count --input-file ctrl_output_collapsed.csv --output-file ctrl_counts.csv \
+    --barcode-column umi3_umi5_corrected --key-column protospacer
+outerspace count --input-file exp_output_collapsed.csv --output-file exp_counts.csv \
+    --barcode-column umi3_umi5_corrected --key-column protospacer
 
 # Calculate Gini coefficient
-outerspace gini --column counts ctrl_counts.csv  # Expecting a low gini
-outerspace gini --column exp_counts.csv counts # Expecting a high gini
+outerspace gini ctrl_counts.csv --column counts  # Expecting a low gini
+outerspace gini exp_counts.csv --column counts  # Expecting a high gini
 
-# Find significant protospacers
-outerspace diff --column counts ctrl_counts.csv exp_counts.csv results.csv 
+# Visualize results
+outerspace visualize ctrl_counts.csv exp_counts.csv output_plots/ \
+    --title-prefix "CRISPR Screen" --log-scale
 ```
 
 ## Barcoded Viruses for Latency Studies
@@ -71,7 +74,7 @@ Here's how they work:
 
 OUTERSPACE is well-suited for analyzing barcode sequencing data from these experiments:
 
-1. **Sequence Extraction**: The `find` command can extract viral barcodes from sequencing reads using configurable patterns that match the barcode context.
+1. **Sequence Extraction**: The `findseq` command can extract viral barcodes from sequencing reads using configurable patterns that match the barcode context.
 
 2. **Error Correction**: The `collapse` command corrects sequencing errors in barcodes, ensuring accurate lineage tracking. This is crucial because even single nucleotide errors could artificially inflate diversity estimates.
 
@@ -82,11 +85,28 @@ OUTERSPACE is well-suited for analyzing barcode sequencing data from these exper
    - Clonal expansion of infected cells
    - Changes in reservoir diversity over time
 
-5. **Comparative Analysis**: The `diff` command can compare barcode frequencies between:
-   - Different anatomical sites
-   - Pre- and post-treatment timepoints
-   - Different experimental conditions
+5. **Visualization**: The `visualize` command creates plots to help interpret the distribution of viral barcodes across different samples.
 
-This integrated analysis pipeline helps researchers understand the dynamics of viral reservoirs, evaluate therapeutic interventions, and track viral dissemination throughout the host.
+### Example Pipeline
+
+For analyzing viral barcode data, you can use the `pipeline` command to run all steps automatically:
+
+```bash
+outerspace pipeline config.toml \
+    --input-dir fastq_files/ \
+    --output-dir results/ \
+    --barcode-columns UMI_5prime,UMI_3prime \
+    --key-column viral_barcode \
+    --mismatches 2 \
+    --method directional \
+    --metrics
+```
+
+This will:
+1. Process all FASTQ files in the input directory
+2. Extract and correct barcodes
+3. Count unique barcodes per sample
+4. Generate metrics and visualizations
+5. Save all results in the output directory
 
 Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.

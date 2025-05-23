@@ -11,9 +11,8 @@ Extracts sequences from FASTQ files based on configuration patterns. Features:
 - Error handling for failed read pairs
 
 ```bash
-usage: outerspace findseq [-h] [-1 READ1_FILENAME] [-2 READ2_FILENAME] [-o OUTPUT_FILENAME]
+usage: outerspace findseq [-h] [config_filename] [-1 READ1_FILENAME] [-2 READ2_FILENAME] [-o OUTPUT_FILENAME]
                  [--fastqfiles FASTQFILES [FASTQFILES ...]] [--outdir OUTDIR]
-                 [config_filename]
 
 Extract sequences from FASTQ files based on configuration patterns
 
@@ -42,18 +41,24 @@ Corrects barcodes in CSV files using UMI-tools clustering. Features:
 - Detailed metrics output
 
 ```bash
-usage: outerspace collapse [-h] --columns COLUMNS [--mismatches MISMATCHES] [--sep SEP]
-                  [--row-limit ROW_LIMIT] [--method {cluster,adjacency,directional}]
-                  input_dir output_dir
+usage: outerspace collapse [-h] (--input-file INPUT_FILE | --input-dir INPUT_DIR)
+                 (--output-file OUTPUT_FILE | --output-dir OUTPUT_DIR)
+                 --columns COLUMNS [--mismatches MISMATCHES] [--sep SEP]
+                 [--row-limit ROW_LIMIT] [--method {cluster,adjacency,directional}]
+                 [--metrics METRICS]
 
 Correct barcodes in CSV files using UMI-tools clustering
 
-positional arguments:
-  input_dir             Input directory containing CSV files
-  output_dir            Output directory for corrected CSV files
-
 options:
   -h, --help            show this help message and exit
+  --input-file INPUT_FILE
+                        Input CSV file to process
+  --input-dir INPUT_DIR
+                        Input directory containing CSV files to process
+  --output-file OUTPUT_FILE
+                        Output CSV file for corrected barcodes
+  --output-dir OUTPUT_DIR
+                        Output directory for corrected CSV files
   --columns COLUMNS     Column(s) containing barcodes to correct. Can be a single column or comma-separated list
   --mismatches MISMATCHES
                         Number of mismatches allowed for clustering (default: 2)
@@ -62,9 +67,10 @@ options:
                         Process only the first N rows (for testing)
   --method {cluster,adjacency,directional}
                         Clustering method to use (default: directional)
+  --metrics METRICS     Output YAML file for metrics
 ```
 
-### `count`
+### `outerspace count`
 Counts unique barcodes per key value in CSV files. Features:
 - Barcode and key column specification
 - `--allowed-list` filtering
@@ -74,20 +80,25 @@ Counts unique barcodes per key value in CSV files. Features:
 - Metrics output in YAML format
 
 ```bash
-usage: outerspace count [-h] --barcode-column BARCODE_COLUMN --key-column KEY_COLUMN
+usage: outerspace count [-h] (--input-file INPUT_FILE | --input-dir INPUT_DIR)
+               (--output-file OUTPUT_FILE | --output-dir OUTPUT_DIR)
+               --barcode-column BARCODE_COLUMN --key-column KEY_COLUMN
                [--sep SEP] [--row-limit ROW_LIMIT] [--allowed-list ALLOWED_LIST]
                [--detailed] [--downsample DOWNSAMPLE] [--random-seed RANDOM_SEED]
                [--metrics METRICS]
-               input_dir output_dir
 
 Count unique barcodes per key value in CSV files
 
-positional arguments:
-  input_dir             Input directory containing CSV files
-  output_dir            Output directory for barcode counts
-
 options:
   -h, --help            show this help message and exit
+  --input-file INPUT_FILE
+                        Input CSV file to process
+  --input-dir INPUT_DIR
+                        Input directory containing CSV files to process
+  --output-file OUTPUT_FILE
+                        Output CSV file for barcode counts
+  --output-dir OUTPUT_DIR
+                        Output directory for barcode counts
   --barcode-column BARCODE_COLUMN
                         Column containing barcodes
   --key-column KEY_COLUMN
@@ -105,7 +116,7 @@ options:
   --metrics METRICS     Output YAML file for metrics
 ```
 
-### `gini`
+### `outerspace gini`
 Calculates Gini coefficient from counts in a CSV column. Features:
 - Support for pre-counted values
 - Scale factor application for dealing with 'pre-normalized' counts
@@ -113,9 +124,8 @@ Calculates Gini coefficient from counts in a CSV column. Features:
 - Detailed statistics output
 
 ```bash
-usage: outerspace gini [-h] --column COLUMN [--count-column COUNT_COLUMN] [--scale SCALE]
-              [--sep SEP] [--allowed-list ALLOWED_LIST]
-              input_file
+usage: outerspace gini [-h] input_file --column COLUMN [--count-column COUNT_COLUMN]
+              [--scale SCALE] [--sep SEP] [--allowed-list ALLOWED_LIST]
 
 Calculate Gini coefficient from counts in a CSV column
 
@@ -143,10 +153,9 @@ Creates visualizations of barcode counts from CSV files. Features:
 - Statistical summary overlay
 
 ```bash
-usage: outerspace visualize [-h] [--sep SEP] [--bins BINS] [--title-prefix TITLE_PREFIX]
-                   [--xlabel XLABEL] [--ylabel YLABEL] [--log-scale]
-                   [--format FORMAT]
-                   input_dir output_dir
+usage: outerspace visualize [-h] input_dir output_dir [--sep SEP] [--bins BINS]
+                   [--title-prefix TITLE_PREFIX] [--xlabel XLABEL]
+                   [--ylabel YLABEL] [--log-scale] [--format FORMAT]
 
 Visualize barcode counts from CSV files
 
@@ -166,7 +175,42 @@ options:
   --format FORMAT       Output image format (default: png)
 ```
 
-### `outspace pipeline`
+### `outerspace pipeline`
+A wrapper to complete all of the steps in a single command. Features:
+- Automated processing of multiple FASTQ files
+- Configurable barcode correction parameters
+- Optional metrics generation
+- Progress tracking
+- Error handling
 
-A wrapper to complete all of the steps in a single command.
-TBD
+```bash
+usage: outerspace pipeline [-h] config_file --input-dir INPUT_DIR --output-dir OUTPUT_DIR
+                 [--allowed-list ALLOWED_LIST] [--mismatches MISMATCHES]
+                 [--method {cluster,adjacency,directional}]
+                 [--barcode-columns BARCODE_COLUMNS] [--key-column KEY_COLUMN]
+                 [--sep SEP] [--metrics]
+
+Run the complete OUTERSPACE pipeline
+
+positional arguments:
+  config_file           Configuration file with search patterns
+
+options:
+  -h, --help            show this help message and exit
+  --input-dir INPUT_DIR
+                        Directory containing paired FASTQ read files
+  --output-dir OUTPUT_DIR
+                        Output directory for all pipeline results
+  --allowed-list ALLOWED_LIST
+                        Text file containing allowed keys (one per line)
+  --mismatches MISMATCHES
+                        Number of mismatches allowed for clustering (default: 2)
+  --method {cluster,adjacency,directional}
+                        Clustering method to use (default: directional)
+  --barcode-columns BARCODE_COLUMNS
+                        Column(s) containing barcodes to correct (default: UMI_5prime,UMI_3prime)
+  --key-column KEY_COLUMN
+                        Column to group by for counting (default: protospacer)
+  --sep SEP             CSV separator (default: ',')
+  --metrics             Generate metrics files for collapse and count steps
+```

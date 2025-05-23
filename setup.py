@@ -23,7 +23,7 @@ def get_long_description():
 
 # These are executables on left and module name:function name
 CONSOLE_SCRIPTS = [
-    'findseq=outerspace.cli:main'
+    'outerspace=outerspace.cli:main'
 ]
 
 REQUIRES = [

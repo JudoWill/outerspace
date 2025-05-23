@@ -42,7 +42,7 @@ def get_outputfname(filename1, filename2):
     ptz = fcsv.find('.')
     if ptz != -1:
         fcsv = fcsv[:ptz]
-    return f'{fcsv[:pt0]}p{fcsv[pt0+1:]}.csv'
+    return f'{fcsv[:pt0]}p{fcsv[pt0+1:]}'
 
 
 class FastqSort:
