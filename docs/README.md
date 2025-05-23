@@ -23,13 +23,13 @@ pip install outerspace
 
 `outerspace` uses the `regex` library to extract relevant features from a DNA sequence.
 This allows an simple, expressive, and modular strategy for extracting of regions of interest while tolerating mismatches.
-It supports both short, paired end reads and log long reads.
+It supports both short, paired end reads and long reads.
 See the [walkthrough](regex_explainer.md) for a detailed discussion on how to design your extraction strategy.
 
 ### Create your config file
 
 If you are going to repeating similar experiments often, `outerspace` allows you to encapsulate that information in a `toml` file accepted by all commands.
-This ensures repeatability between analyses and can drastically simplify analyses.
+This ensures repeatability between analyses and can drastically simplify command line execution.
 It also facilitates reproducible science as the config can be stored, shared, and tracked.
 
 See the [walkthrough](config.md) for a more detailed discussion on creating your config file.
@@ -61,5 +61,7 @@ This will:
 5. Generate metrics files for quality control
 
 For more detailed instructions, including how to run individual commands and perform additional analyses, see the [detailed walkthrough](walkthrough.md).
+
+For running your tasks in parallel or on a cluster consider using our Snakemake [wrappers](wrappers.md).
 
 Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.
