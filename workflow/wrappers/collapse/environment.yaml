@@ -1,0 +1,7 @@
+name: outerspace-collapse
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.8
+  - outerspace>=0.0.1 
