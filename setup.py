@@ -10,7 +10,10 @@ from os.path import dirname
 from setuptools import setup
 
 PACKAGES = [
-    'outerspace'
+    'outerspace',
+    'outerspace.cli',
+    'outerspace.cli.commands',
+    'outerspace.cli.utils'
 ]
 
 PACKAGE_DIRS = {p:join(*p.split('.')) for p in PACKAGES}
