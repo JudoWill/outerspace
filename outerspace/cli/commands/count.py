@@ -52,6 +52,8 @@ class CountCommand(BaseCommand):
             help='Random seed for downsampling')
         parser.add_argument('--metrics',
             help='Output YAML file for metrics')
+        parser.add_argument('--config',
+            help='YAML configuration file for command')
         return parser
 
     def _read_allowed_keys(self, filepath: str) -> Set[str]:
@@ -169,6 +171,20 @@ class CountCommand(BaseCommand):
 
     def run(self):
         """Run the count command"""
+        # Load config if provided
+        if self.args.config:
+            self._load_config(self.args.config)
+        
+        # Merge config and args with defaults
+        defaults = {
+            'sep': ',',
+            'row_limit': None,
+            'detailed': False,
+            'downsample': None,
+            'random_seed': None
+        }
+        self._merge_config_and_args(defaults)
+
         # Validate required arguments
         if not self.args.barcode_column:
             raise ValueError("Please provide a barcode column")

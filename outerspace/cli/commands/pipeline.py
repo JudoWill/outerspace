@@ -52,6 +52,8 @@ class PipelineCommand(BaseCommand):
             help='CSV separator (default: ,)')
         parser.add_argument('--metrics', action='store_true',
             help='Generate metrics files for collapse and count steps')
+        parser.add_argument('--config',
+            help='TOML configuration file containing command settings')
         return parser
 
     def _setup_directories(self, output_dir: str) -> Tuple[str, str, str]:
@@ -117,6 +119,21 @@ class PipelineCommand(BaseCommand):
 
     def run(self):
         """Run the pipeline command"""
+        # Load config if provided
+        if self.args.config:
+            self._load_config(self.args.config)
+        
+        # Merge config and args with defaults
+        defaults = {
+            'mismatches': 2,
+            'method': 'directional',
+            'barcode_columns': 'UMI_5prime,UMI_3prime',
+            'key_column': 'protospacer',
+            'sep': ',',
+            'metrics': False
+        }
+        self._merge_config_and_args(defaults)
+
         # Validate input directory
         if not os.path.exists(self.args.input_dir):
             raise ValueError(f"Input directory not found: {self.args.input_dir}")

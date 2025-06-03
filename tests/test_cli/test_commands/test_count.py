@@ -227,3 +227,123 @@ def test_count_single_file_with_allowed_list():
             assert 'key2,1' in content
             assert 'key3' not in content
 
+def test_count_with_config_file():
+    """Test that count command loads and uses config file correctly"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create config file
+        config_file = os.path.join(temp_dir, 'config.toml')
+        with open(config_file, 'w') as f:
+            f.write("""[count]
+sep = ";"
+detailed = true
+downsample = 0.5
+random_seed = 42
+""")
+        
+        # Create test input file
+        input_file = os.path.join(temp_dir, 'test.csv')
+        with open(input_file, 'w') as f:
+            f.write('protospacer;umi3_umi5_corrected\n')
+            f.write('key1;bar1\n')
+            f.write('key1;bar2\n')
+            f.write('key2;bar3\n')
+        
+        # Create output file path
+        output_file = os.path.join(temp_dir, 'output.csv')
+        
+        args = [
+            'count',
+            '--config', config_file,
+            '--input-file', input_file,
+            '--output-file', output_file,
+            '--barcode-column', 'umi3_umi5_corrected',
+            '--key-column', 'protospacer'
+        ]
+        cli = Cli(args)
+        cli.run()
+        
+        # Verify config values were applied
+        assert cli.args.sep == ';'
+        assert cli.args.detailed is True
+        assert cli.args.downsample == 0.5
+        assert cli.args.random_seed == 42   
+
+def test_count_config_override():
+    """Test that command line arguments override config file settings"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create config file
+        config_file = os.path.join(temp_dir, 'config.toml')
+        with open(config_file, 'w') as f:
+            f.write("""[count]
+sep = ";"
+detailed = true
+downsample = 0.5
+random_seed = 42
+""")
+        
+        # Create test input file
+        input_file = os.path.join(temp_dir, 'test.csv')
+        with open(input_file, 'w') as f:
+            f.write('protospacer|umi3_umi5_corrected\n')
+            f.write('key1|bar1\n')
+            f.write('key1|bar2\n')
+            f.write('key2|bar3\n')
+        
+        # Create output file path
+        output_file = os.path.join(temp_dir, 'output.csv')
+        
+        args = [
+            'count',
+            '--config', config_file,
+            '--input-file', input_file,
+            '--output-file', output_file,
+            '--barcode-column', 'umi3_umi5_corrected',
+            '--key-column', 'protospacer',
+            '--sep', '|',  # Override config
+            '--downsample', '0.25'  # Override config
+        ]
+        cli = Cli(args)
+        cli.run()
+        
+        # Verify command line args took precedence
+        assert cli.args.sep == '|'
+        assert cli.args.downsample == 0.25
+        assert cli.args.detailed is True  # This one should come from config
+        assert cli.args.random_seed == 42  # This one should come from config
+        
+def test_count_nonexistent_config():
+    """Test that count command handles nonexistent config file"""
+    args = [
+        'count',
+        '--config', 'nonexistent.toml',
+        '--input-file', 'test_input.csv',
+        '--output-file', 'test_output.csv',
+        '--barcode-column', 'umi3_umi5_corrected',
+        '--key-column', 'protospacer'
+    ]
+    cli = Cli(args)
+    with pytest.raises(ValueError, match="Configuration file not found"):
+        cli.run()
+
+def test_count_invalid_config_section():
+    """Test that count command handles config file with invalid section"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create config file with wrong section name
+        config_file = os.path.join(temp_dir, 'config.toml')
+        with open(config_file, 'w') as f:
+            f.write("""[wrong_section]
+sep = ";"
+""")
+        
+        args = [
+            'count',
+            '--config', config_file,
+            '--input-file', 'test_input.csv',
+            '--output-file', 'test_output.csv',
+            '--barcode-column', 'umi3_umi5_corrected',
+            '--key-column', 'protospacer'
+        ]
+        cli = Cli(args)
+        # Should still work, just using defaults for count-specific settings
+        assert cli.args.sep == ','  # Default value
+

@@ -212,3 +212,127 @@ def test_collapse_single_file_basic():
             assert 'AAT,CCC' in content
             assert 'GGG,TTT' in content
 
+def test_collapse_with_config_file():
+    """Test that collapse command loads and uses config file correctly"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create config file
+        config_file = os.path.join(temp_dir, 'config.toml')
+        with open(config_file, 'w') as f:
+            f.write("""[collapse]
+method = "cluster"
+mismatches = 3
+sep = ";"
+""")
+        
+        # Create test input file
+        input_file = os.path.join(temp_dir, 'test.csv')
+        with open(input_file, 'w') as f:
+            f.write('umi3;umi5\n')
+            f.write('AAA;CCC\n')
+            f.write('AAT;CCC\n')
+            f.write('GGG;TTT\n')
+        
+        # Create output file path
+        output_file = os.path.join(temp_dir, 'output.csv')
+        
+        args = [
+            'collapse',
+            '--config', config_file,
+            '--input-file', input_file,
+            '--output-file', output_file,
+            '--columns', 'umi3,umi5'
+        ]
+        cli = Cli(args)
+        cli.run()
+        
+        # Verify config values were applied
+        assert cli.args.method == 'cluster'
+        assert cli.args.mismatches == 3
+        assert cli.args.sep == ';'
+        
+        # Verify output file exists and has correct content
+        assert os.path.exists(output_file)
+        with open(output_file, 'r') as f:
+            content = f.read()
+            assert 'umi3;umi5;umi3_umi5_corrected' in content
+
+def test_collapse_config_override():
+    """Test that command line arguments override config file settings"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create config file
+        config_file = os.path.join(temp_dir, 'config.toml')
+        with open(config_file, 'w') as f:
+            f.write("""[collapse]
+method = "cluster"
+mismatches = 3
+sep = ";"
+""")
+        
+        # Create test input file
+        input_file = os.path.join(temp_dir, 'test.csv')
+        with open(input_file, 'w') as f:
+            f.write('umi3;umi5\n')  # Using semicolon separator to match config
+            f.write('AAA;CCC\n')
+            f.write('AAT;CCC\n')
+            f.write('GGG;TTT\n')
+        
+        # Create output file path
+        output_file = os.path.join(temp_dir, 'output.csv')
+        
+        args = [
+            'collapse',
+            '--config', config_file,
+            '--input-file', input_file,
+            '--output-file', output_file,
+            '--columns', 'umi3,umi5',
+            '--method', 'adjacency',  # Override config
+            '--mismatches', '1'  # Override config
+        ]
+        cli = Cli(args)
+        cli.run()
+        
+        # Verify command line args took precedence
+        assert cli.args.method == 'adjacency'
+        assert cli.args.mismatches == 1
+        assert cli.args.sep == ';'  # This one should come from config
+        
+        # Verify output file exists and has correct content
+        assert os.path.exists(output_file)
+        with open(output_file, 'r') as f:
+            content = f.read()
+            assert 'umi3;umi5;umi3_umi5_corrected' in content
+
+def test_collapse_nonexistent_config():
+    """Test that collapse command handles nonexistent config file"""
+    args = [
+        'collapse',
+        '--config', 'nonexistent.toml',
+        '--input-file', 'test_input.csv',
+        '--output-file', 'test_output.csv',
+        '--columns', 'umi3,umi5'
+    ]
+    cli = Cli(args)
+    with pytest.raises(ValueError, match="Configuration file not found"):
+        cli.run()
+
+def test_collapse_invalid_config_section():
+    """Test that collapse command handles config file with invalid section"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create config file with wrong section name
+        config_file = os.path.join(temp_dir, 'config.toml')
+        with open(config_file, 'w') as f:
+            f.write("""[wrong_section]
+method = "cluster"
+""")
+        
+        args = [
+            'collapse',
+            '--config', config_file,
+            '--input-file', 'test_input.csv',
+            '--output-file', 'test_output.csv',
+            '--columns', 'umi3,umi5'
+        ]
+        cli = Cli(args)
+        # Should still work, just using defaults for collapse-specific settings
+        assert cli.args.method == 'directional'  # Default value
+

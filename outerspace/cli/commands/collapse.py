@@ -44,6 +44,8 @@ class CollapseCommand(BaseCommand):
             help='Clustering method to use (default: directional)')
         parser.add_argument('--metrics',
             help='Output YAML file for metrics')
+        parser.add_argument('--config',
+            help='TOML configuration file containing command settings')
         return parser
 
     def _parse_columns(self, columns_str: str) -> List[str]:
@@ -149,6 +151,19 @@ class CollapseCommand(BaseCommand):
 
     def run(self):
         """Run the collapse command"""
+        # Load config if provided
+        if self.args.config:
+            self._load_config(self.args.config)
+        
+        # Merge config and args with defaults
+        defaults = {
+            'mismatches': 2,
+            'sep': ',',
+            'method': 'directional',
+            'row_limit': None
+        }
+        self._merge_config_and_args(defaults)
+        
         # Validate required arguments
         if not self.args.columns:
             raise ValueError("Please provide columns to correct")

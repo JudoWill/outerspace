@@ -281,3 +281,148 @@ def test_pipeline_multi_file_workflow(temp_workspace):
     # Verify metrics files
     assert os.path.exists(os.path.join(temp_workspace, 'results/collapsed/collapse_metrics.yaml'))
     assert os.path.exists(os.path.join(temp_workspace, 'results/counted/count_metrics.yaml'))
+
+def test_full_workflow_with_config(temp_workspace):
+    """Test the full workflow using a master TOML config file"""
+    # Create master config file
+    config_file = os.path.join(temp_workspace, 'master_config.toml')
+    with open(config_file, 'w') as f:
+        f.write("""[findseq]
+# No specific config needed for findseq
+
+[collapse]
+mismatches = 2
+method = "directional"
+sep = ","
+columns = "UMI_5prime,UMI_3prime"
+
+[count]
+barcode_column = "UMI_5prime_UMI_3prime_corrected"
+key_column = "protospacer"
+sep = ","
+detailed = false
+""")
+
+    # Step 1: Run findseq commands for each sample
+    pairs = [('reads/409-4_S1_L002_R1_001.fastq.gz', 'reads/409-4_S1_L002_R2_001.fastq.gz', 'shuffle'),
+             ('reads/2-G1L9-M1_S9_L001_R1_001.fastq.gz', 'reads/2-G1L9-M1_S9_L001_R2_001.fastq.gz', 'M1-lib'),
+             ('reads/2-G1L9-M2_S12_L001_R1_001.fastq.gz', 'reads/2-G1L9-M2_S12_L001_R2_001.fastq.gz', 'M2-lib')]
+
+    for read1, read2, output_name in pairs:
+        findseq_args = [
+            'findseq',
+            os.path.join(temp_workspace, 'grnaquery.cfg'),
+            '-1', os.path.join(temp_workspace, read1),
+            '-2', os.path.join(temp_workspace, read2),
+            '-o', os.path.join(temp_workspace, f'results/extracted/{output_name}.csv')
+        ]
+        cli = Cli(findseq_args)
+        cli.run()
+
+        # Verify findseq output
+        assert os.path.exists(os.path.join(temp_workspace, f'results/extracted/{output_name}.csv'))
+
+    # Step 2: Run collapse command with config
+    collapse_args = [
+        'collapse',
+        '--config', config_file,
+        '--input-dir', os.path.join(temp_workspace, 'results/extracted'),
+        '--output-dir', os.path.join(temp_workspace, 'results/collapsed'),
+        '--columns', 'UMI_5prime,UMI_3prime'  # Still required as it's a required argument
+    ]
+    cli = Cli(collapse_args)
+    cli.run()
+
+    # Verify collapse output
+    for output_name in ['shuffle', 'M1-lib', 'M2-lib']:
+        assert os.path.exists(os.path.join(temp_workspace, f'results/collapsed/{output_name}.csv'))
+
+    # Step 3: Run count command with config
+    count_args = [
+        'count',
+        '--config', config_file,
+        '--input-dir', os.path.join(temp_workspace, 'results/collapsed'),
+        '--output-dir', os.path.join(temp_workspace, 'results/counted'),
+        '--barcode-column', 'UMI_5prime_UMI_3prime_corrected',  # Still required as it's a required argument
+        '--key-column', 'protospacer'  # Still required as it's a required argument
+    ]
+    cli = Cli(count_args)
+    cli.run()
+
+    # Verify count output
+    for output_name in ['shuffle', 'M1-lib', 'M2-lib']:
+        assert os.path.exists(os.path.join(temp_workspace, f'results/counted/{output_name}.csv'))
+
+    # Verify config values were applied correctly
+    # For collapse
+    collapse_cli = Cli(collapse_args)
+    assert collapse_cli.args.mismatches == 2
+    assert collapse_cli.args.method == 'directional'
+    assert collapse_cli.args.sep == ','
+
+    # For count
+    count_cli = Cli(count_args)
+    assert count_cli.args.sep == ','
+    assert count_cli.args.detailed is False
+
+def test_pipeline_multi_file_workflow_with_config(temp_workspace):
+    """Test the pipeline command processing multiple files using a master TOML config file"""
+    # Create master config file
+    config_file = os.path.join(temp_workspace, 'master_config.toml')
+    with open(config_file, 'w') as f:
+        f.write("""[pipeline]
+mismatches = 2
+method = "directional"
+barcode_columns = "UMI_5prime,UMI_3prime"
+key_column = "protospacer"
+sep = ","
+metrics = true
+
+[collapse]
+mismatches = 2
+method = "directional"
+sep = ","
+columns = "UMI_5prime,UMI_3prime"
+
+[count]
+barcode_column = "UMI_5prime_UMI_3prime_corrected"
+key_column = "protospacer"
+sep = ","
+detailed = false
+""")
+
+    # Run pipeline for multiple samples
+    pipeline_args = [
+        'pipeline',
+        os.path.join(temp_workspace, 'grnaquery.cfg'),
+        '--config', config_file,
+        '--input-dir', os.path.join(temp_workspace, 'reads'),
+        '--output-dir', os.path.join(temp_workspace, 'results')
+    ]
+    cli = Cli(pipeline_args)
+    cli.run()
+
+    # Verify config values were applied correctly
+    assert cli.args.mismatches == 2
+    assert cli.args.method == 'directional'
+    assert cli.args.barcode_columns == 'UMI_5prime,UMI_3prime'
+    assert cli.args.key_column == 'protospacer'
+    assert cli.args.sep == ','
+    assert cli.args.metrics is True
+
+    # Verify outputs for all samples
+    expected_files = [
+        '409-4_S1_L002_R1_001p.csv',
+        '2-G1L9-M1_S9_L001_R1_001p.csv',
+        '2-G1L9-M2_S12_L001_R1_001p.csv'
+    ]
+    
+    for filename in expected_files:
+        assert os.path.exists(os.path.join(temp_workspace, f'results/extracted/{filename}'))
+        assert os.path.exists(os.path.join(temp_workspace, f'results/collapsed/{filename}'))
+        assert os.path.exists(os.path.join(temp_workspace, f'results/counted/{filename}'))
+    
+    # Verify metrics files
+    assert os.path.exists(os.path.join(temp_workspace, 'results/collapsed/collapse_metrics.yaml'))
+    assert os.path.exists(os.path.join(temp_workspace, 'results/counted/count_metrics.yaml'))
+
