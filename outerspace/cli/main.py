@@ -55,14 +55,6 @@ class Cli:
         }
         return command_map[self.args.command](self.args)
 
-    def _prt_args(self):
-        """Print the command line arguments"""
-        print("ARGS:", end=' ')
-        for key, value in vars(self.args).items():
-            if value is not None:
-                print(f"{key}={value}", end=', ')
-        print()
-
     def run(self):
         """Run the selected command"""
         if not self.command:

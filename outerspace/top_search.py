@@ -18,8 +18,6 @@ class TopSearch:
         self.srch = Search(regxdct['regxlist'])
         self.srch1 = Search(regxdct['regxlist1'])
         self.srch2 = Search(regxdct['regxlist2'])
-        print(f'captured names for read1: {self.srch1.capturednames}')
-        print(f'captured names for read2: {self.srch2.capturednames}')
 
     def get_capture_from_readpair(self, read1, read2):
         """Obtaining captured pattern from both reads"""
@@ -63,12 +61,8 @@ class TopSearch:
 
     @staticmethod
     def _check_readids(read1_id, read2_id):
-        if read1_id == read2_id:
-            return True
-        # TODO: Write this to a log file
-        # TODO: Summarize mismatched reads to STDOUT
-        print(f'ERROR: read1 id not equal to read2 id \n read1: {read1_id}\n read2: {read2_id}')
-        return False
+        assert read1_id == read2_id, f'ERROR: read1 id not equal to read2 id \n read1: {read1_id}\n read2: {read2_id}'
+        return True
 
     # read_desc is actual name given
     def get_objsearch(self, read_desc):
