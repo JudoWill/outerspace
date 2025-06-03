@@ -2,11 +2,10 @@
 
 __author__ = "WND"
 __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
-__email__ = "wnd@example.com"
+__email__ = "wnd22@drexel.edu"
 __license__ = "MIT"
 __version__ = "0.0.1"
 
-import os
 from outerspace.cli.main import Cli
 
 # This is a common pattern in Snakemake wrappers
@@ -15,6 +14,7 @@ if "snakemake" not in locals():
 
 # Get input and output files
 input_file = snakemake.input[0]
+toml_file = snakemake.input.get("toml", None)
 output_file = snakemake.output[0]
 
 # Get parameters with defaults
@@ -36,6 +36,9 @@ args = [
     '--key-column', key_column,
     '--sep', sep
 ]
+
+if toml_file:
+    args.extend(['--config', toml_file])
 
 if detailed:
     args.append('--detailed')

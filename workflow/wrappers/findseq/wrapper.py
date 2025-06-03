@@ -2,11 +2,10 @@
 
 __author__ = "WND"
 __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
-__email__ = "wnd@example.com"
+__email__ = "wnd22@drexel.edu"
 __license__ = "MIT"
 __version__ = "0.0.1"
 
-import os
 from outerspace.cli.main import Cli
 
 # This is a common pattern in Snakemake wrappers

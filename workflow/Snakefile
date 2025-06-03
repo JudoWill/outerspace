@@ -35,16 +35,9 @@ rule findseq:
         f'file:{WORKFLOW_DIR}/wrappers/findseq'
 
 
-def get_countable_file(wildcards):
-    sample = wildcards.sample
-    if config.get('collapse_columns', None):
-        return 'condensed/{sample}.csv'.format(sample=sample)
-    return 'extracted/{sample}.csv'.format(sample=sample)
-
-
 rule count:
     input:
-        csv = get_countable_file,
+        csv = 'collapsed/{sample}.csv',
         toml = get_toml_file
     output:
         'counts/{sample}.csv'
@@ -56,7 +49,7 @@ rule collapse:
         'extracted/{sample}.csv',
         toml = get_toml_file
     output:
-        'condensed/{sample}.csv'
+        'collapsed/{sample}.csv'
     wrapper:
         f'file:{WORKFLOW_DIR}/wrappers/collapse'
 
