@@ -5,8 +5,32 @@ WORKFLOW_DIR = Path(workflow.snakefile).parent
 
 configfile: 'config.yaml'
 
-SAMPLES = pd.read_csv(config['samples']).set_index('sample_name')
-print(SAMPLES)
+if 'samples' in config:
+    SAMPLES = pd.read_csv(config['samples']).set_index('sample_name')
+elif 'direc' in config:
+    # List all files in directory
+    direc = Path(config['direc'])
+    paired = config.get('paired', False)
+    
+    files = list(direc.glob('*'))
+    samples_dict = {}
+    
+    if paired:
+        # Group files by sample name (assuming _R1/_R2 naming)
+        for f in files:
+            if '_R1' in f.name:
+                sample = f.name.split('_R1')[0]
+                r2 = f.parent / f.name.replace('_R1', '_R2')
+                if r2.exists():
+                    samples_dict[sample] = {'reads': f'{f}|{r2}'}
+    else:
+        # Each file is a separate sample
+        for f in files:
+            sample = f.stem
+            samples_dict[sample] = {'reads': str(f)}
+            
+    SAMPLES = pd.DataFrame.from_dict(samples_dict, orient='index')
+
 
 rule count_all:
     input:
