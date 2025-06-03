@@ -6,4 +6,4 @@ dependencies:
   - python>=3.8
   - pip
   - pip:
-    - git+ssh://git@10.248.148.109:3022/willdampier/outerspace.git@snakemakify.148.109:3022/willdampier/outerspace.git@snakemakify
+    - git+ssh://git@10.248.148.109:3022/willdampier/outerspace.git@snakemakify
