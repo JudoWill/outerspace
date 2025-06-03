@@ -41,19 +41,7 @@ class ReadPairedFastq:
             # if doing break and more than 10 reads then breaking
             if do_break and total > 10:
                 break
-        ####        foward_umi = get_capture_from_read(forward_reg, read1)
-        ####        protospacer = get_capture_from_read(proto_reg, read1)
-        ####        reverse_umi = get_capture_from_read(reverse_reg, read2)
-        ####
-        ####        if foward_umi and protospacer and reverse_umi:
-        ####            yield {'forward_umi': foward_umi,
-        ####                   'protospacer': protospacer,
-        ####                   'reverse_umi': reverse_umi,
-        ####                   'read_id': read1.id
-        ####                  }
-        ####        else:
-        ####            missed += 1
-        print(f'Total sequences: {total:,}\nMissed sequences: {missed}')
+        
 
     @staticmethod
     def _process_matches(r1_2, read, readnum, names, matches):
@@ -101,8 +89,7 @@ class ReadPairedFastq:
             # dobreak is passing whatever the value is that is passed into function
             stream = self._extract_from_paired_reads(path1, path2, do_break)
             writer.writerows(stream)
-            print(f' FILE WRITTEN: {outpath}')
-            #TODO: Add print statement of how many total reads processed and how may did not have pattern
+            #TODO: Add logging statement of how many total reads processed and how may did not have pattern
 ##
 ## ####forward_umi_reg = regex.compile('(?P<UMI>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}', flags=regex.BESTMATCH)
 ## ####protospacer_reg = regex.compile('(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?:GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}',

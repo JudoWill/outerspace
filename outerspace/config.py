@@ -11,9 +11,6 @@ from tomlkit import array
 from tomlkit.toml_file import TOMLFile
 
 
-
-print(f'CCCCCCCCC config({__name__})')
-
 # Format taken from TOML Quickstart Kit
 class Cfg:
     """configuration for defining motifs"""
@@ -27,7 +24,6 @@ class Cfg:
     #file does not need to be given name
     def read_file(self):
         """Read the file specified"""
-        print(f'  READ: {self.filename}')
         return TOMLFile(self.filename).read() if self.filename is not None else None
 
 
@@ -36,9 +32,6 @@ class Cfg:
         doc = self.get_doc_default()
         if self.filename is not None:
             TOMLFile(self.filename).write(doc)
-            print(f'  WROTE: {self.filename}')
-        else:
-            print('  PLEASE PROVIDE FILE NAME IN ORDER TO WRITE')
         return doc
 
 
