@@ -1,36 +1,38 @@
 import pandas as pd
+from pathlib import Path
+
+WORKFLOW_DIR = Path(workflow.snakefile).parent
 
 configfile: 'config.yaml'
 
 SAMPLES = pd.read_csv(config['samples']).set_index('sample_name')
+print(SAMPLES)
 
 rule count_all:
     input:
         expand('counts/{sample}.csv', sample=SAMPLES.index)
 
-rule extract_all:
+rule findseq_all:
     input:
         expand('extracted/{sample}.csv', sample=SAMPLES.index)
 
 
 def get_input_files(wildcards):
     sample = wildcards.sample
-    return SAMPLES.loc[sample, 'reads']
+    return SAMPLES.loc[sample, 'reads'].split('|')
 
 def get_toml_file(wildcards):
     sample = wildcards.sample
     return SAMPLES.loc[sample].get('toml', config['toml'])
 
-rule extract:
+rule findseq:
     input:
         reads = get_input_files,
         toml = get_toml_file
     output:
         'extracted/{sample}.csv'
-    params:
-        pass
-    wrappers:
-        'wrappers/extract'
+    wrapper:
+        f'file:{WORKFLOW_DIR}/wrappers/findseq'
 
 
 def get_countable_file(wildcards):
@@ -46,19 +48,15 @@ rule count:
         toml = get_toml_file
     output:
         'counts/{sample}.csv'
-    params:
-        pass
-    wrappers:
-        'wrappers/count'
+    wrapper:
+        f'file:{WORKFLOW_DIR}/wrappers/count'
 
-rule condense:
+rule collapse:
     input:
         'extracted/{sample}.csv',
         toml = get_toml_file
     output:
         'condensed/{sample}.csv'
-    params:
-        pass
-    wrappers:
-        'wrappers/condense'
+    wrapper:
+        f'file:{WORKFLOW_DIR}/wrappers/collapse'
 
