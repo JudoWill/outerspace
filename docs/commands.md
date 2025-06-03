@@ -11,13 +11,13 @@ Extracts sequences from FASTQ files based on configuration patterns. Features:
 - Error handling for failed read pairs
 
 ```bash
-usage: outerspace findseq [-h] [config_filename] [-1 READ1_FILENAME] [-2 READ2_FILENAME] [-o OUTPUT_FILENAME]
+usage: outerspace findseq [-h] config [-1 READ1_FILENAME] [-2 READ2_FILENAME] [-o OUTPUT_FILENAME]
                  [--fastqfiles FASTQFILES [FASTQFILES ...]] [--outdir OUTDIR]
 
 Extract sequences from FASTQ files based on configuration patterns
 
 positional arguments:
-  config_filename       Configuration file with search patterns
+  config                Configuration file with search patterns
 
 options:
   -h, --help            show this help message and exit

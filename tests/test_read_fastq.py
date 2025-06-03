@@ -13,7 +13,6 @@ from outerspace.top_search import TopSearch
 from outerspace.read_fastq import ReadPairedFastq
 from tests.pkgtest.utils import mk_outdir
 from tests.pkgtest.utils import get_filename
-print(f'TTTTTTTT test_search({__name__})')
 
 
 def test_read_fastq():
@@ -34,10 +33,9 @@ def test_read_fastq():
     # Reads configuration files and loads that info into dictionary and delivers that back to you
     cfg = Cfg(cfg_filename)
     doc = cfg.read_file()
-    print(doc)
 
     # Searching...
-    search = TopSearch(doc)
+    search = TopSearch(doc['findseq'])
     
 
     assert search.srch.regxlist == []

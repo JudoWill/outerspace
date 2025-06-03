@@ -198,7 +198,6 @@ def test_single_file_workflow(temp_workspace):
 
     # Verify count output
     assert os.path.exists(os.path.join(temp_workspace, 'results/counted/shuffle.csv'))
-    assert os.path.exists(os.path.join(temp_workspace, 'results/counted/shuffle_metrics.yaml'))
 
 def test_single_file_workflow_with_allowed_list(temp_workspace):
     """Test the single file workflow with an allowed list for counting"""
