@@ -18,7 +18,7 @@ toml_file = snakemake.input.get("toml", None)
 output_file = snakemake.output[0]
 
 # Get parameters with defaults
-column = snakemake.params.get("column", "counts")
+column = snakemake.params.get("column", "count")
 count_column = snakemake.params.get("count_column", None)
 scale = snakemake.params.get("scale", None)
 sep = snakemake.params.get("sep", ",")
