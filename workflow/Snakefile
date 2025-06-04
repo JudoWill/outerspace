@@ -32,6 +32,11 @@ elif 'direc' in config:
     SAMPLES = pd.DataFrame.from_dict(samples_dict, orient='index')
 
 
+rule gini_all:
+    input:
+        expand('gini/{sample}.csv', sample=SAMPLES.index)
+
+
 rule count_all:
     input:
         expand('counts/{sample}.csv', sample=SAMPLES.index)
@@ -77,3 +82,12 @@ rule collapse:
     wrapper:
         f'file:{WORKFLOW_DIR}/wrappers/collapse'
 
+
+rule gini:
+    input:
+        csv = 'counts/{sample}.csv',
+        toml = get_toml_file
+    output:
+        'gini/{sample}.csv'
+    wrapper:
+        f'file:{WORKFLOW_DIR}/wrappers/gini'

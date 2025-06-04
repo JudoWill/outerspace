@@ -155,12 +155,12 @@ class CountCommand(BaseCommand):
         with open(filepath, 'w', newline='') as f:
             if detailed:
                 writer = csv.writer(f, delimiter=sep)
-                writer.writerow(['key', 'unique_barcodes', 'barcode_count'])
+                writer.writerow(['key', 'unique_barcodes', 'count'])
                 for key, barcodes in sorted(barcodes_by_key.items()):
                     writer.writerow([key, ','.join(sorted(barcodes)), len(barcodes)])
             else:
                 writer = csv.writer(f, delimiter=sep)
-                writer.writerow(['key', 'barcode_count'])
+                writer.writerow(['key', 'count'])
                 for key, barcodes in sorted(barcodes_by_key.items()):
                     writer.writerow([key, len(barcodes)])
 
