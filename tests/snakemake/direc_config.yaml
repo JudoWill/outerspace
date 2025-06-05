@@ -1,6 +1,0 @@
-# Basic testing config
-# paths should be relative to tests/snakemake/
-
-direc: '../data/'
-paired: True
-toml: 'grnaquery.cfg'

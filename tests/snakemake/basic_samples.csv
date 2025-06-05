@@ -1,4 +1,0 @@
-sample_name,reads
-M1_lib,../data/2-G1L9-M1_S9_L001_R1_001.fastq.gz|../data/2-G1L9-M1_S9_L001_R2_001.fastq.gz
-M2_lib,../data/2-G1L9-M2_S12_L001_R1_001.fastq.gz|../data/2-G1L9-M2_S12_L001_R2_001.fastq.gz
-shuffle,../data/409-4_S1_L002_R1_001.fastq.gz|../data/409-4_S1_L002_R2_001.fastq.gz

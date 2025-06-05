@@ -41,7 +41,8 @@ class ReadPairedFastq:
     def _iterate_reads(path):
         "Iterate reads from a gzipped or regular fastq files"
         # pyfastx automatically handles gzipped files
-        for read in pyfastx.Fastx(path, build_index=False):
+        
+        for read in pyfastx.Fastq(path, build_index=False):
             # Convert pyfastx read to a format compatible with existing code
             # pyfastx returns (name, sequence, quality) tuple
             yield Read(read[0], read[1], read[2])

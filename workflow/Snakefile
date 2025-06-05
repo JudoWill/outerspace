@@ -3,7 +3,8 @@ from pathlib import Path
 
 WORKFLOW_DIR = Path(workflow.snakefile).parent
 
-configfile: 'config.yaml'
+# Use config file from snakemake config if provided, otherwise use default
+configfile: config.get('config_file', 'config.yaml')
 
 if 'samples' in config:
     SAMPLES = pd.read_csv(config['samples']).set_index('sample_name')
@@ -39,11 +40,11 @@ rule gini_all:
 
 rule count_all:
     input:
-        expand('counts/{sample}.csv', sample=SAMPLES.index)
+        expand('count/{sample}.csv', sample=SAMPLES.index)
 
 rule findseq_all:
     input:
-        expand('extracted/{sample}.csv', sample=SAMPLES.index)
+        expand('findseq/{sample}.csv', sample=SAMPLES.index)
 
 
 def get_input_files(wildcards):
@@ -59,33 +60,33 @@ rule findseq:
         reads = get_input_files,
         toml = get_toml_file
     output:
-        'extracted/{sample}.csv'
+        'findseq/{sample}.csv'
     wrapper:
         f'file:{WORKFLOW_DIR}/wrappers/findseq'
 
 
 rule count:
     input:
-        csv = 'collapsed/{sample}.csv',
+        csv = 'collapse/{sample}.csv',
         toml = get_toml_file
     output:
-        'counts/{sample}.csv'
+        'count/{sample}.csv'
     wrapper:
         f'file:{WORKFLOW_DIR}/wrappers/count'
 
 rule collapse:
     input:
-        'extracted/{sample}.csv',
+        'findseq/{sample}.csv',
         toml = get_toml_file
     output:
-        'collapsed/{sample}.csv'
+        'collapse/{sample}.csv'
     wrapper:
         f'file:{WORKFLOW_DIR}/wrappers/collapse'
 
 
 rule gini:
     input:
-        csv = 'counts/{sample}.csv',
+        csv = 'count/{sample}.csv',
         toml = get_toml_file
     output:
         'gini/{sample}.csv'

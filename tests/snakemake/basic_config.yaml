@@ -1,5 +1,0 @@
-# Basic testing config
-# paths should be relative to tests/snakemake/
-
-samples: 'basic_samples.csv'
-toml: 'grnaquery.cfg'
