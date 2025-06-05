@@ -3,17 +3,15 @@
 __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
 __author__ = "SC Barrera"
 
-## ####from os.path import join
 from sys import exit as sys_exit
 import gzip
 from tqdm import tqdm
-from Bio import SeqIO
-
-## ####from itertools import islice
-## ####from Bio.Seq import reverse_complement
-## ####
-## ####import regex
+import pyfastx
 import csv
+from collections import namedtuple
+
+# Define Read as a namedtuple at module level
+Read = namedtuple('Read', ['id', 'seq', 'qual'])
 
 class ReadPairedFastq:
     """Reading in & parsing the fastq paired reads"""
@@ -22,7 +20,6 @@ class ReadPairedFastq:
 
     def _extract_from_paired_reads(self, file1, file2, do_break=False):
         """Actually reading & parsing the fastq paired reads from given files"""
-        #def extract_from_paired_reads(read1_path, read2_path, forward_reg, proto_reg, reverse_reg):
         total = 0
         missed = 0
 
@@ -32,8 +29,6 @@ class ReadPairedFastq:
             # topsearch is getting the capture from read1 and read2, calling it matches
             matches = topsearch.get_capture_from_readpair(read1,read2)
 
-            #function call, definition below for _process_matches
-            # self._process_matches(1, read1, total, names1, matches1)
             if matches:
                 yield matches
             else:
@@ -41,41 +36,22 @@ class ReadPairedFastq:
             # if doing break and more than 10 reads then breaking
             if do_break and total > 10:
                 break
-        
-
-    @staticmethod
-    def _process_matches(r1_2, read, readnum, names, matches):
-        pass
-
 
     @staticmethod
     def _iterate_reads(path):
         "Iterate reads from a gzipped or regular fastq files"
-
-        if path.endswith('.gz'):
-            with gzip.open(path, mode='rt') as handle:
-                for read in SeqIO.parse(handle, 'fastq'):
-                    yield read
-        else:
-            with open(path) as handle:
-                for read in SeqIO.parse(handle, 'fastq'):
-                    yield read
+        # pyfastx automatically handles gzipped files
+        for read in pyfastx.Fastx(path, build_index=False):
+            # Convert pyfastx read to a format compatible with existing code
+            # pyfastx returns (name, sequence, quality) tuple
+            yield Read(read[0], read[1], read[2])
 
     def _iterate_readpairs(self, path1, path2):
-        #TODO: If file is not a gzip file - error message should include filename
         for r1, r2 in zip(self._iterate_reads(path1), self._iterate_reads(path2)):
             yield r1, r2
-## ####def get_capture_from_read(reg_exp, read):
-## ####
-## ####    sequence = str(read.seq)
-## ####    result = reg_exp.findall(sequence)
-## ####
-## ####    if len(result) == 1:
-## ####        return result[0]
-## ####
-    # Function takes headers  and writes them
+
     def process_paired_read_file(self, outpath, path1, path2, do_break=False):
-        """Function takes headers  and writes them"""
+        """Function takes headers and writes them"""
         fieldnames = self.topsearch.get_names_readpair()
         if not fieldnames:
             # TODO: want to make log file with various mesages for ppl
@@ -90,14 +66,3 @@ class ReadPairedFastq:
             stream = self._extract_from_paired_reads(path1, path2, do_break)
             writer.writerows(stream)
             #TODO: Add logging statement of how many total reads processed and how may did not have pattern
-##
-## ####forward_umi_reg = regex.compile('(?P<UMI>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}', flags=regex.BESTMATCH)
-## ####protospacer_reg = regex.compile('(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?:GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}',
-## ####                                flags=regex.BESTMATCH)
-## ####
-## ####back_umi_forward = 'gtgtgtcagttagggtgtggaa'.upper()
-## ####back_umi_rc = reverse_complement(back_umi_forward)
-## ####
-## ####reverse_umi_reg = regex.compile(f'(?P<UMI>.{{8}})(?:{back_umi_rc}){{s<=4}}', flags=regex.BESTMATCH)
-## ####
-## ##### Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.

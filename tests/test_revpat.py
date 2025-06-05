@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Test uppercase and reverse complement a nuceotide pattern"""
 
-import Bio
-from Bio.Seq import reverse_complement
-
+def reverse_complement(seq):
+    """Reverse complement a DNA sequence"""
+    complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A',
+                 'a': 't', 'c': 'g', 'g': 'c', 't': 'a'}
+    return ''.join(complement.get(base, base) for base in reversed(seq))
 
 def test_revpat():
     """Test uppercase and reverse complement a nuceotide pattern"""
