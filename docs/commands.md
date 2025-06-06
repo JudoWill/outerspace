@@ -1,6 +1,6 @@
 # Commands
 
-Below are a proposed set of commands for `outerspace` based on the usages described.
+Below are the commands available in `outerspace`:
 
 ### `outerspace findseq`
 Extracts sequences from FASTQ files based on configuration patterns. Features:
@@ -13,6 +13,8 @@ Extracts sequences from FASTQ files based on configuration patterns. Features:
 ```bash
 usage: outerspace findseq [-h] config [-1 READ1_FILENAME] [-2 READ2_FILENAME] [-o OUTPUT_FILENAME]
                  [--fastqfiles FASTQFILES [FASTQFILES ...]] [--outdir OUTDIR]
+                 [--read_regxlist READ_REGXLIST] [--read1_regxlist READ1_REGXLIST]
+                 [--read2_regxlist READ2_REGXLIST]
 
 Extract sequences from FASTQ files based on configuration patterns
 
@@ -30,6 +32,12 @@ options:
   --fastqfiles FASTQFILES [FASTQFILES ...]
                         Directory containing paired FASTQ read files
   --outdir OUTDIR       Output directory for processed files
+  --read_regxlist READ_REGXLIST
+                        Regular expression list for either read
+  --read1_regxlist READ1_REGXLIST
+                        Regular expression list for read 1
+  --read2_regxlist READ2_REGXLIST
+                        Regular expression list for read 2
 ```
 
 ### `outerspace collapse`
@@ -45,7 +53,7 @@ usage: outerspace collapse [-h] (--input-file INPUT_FILE | --input-dir INPUT_DIR
                  (--output-file OUTPUT_FILE | --output-dir OUTPUT_DIR)
                  --columns COLUMNS [--mismatches MISMATCHES] [--sep SEP]
                  [--row-limit ROW_LIMIT] [--method {cluster,adjacency,directional}]
-                 [--metrics METRICS]
+                 [--metrics METRICS] [--config CONFIG]
 
 Correct barcodes in CSV files using UMI-tools clustering
 
@@ -68,6 +76,7 @@ options:
   --method {cluster,adjacency,directional}
                         Clustering method to use (default: directional)
   --metrics METRICS     Output YAML file for metrics
+  --config CONFIG       TOML configuration file containing command settings
 ```
 
 ### `outerspace count`
@@ -85,35 +94,38 @@ usage: outerspace count [-h] (--input-file INPUT_FILE | --input-dir INPUT_DIR)
                --barcode-column BARCODE_COLUMN --key-column KEY_COLUMN
                [--sep SEP] [--row-limit ROW_LIMIT] [--allowed-list ALLOWED_LIST]
                [--detailed] [--downsample DOWNSAMPLE] [--random-seed RANDOM_SEED]
-               [--metrics METRICS]
+               [--metrics METRICS] [--config CONFIG]
 
 Count unique barcodes per key value in CSV files
 
 options:
   -h, --help            show this help message and exit
-  --input-file INPUT_FILE
+  -i INPUT_FILE, --input-file INPUT_FILE
                         Input CSV file to process
-  --input-dir INPUT_DIR
+  -d INPUT_DIR, --input-dir INPUT_DIR
                         Input directory containing CSV files to process
-  --output-file OUTPUT_FILE
+  -o OUTPUT_FILE, --output-file OUTPUT_FILE
                         Output CSV file for barcode counts
-  --output-dir OUTPUT_DIR
+  -D OUTPUT_DIR, --output-dir OUTPUT_DIR
                         Output directory for barcode counts
-  --barcode-column BARCODE_COLUMN
+  -b BARCODE_COLUMN, --barcode-column BARCODE_COLUMN
                         Column containing barcodes
-  --key-column KEY_COLUMN
+  -k KEY_COLUMN, --key-column KEY_COLUMN
                         Column to group by
-  --sep SEP             CSV separator (default: ',')
-  --row-limit ROW_LIMIT
+  -s SEP, --sep SEP     CSV separator (default: ',')
+  -l ROW_LIMIT, --row-limit ROW_LIMIT
                         Process only the first N rows (for testing)
-  --allowed-list ALLOWED_LIST
+  -a ALLOWED_LIST, --allowed-list ALLOWED_LIST
                         Text file containing allowed keys (one per line)
-  --detailed            Include barcode lists in output (default: False)
+  --detailed            Include barcode lists in output
   --downsample DOWNSAMPLE
                         Randomly sample reads with probability between 0 and 1
   --random-seed RANDOM_SEED
                         Random seed for downsampling
-  --metrics METRICS     Output YAML file for metrics
+  -m METRICS, --metrics METRICS
+                        Output YAML file for metrics
+  -c CONFIG, --config CONFIG
+                        YAML configuration file for command
 ```
 
 ### `outerspace gini`
@@ -126,6 +138,7 @@ Calculates Gini coefficient from counts in a CSV column. Features:
 ```bash
 usage: outerspace gini [-h] input_file --column COLUMN [--count-column COUNT_COLUMN]
               [--scale SCALE] [--sep SEP] [--allowed-list ALLOWED_LIST]
+              [--config CONFIG]
 
 Calculate Gini coefficient from counts in a CSV column
 
@@ -134,49 +147,19 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  --column COLUMN       Column to calculate Gini coefficient from
+  -c COLUMN, --column COLUMN
+                        Column to calculate Gini coefficient from
   --count-column COUNT_COLUMN
                         Column containing pre-counted values
   --scale SCALE         Scale factor for normalized values (e.g., if normalized to mean=1)
   --sep SEP             CSV separator (default: ',')
   --allowed-list ALLOWED_LIST
                         Text file containing allowed values (one per line)
-```
-
-### `outerspace visualize`
-Creates visualizations of barcode counts from CSV files. Features:
-- Histogram generation
-- Configurable bins and scales
-- Customizable titles and labels
-- Log scale support
-- Multiple output formats
-- Statistical summary overlay
-
-```bash
-usage: outerspace visualize [-h] input_dir output_dir [--sep SEP] [--bins BINS]
-                   [--title-prefix TITLE_PREFIX] [--xlabel XLABEL]
-                   [--ylabel YLABEL] [--log-scale] [--format FORMAT]
-
-Visualize barcode counts from CSV files
-
-positional arguments:
-  input_dir             Input directory containing CSV files with barcode counts
-  output_dir            Output directory for visualization plots
-
-options:
-  -h, --help            show this help message and exit
-  --sep SEP             CSV separator (default: ',')
-  --bins BINS           Number of histogram bins (default: 50)
-  --title-prefix TITLE_PREFIX
-                        Prefix for plot titles (default: filename)
-  --xlabel XLABEL       X-axis label (default: Number of Unique Barcodes)
-  --ylabel YLABEL       Y-axis label (default: Count)
-  --log-scale           Use log scale for y-axis
-  --format FORMAT       Output image format (default: png)
+  --config CONFIG       TOML configuration file containing command settings
 ```
 
 ### `outerspace pipeline`
-A wrapper to complete all of the steps in a single command. Features:
+Runs the complete OUTERSPACE pipeline using Snakemake. Features:
 - Automated processing of multiple FASTQ files
 - Configurable barcode correction parameters
 - Optional metrics generation
@@ -184,33 +167,16 @@ A wrapper to complete all of the steps in a single command. Features:
 - Error handling
 
 ```bash
-usage: outerspace pipeline [-h] config_file --input-dir INPUT_DIR --output-dir OUTPUT_DIR
-                 [--allowed-list ALLOWED_LIST] [--mismatches MISMATCHES]
-                 [--method {cluster,adjacency,directional}]
-                 [--barcode-columns BARCODE_COLUMNS] [--key-column KEY_COLUMN]
-                 [--sep SEP] [--metrics]
+usage: outerspace pipeline [-h] config_file snakemake_config [--snakemake-args SNAKEMAKE_ARGS]
 
-Run the complete OUTERSPACE pipeline
+Run the complete OUTERSPACE pipeline using Snakemake
 
 positional arguments:
-  config_file           Configuration file with search patterns
+  config_file           TOML configuration file with search patterns
+  snakemake_config      YAML configuration file for Snakemake workflow
 
 options:
   -h, --help            show this help message and exit
-  --input-dir INPUT_DIR
-                        Directory containing paired FASTQ read files
-  --output-dir OUTPUT_DIR
-                        Output directory for all pipeline results
-  --allowed-list ALLOWED_LIST
-                        Text file containing allowed keys (one per line)
-  --mismatches MISMATCHES
-                        Number of mismatches allowed for clustering (default: 2)
-  --method {cluster,adjacency,directional}
-                        Clustering method to use (default: directional)
-  --barcode-columns BARCODE_COLUMNS
-                        Column(s) containing barcodes to correct (default: UMI_5prime,UMI_3prime)
-  --key-column KEY_COLUMN
-                        Column to group by for counting (default: protospacer)
-  --sep SEP             CSV separator (default: ',')
-  --metrics             Generate metrics files for collapse and count steps
+  --snakemake-args SNAKEMAKE_ARGS
+                        Additional arguments to pass to Snakemake (e.g. --snakemake-args="--dry-run --cores 4")
 ```
