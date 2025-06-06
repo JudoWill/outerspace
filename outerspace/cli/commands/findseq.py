@@ -59,25 +59,24 @@ class FindSeqCommand(BaseCommand):
             help='Directory containing paired FASTQ read files')
         parser.add_argument('--outdir',
             help='Output directory for processed files')
+        parser.add_argument('--read_regxlist',
+            help='Regular expression list for either read. This is usually defined in the config file but can be overridden on the command line.')
+        parser.add_argument('--read1_regxlist',
+            help='Regular expression list for read 1. This is usually defined in the config file but can be overridden on the command line.')
+        parser.add_argument('--read2_regxlist',
+            help='Regular expression list for read 2. This is usually defined in the config file but can be overridden on the command line.')
         return parser
 
-    def _initialize_search(self, config_file):
+    def _initialize_search(self):
         """Initialize search configuration and objects"""
-        if not exists(config_file):
-            raise ValueError(f'Configuration file not found: {config_file}')
-
-        # Create configuration object and read file
-        cfg = Cfg(config_file)
-        doc = cfg.read_file()
+        
+        assert any([self.args.read_regxlist, self.args.read1_regxlist, self.args.read2_regxlist]), \
+            'No search patterns provided'
 
         # Initialize search object
-        search = TopSearch(doc['findseq'])
-
-        # Validate search configuration
-        if not search.srch1.cmps:
-            raise ValueError('No search patterns found in configuration')
-        if not search.srch1.capturednames:
-            raise ValueError('No capture names found in configuration')
+        search = TopSearch(read_regxlist=self.args.read_regxlist,
+                           read1_regxlist=self.args.read1_regxlist,
+                           read2_regxlist=self.args.read2_regxlist)
 
         # Create reader object
         reader = ReadPairedFastq(search)
@@ -124,7 +123,7 @@ class FindSeqCommand(BaseCommand):
     def _runpairedreads(self):
         """Run on paired reads"""
         self._chk_exists([self.args.read1_filename, self.args.read2_filename])
-        reader = self._initialize_search(self.args.config)
+        reader = self._initialize_search()
         reader.process_paired_read_file(
             self.args.output_filename,
             self.args.read1_filename,

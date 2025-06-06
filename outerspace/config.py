@@ -1,27 +1,60 @@
 """configuration for defining motifs"""
 
 __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
-__author__ = "??"
+__author__ = "WND"
 
 from tomlkit import comment
 from tomlkit import document
-from tomlkit import nl
 from tomlkit import table
-from tomlkit import array
 from tomlkit.toml_file import TOMLFile
+from argparse import ArgumentParser
 
 
-# Format taken from TOML Quickstart Kit
 class Cfg:
     """configuration for defining motifs"""
 
-    # Upon Cfg() __init__() runs - bc we are creating document here
-    # referring to self and filename in arguments that are passed by the user
-    # Need self in the class to have acces to everything within the class
     def __init__(self, filename=None):
         self.filename = filename
 
-    #file does not need to be given name
+    @staticmethod
+    def _generate_from_parser(parser: ArgumentParser, return_doc: bool = False):
+        """Generate a TOML configuration file with default values from argparse parser.
+        
+        Args:
+            parser: The ArgumentParser instance to generate config from
+            return_doc: If True, return the TOML document object instead of string
+            
+        Returns:
+            str | document: The TOML configuration file as a string or document object
+        """
+        doc = document()
+        
+        # Process each subcommand
+        for cmd_name, subparser in parser._subparsers._group_actions[0].choices.items():
+            section = table()
+            
+            # Extract defaults from subparser
+            for action in subparser._actions:
+                if action.dest != 'help':  # Skip help action
+                    # Add help text and type as comment
+                    help_text = action.help if action.help else "No description available"
+                    type_info = f"Type: {action.type.__name__}" if action.type else "Type: str"
+                    section.add(comment(f"\n# {help_text}\n# {type_info}"))
+                    
+                    if action.default is not None and action.default != '==SUPPRESS==':
+                        section[action.dest] = action.default
+                    elif action.default is None:
+                        if not action.option_strings:  # Positional argument
+                            section[action.dest] = 'positional'
+                        else:  # Keyword argument
+                            section[action.dest] = 'required' if action.required else 'optional'
+            
+            # Add section to document if it has any values
+            if section:
+                doc[cmd_name] = section
+        
+        return doc if return_doc else doc.as_string()
+
     def read_file(self):
         """Read the file specified"""
         return TOMLFile(self.filename).read() if self.filename is not None else None
@@ -35,83 +68,13 @@ class Cfg:
         return doc
 
 
-
-    def get_doc_default(self):
+    @staticmethod
+    def get_doc_default():
         """Getting default config document object"""
-        doc = document()
-        doc.add(comment("Configuration file for gRNA extraction."))
-        doc.add(nl())
-        doc.add("title", "gRNA Extraction Input")
-        doc.add(nl())
-        # Using doc["title"] = "TOML Example" is also possible
 
-        owner = table()
-        owner.add("name", "SCB, DK, WND, RB")
-        owner.add("organization", "DUCOM")
-        # Adding the table to the document
-        doc.add("owner", owner)
-        doc.add(nl())
-        
-        #TODO:add message in here saying warning using one not the other
-        self._addregxlist(doc)
-        doc.add(nl())
-        self._addregxlist1(doc)
-        doc.add(nl())
-        self._addregxlist2(doc)
-        doc.add(nl())
+        from outerspace.cli.main import Cli
 
-        # This is made into an array
-        #regxlist = table()
-        doc.add(comment("Edit this list to specify what part of sequence you want to capture."))
-        doc.add(comment("Named patterns/groups captured  will be saved in a .csv file. Ex: (?P<UMI>.{8})"))
-
-        #regxlist.add("back_umi_forward", 'gtgtgtcagttagggtgtggaa')
-        #regxlist.add('gtgtgtcagttagggtgtggaa')
-        # Kept this variable in 1 part
-        # regxlist.add("umi_pattern_forward_downstream_nt", 'gtgtgtcagttagggtgtggaa')
-
-##############FINISH THIS LAST ONE BELOW & MAKE SURE TO MAKE CHANGES AND ADD TESTS TO TESTS SCRIPT & MAKE SURE TO ADD TO THE DICTIONARY IN THAT FILE AS WELL#############
-
-        #regxlist.add("umi_pattern_reverse",'(?P<UMI>.{{8}})(?:{back_umi_rc}){{s<=4}}')
-        #regxlist.add('(?P<UMI>.{{8}})(?:{back_umi_rc}){{s<=4}}')
-        # Kept this variable in  3 parts
-        #regxlist.add("umi_pattern_reverse_downstream_nt",8)
-        #regxlist.add("umi_pattern_reverse",'(?P<UMI>.{{8}})(?:{back_umi_rc}){{s<=4}}')
-
-        # Adding the table to the document
-        #doc.add("define_motifs", regxlist)
-        return doc
-
-    #regxlist here applies to pattern in both reads
-    @staticmethod
-    def _addregxlist(doc):
-        """regxlist here applies to pattern in both reads"""
-        arr = array()
-        arr.multiline(True)
-        doc['regxlist'] = arr
-
-    #regxlist here applies to pattern in first read of paired read
-    @staticmethod
-    def _addregxlist1(doc):
-        """regxlist1 here applies to pattern in first read of paired read"""
-        arr = array()
-        arr.multiline(True)
-        doc['regxlist1'] = arr
-
-        #regxlist.add("regex_flags", "BESTMATCH")
-
-        doc['regxlist1'].add_line('(?P<UMI>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}')
-
-        doc['regxlist1'].add_line('(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}'
-                                 '(?P<protospacer>.{19,21})'
-                                 '(?P<downstreamof_protospacer>GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}')
-
-    @staticmethod
-    def _addregxlist2(doc):
-        """regxlist2 here applies to pattern in 2nd read of paired read"""
-        arr = array()
-        arr.multiline(True)
-        doc['regxlist2'] = arr
+        return Cfg._generate_from_parser(Cli._init_parser(), return_doc=True)
 
     def __str__(self):
         return f'Cfg({self.filename})'

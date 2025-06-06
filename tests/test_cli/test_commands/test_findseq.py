@@ -52,7 +52,7 @@ def test_findseq_with_example_data():
     with tempfile.TemporaryDirectory() as temp_dir:
         args = [
             'findseq',
-            'tests/configs/grnaquery.cfg',
+            'tests/configs/grnaquery.toml',
             '-1', 'tests/data/409-4_S1_L002_R1_001.fastq.gz',
             '-2', 'tests/data/409-4_S1_L002_R2_001.fastq.gz',
             '-o', os.path.join(temp_dir, 'shuffle.csv')

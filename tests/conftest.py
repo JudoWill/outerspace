@@ -49,7 +49,7 @@ def temp_workspace():
             ('tests/test_cli/pipeline_data/samplesheet_config.yaml', 'samplesheet_config.yaml'),
             ('tests/test_cli/pipeline_data/samplesheet.csv', 'samplesheet.csv'),
             ('tests/test_cli/pipeline_data/directory_config.yaml', 'directory_config.yaml'),
-            ('tests/test_cli/pipeline_data/grnaquery.toml', 'grnaquery.toml')
+            ('tests/configs/grnaquery.toml', 'grnaquery.toml')
         ]
         
         for src, dst in config_files:

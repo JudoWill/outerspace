@@ -23,7 +23,8 @@ class Cli:
             self.args = self.parser.parse_args(args)
         self.command = self._init_command()
 
-    def _init_parser(self):
+    @staticmethod
+    def _init_parser():
         """Initialize the main argument parser with subcommands"""
         parser = ArgumentParser(
             prog='outerspace',

@@ -6,7 +6,7 @@ __author__ = "WND"
 import os
 from argparse import ArgumentParser, Namespace
 from sys import exit as sys_exit
-from typing import Dict, Any, Optional, Set
+from typing import Dict, Any, Optional, Set, Type
 from tomlkit import parse as toml_parse
 
 class BaseCommand:

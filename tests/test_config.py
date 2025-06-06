@@ -3,56 +3,83 @@
 
 from outerspace.config import Cfg
 from tests.pkgtest.utils import get_filename
-print(f'TTTTTTTT test_config({__name__})')
 
 
-def test_config():
+def test_config_from_compiled_config():
     """testing config"""
-    filename = get_filename('example.cfg')
+    filename = 'tests/configs/compiled_config.toml'
     cfg = Cfg(filename)
-    doc = cfg.write_file()
-    dct = doc.unwrap()
-    assert doc is not None 
-    # assert not dct, f"Dictionary contains stuff & shouldn't:\n{dct}"
-    assert dct, f"Dictionary is empty & should contain stuff: {dct}"
-    assert sorted(dct.keys()) == ['owner', 'regxlist', 'regxlist1', 'regxlist2', 'title'], sorted(dct.keys())
-
-    return
-    # TODO: Adjust tests below
-    # Asserting variable is equal to what is defined in outerspace/config.py
-    assert cfg.get_umi_pattern_forward() == (
-        '(?P<UMI>.{8})'
-        '(?:CTTGGCTTTATATATCTTGTGG)'
-        '{s<=4}')
-    print(cfg.get_umi_pattern_forward())
-
-    # Asserting variable is equal to what is defined in outerspace/config.py
-    assert cfg.get_protospacer_forward() == (
-        '(?:TATCTTGTGGAAAGGACGAAACACC)'
-        '{s<=4}'
-        '(?P<protospacer>.{19,21})'
-        '(?:GTTTAAGTACTCTGTGCTGGAAACAG)'
-        '{s<=4}')
-    print(cfg.get_protospacer_forward())
-
-    #Asserting variable is equal to what is defined in outerspace/config.py
-    exp_pat = 'gtgtgtcagttagggtgtggaa'
-    assert cfg.get_umi_pattern_forward_downstream_nt() == exp_pat,(
-            f'\nACTUAL: {cfg.get_umi_pattern_forward_downstream_nt()}\n'
-            f'EXPECTED: {exp_pat}')
-            
-    print(cfg.get_umi_pattern_forward_downstream_nt())
-
-    #Asserting variable is equal to what is defined in outerspace/config.py
+    doc = cfg.read_file()
     
+    assert 'read_regxlist' in doc['findseq']
+    assert 'read1_regxlist' in doc['findseq']
+    assert 'read2_regxlist' in doc['findseq']
 
-        
-    # These prints below were to see the keys that were printed out to then add them to the assert tests above
-    # print(cfg)
-    # print(dct)
-    # print(dct['define_motifs'].keys())
+    assert 'columns' in doc['collapse']
+    assert 'mismatches' in doc['collapse']
+    assert 'method' in doc['collapse']
 
-    print("TEST PASSED")
+    assert 'barcode_column' in doc['count']
+    assert 'key_column' in doc['count']
 
-if __name__ == '__main__':
-    test_config()
+def test_config_from_grnaquery():
+    """testing config"""
+    filename = 'tests/configs/grnaquery.toml'
+    cfg = Cfg(filename)
+    doc = cfg.read_file()
+    
+    assert 'read_regxlist' in doc['findseq']
+    assert doc['findseq']['read1_regxlist'] == [
+    "(?P<UMI_5prime>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}",
+    "(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?P<downstreamof_protospacer>GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}",
+    ]
+    
+    assert 'read2_regxlist' in doc['findseq']
+    assert doc['findseq']['read2_regxlist'] == [
+    '(?P<UMI_3prime>.{8})(?:TTCCACACCCTAACTGACACAC){s<=4}',
+]
+
+    assert 'columns' in doc['collapse']
+    assert doc['collapse']['columns'] == 'UMI_5prime,UMI_3prime'
+    assert 'mismatches' in doc['collapse']
+    assert doc['collapse']['mismatches'] == 2
+    assert 'method' in doc['collapse']
+    assert doc['collapse']['method'] == 'directional'
+
+    assert 'barcode_column' in doc['count']
+    assert doc['count']['barcode_column'] == 'UMI_5prime_UMI_3prime_corrected'
+    assert 'key_column' in doc['count']
+    assert doc['count']['key_column'] == 'protospacer'
+
+    assert 'column' in doc['gini']
+    assert doc['gini']['column'] == 'count'
+
+def test_config_has_not_changed():
+    """testing config"""
+    filename = 'tests/configs/compiled_config.toml'
+    cfg = Cfg(filename)
+    doc = cfg.read_file()
+    
+    default_doc = Cfg.get_doc_default()
+    differences = []
+    
+    # Compare each section
+    for section in doc:
+        if section not in default_doc:
+            differences.append(f"Section '{section}' exists in config but not in default")
+            continue
+            
+        # Compare each field in the section
+        for field in doc[section]:
+            if field not in default_doc[section]:
+                differences.append(f"Field '{field}' in section '{section}' exists in config but not in default")
+            elif doc[section][field] != default_doc[section][field]:
+                differences.append(f"Field '{field}' in section '{section}' has different value: {doc[section][field]} != {default_doc[section][field]}")
+                
+    # Check for sections in default that aren't in config
+    for section in default_doc:
+        if section not in doc:
+            differences.append(f"Section '{section}' exists in default but not in config")
+            
+    assert not differences, "Config differences found:\n" + "\n".join(differences)
+    
