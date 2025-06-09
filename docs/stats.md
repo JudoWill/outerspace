@@ -29,17 +29,6 @@ Here are important statistical metrics for analyzing UMI distributions:
    - 1: Maximum diversity (all UMIs equally abundant)
    - Typical values: 0.7-0.95 for well-diversified libraries
 
-4. **UMI Saturation** - The ratio of unique UMIs to total reads, indicating how well the sequencing depth captures the true diversity of the sample.
-   - Range: 0 to 1
-   - 0: No unique UMIs
-   - 1: All reads have unique UMIs
-   - Typical values: 0.1-0.3 for well-saturated experiments
-
-5. **UMI Collision Rate** - The frequency at which different molecules receive the same UMI by chance, which can be estimated from the UMI length and number of molecules.
-   - Range: 0 to 1
-   - 0: No collisions
-   - 1: All UMIs collide
-   - Typical values: <0.01 for well-designed experiments
 
 6. **UMI Recovery Rate** - The proportion of expected UMIs that are actually observed after error correction, helping assess the effectiveness of the correction process.
    - Range: 0 to 1
