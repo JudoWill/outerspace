@@ -42,6 +42,5 @@ def test_recovery_rate_with_allowed_list(partial_umi):
     """Test recovery rate calculation with allowed list"""
     allowed_list = ["AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG", "ATATAT"]
     result = UMIRecoveryRate.calculate(partial_umi, allowed_list=allowed_list)
-    assert 'umi_recovery_rate' in result
-    assert result['umi_recovery_rate'] is not None
-    assert result['umi_recovery_rate'] == 1 
+    assert result is not None
+    assert result == 1 

@@ -74,13 +74,11 @@ def test_efficiency_rate_end_to_end(partial_umi):
     """Test end-to-end efficiency rate calculation"""
     allowed_list = ["AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG", "ATATAT"]
     result = UMIEfficiencyRate.calculate(partial_umi, allowed_list=allowed_list)
-    assert 'umi_efficiency_rate' in result
-    assert result['umi_efficiency_rate'] is not None
-    assert 0 <= result['umi_efficiency_rate'] <= 1
+    assert result is not None
+    assert 0 <= result <= 1
 
 
 def test_efficiency_rate_no_allowed_list(partial_umi):
     """Test efficiency rate calculation without allowed list"""
     result = UMIEfficiencyRate.calculate(partial_umi)
-    assert 'umi_efficiency_rate' in result
-    assert result['umi_efficiency_rate'] is None 
+    assert result is None 

@@ -10,6 +10,7 @@ from outerspace.cli.commands.findseq import FindSeqCommand
 from outerspace.cli.commands.collapse import CollapseCommand
 from outerspace.cli.commands.count import CountCommand
 from outerspace.cli.commands.gini import GiniCommand
+from outerspace.cli.commands.stats import StatsCommand
 from outerspace.cli.commands.visualize import VisualizeCommand
 from outerspace.cli.commands.pipeline import PipelineCommand
 
@@ -35,7 +36,7 @@ class Cli:
         
         # Register each command
         for cmd_cls in [FindSeqCommand, CollapseCommand, CountCommand, 
-                       GiniCommand, VisualizeCommand, PipelineCommand]:
+                       GiniCommand, StatsCommand, VisualizeCommand, PipelineCommand]:
             cmd = cmd_cls()
             cmd._init_parser(subparsers)
         
@@ -52,7 +53,8 @@ class Cli:
             'count': CountCommand,
             'gini': GiniCommand,
             'visualize': VisualizeCommand,
-            'pipeline': PipelineCommand
+            'pipeline': PipelineCommand,
+            'stats': StatsCommand
         }
         return command_map[self.args.command](self.args)
 

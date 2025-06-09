@@ -51,15 +51,13 @@ def test_simpson_mixed_zero_counts():
 def test_simpson_end_to_end(equal_umi):
     """Test end-to-end Simpson diversity calculation"""
     result = SimpsonDiversity.calculate(equal_umi)
-    assert 'simpson_diversity' in result
-    assert result['simpson_diversity'] is not None
-    assert 0 < result['simpson_diversity'] < 1
+    assert result is not None
+    assert 0 < result < 1
 
 
 def test_simpson_with_allowed_list(partial_umi):
     """Test Simpson diversity calculation with allowed list"""
     allowed_list = ["AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG", "ATATAT"]
     result = SimpsonDiversity.calculate(partial_umi, allowed_list=allowed_list)
-    assert 'simpson_diversity' in result
-    assert result['simpson_diversity'] is not None
-    assert 0 < result['simpson_diversity'] < 1 
+    assert result is not None
+    assert 0 < result < 1 

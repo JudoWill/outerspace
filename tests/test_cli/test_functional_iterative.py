@@ -59,6 +59,16 @@ def test_full_workflow(temp_workspace):
     for output_name in ['shuffle', 'M1-lib', 'M2-lib']:
         assert os.path.exists(os.path.join(temp_workspace, f'count/{output_name}.csv'))
 
+    # Step 4: Run stats command
+    stats_args = [
+        'stats',
+        *[os.path.join(temp_workspace, f'count/{output_name}.csv') for output_name in ['shuffle', 'M1-lib', 'M2-lib']],
+        '--umi-column', 'protospacer',
+        '--count-column', 'count'
+    ]
+    cli = Cli(stats_args)
+    cli.run()
+
 def test_workflow_with_allowed_list(temp_workspace):
     """Test the workflow with an allowed list for counting"""
     # Create allowed list file
@@ -109,6 +119,17 @@ def test_workflow_with_allowed_list(temp_workspace):
     for output_name in ['shuffle', 'M1-lib', 'M2-lib']:
         assert os.path.exists(os.path.join(temp_workspace, f'count/{output_name}.csv'))
 
+    # Step 4: Run stats command with allowed list
+    stats_args = [
+        'stats',
+        *[os.path.join(temp_workspace, f'count/{output_name}.csv') for output_name in ['shuffle', 'M1-lib', 'M2-lib']],
+        '--umi-column', 'protospacer',
+        '--count-column', 'count',
+        '--allowed-list', allowed_list_path
+    ]
+    cli = Cli(stats_args)
+    cli.run()
+
 def test_single_file_workflow(temp_workspace):
     """Test the workflow using single file mode for collapse and count"""
     # Step 1: Run findseq for a single sample
@@ -133,14 +154,12 @@ def test_single_file_workflow(temp_workspace):
         '--columns', 'UMI_5prime,UMI_3prime',
         '--mismatches', '2',
         '--method', 'directional',
-        '--metrics', os.path.join(temp_workspace, 'collapse/shuffle_metrics.yaml')
     ]
     cli = Cli(collapse_args)
     cli.run()
 
     # Verify collapse output
     assert os.path.exists(os.path.join(temp_workspace, 'collapse/shuffle.csv'))
-    assert os.path.exists(os.path.join(temp_workspace, 'collapse/shuffle_metrics.yaml'))
 
     # Step 3: Run count command on single file
     count_args = [
@@ -149,13 +168,22 @@ def test_single_file_workflow(temp_workspace):
         '--output-file', os.path.join(temp_workspace, 'count/shuffle.csv'),
         '--barcode-column', 'UMI_5prime_UMI_3prime_corrected',
         '--key-column', 'protospacer',
-        '--metrics', os.path.join(temp_workspace, 'count/shuffle_metrics.yaml')
     ]
     cli = Cli(count_args)
     cli.run()
 
     # Verify count output
     assert os.path.exists(os.path.join(temp_workspace, 'count/shuffle.csv'))
+
+    # Step 4: Run stats command on single file
+    stats_args = [
+        'stats',
+        os.path.join(temp_workspace, 'count/shuffle.csv'),
+        '--umi-column', 'protospacer',
+        '--count-column', 'count'
+    ]
+    cli = Cli(stats_args)
+    cli.run()
 
 def test_single_file_workflow_with_allowed_list(temp_workspace):
     """Test the single file workflow with an allowed list for counting"""
@@ -181,7 +209,6 @@ def test_single_file_workflow_with_allowed_list(temp_workspace):
         '--columns', 'UMI_5prime,UMI_3prime',
         '--mismatches', '2',
         '--method', 'directional',
-        '--metrics', os.path.join(temp_workspace, 'collapse/shuffle_metrics.yaml')
     ]
     cli = Cli(collapse_args)
     cli.run()
@@ -194,11 +221,20 @@ def test_single_file_workflow_with_allowed_list(temp_workspace):
         '--barcode-column', 'UMI_5prime_UMI_3prime_corrected',
         '--key-column', 'protospacer',
         '--allowed-list', allowed_list_path,
-        '--metrics', os.path.join(temp_workspace, 'count/shuffle_metrics.yaml')
     ]
     cli = Cli(count_args)
     cli.run()
 
     # Verify outputs
     assert os.path.exists(os.path.join(temp_workspace, 'count/shuffle.csv'))
-    assert os.path.exists(os.path.join(temp_workspace, 'count/shuffle_metrics.yaml')) 
+
+    # Step 4: Run stats command on single file with allowed list
+    stats_args = [
+        'stats',
+        os.path.join(temp_workspace, 'count/shuffle.csv'),
+        '--umi-column', 'protospacer',
+        '--count-column', 'count',
+        '--allowed-list', allowed_list_path
+    ]
+    cli = Cli(stats_args)
+    cli.run() 

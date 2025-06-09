@@ -12,10 +12,12 @@ from collections import defaultdict
 from typing import Dict, Set, Any
 from tqdm import tqdm
 import yaml
+import logging
 
 from outerspace.cli.commands.base import BaseCommand
 from outerspace.umi import UMI
 from outerspace.stats import GiniCoefficient
+from outerspace.cli.logging_config import setup_logging
 
 class CountCommand(BaseCommand):
     """Command for counting unique barcodes per key value in CSV files"""
@@ -51,10 +53,10 @@ class CountCommand(BaseCommand):
             help='Randomly sample reads with probability between 0 and 1')
         parser.add_argument('--random-seed', type=int,
             help='Random seed for downsampling')
-        parser.add_argument('--metrics',
-            help='Output YAML file for metrics')
         parser.add_argument('--config',
             help='YAML configuration file for command')
+        parser.add_argument('--log-file',
+            help='Path to log file')
         return parser
 
     def _read_allowed_keys(self, filepath: str) -> Set[str]:
@@ -71,6 +73,8 @@ class CountCommand(BaseCommand):
                            sep: str, row_limit: int, allowed_keys: Set[str], detailed: bool,
                            downsample: float = None) -> Dict[str, Any]:
         """Process a single CSV file and return summary statistics"""
+        logger = logging.getLogger(__name__)
+        
         # Create UMI object for this file
         umi = UMI(mismatches=0)
         key_umi = UMI(mismatches=0)  # For key counts
@@ -122,55 +126,59 @@ class CountCommand(BaseCommand):
         # Calculate Gini coefficients using the stats module
         barcode_result = GiniCoefficient.calculate(umi)
         key_result = GiniCoefficient.calculate(key_umi, allowed_list=list(allowed_keys) if allowed_keys else None)
-        barcode_gini = barcode_result['gini_coefficient']
-        key_gini = key_result['gini_coefficient']
+        barcode_gini = barcode_result
+        key_gini = key_result
         
-        stats = {
-            'file_stats': {
-                'total_rows_scanned': total_rows,
-                'total_keys': total_keys,
-                'total_barcodes': total_barcodes,
-                'average_barcodes_per_key': total_barcodes / total_keys if total_keys > 0 else 0,
-                'barcode_gini_coefficient': barcode_gini,
-                'key_gini_coefficient': key_gini
-            }
-        }
+        # Log statistics
+        logger.info(f"File statistics for {os.path.basename(input_file)}:")
+        logger.info(f"Total rows scanned: {total_rows}")
+        logger.info(f"Total keys: {total_keys}")
+        logger.info(f"Total barcodes: {total_barcodes}")
+        logger.info(f"Average barcodes per key: {total_barcodes / total_keys if total_keys > 0 else 0:.3f}")
+        logger.info(f"Barcode Gini coefficient: {barcode_gini:.3f}")
+        logger.info(f"Key Gini coefficient: {key_gini:.3f}")
         
-        # Add allowed list statistics if allowed_keys is provided
         if allowed_keys:
-            stats['file_stats']['rows_with_allowed_key'] = rows_with_allowed_key
+            logger.info(f"Rows with allowed key: {rows_with_allowed_key}")
             missing_keys = allowed_keys - set(barcodes_by_key.keys())
-            stats['missing_keys'] = {
-                'total_missing': len(missing_keys),
-                'missing_keys_list': sorted(list(missing_keys))
-            }
+            logger.info(f"Total missing keys: {len(missing_keys)}")
+            if len(missing_keys) > 0 and detailed:
+                logger.info("Missing keys:")
+                for key in sorted(list(missing_keys))[:10]:
+                    logger.info(f"  {key}")
+                if len(missing_keys) > 10:
+                    logger.info(f"  ... and {len(missing_keys) - 10} more")
         
         # Write output
-        self._write_counts(barcodes_by_key, output_file, sep, detailed)
+        self._write_counts(barcodes_by_key, output_file, sep, detailed, key_col)
         
-        return stats
+        return {
+            'total_rows': total_rows,
+            'total_keys': total_keys,
+            'total_barcodes': total_barcodes,
+            'barcode_gini': barcode_gini,
+            'key_gini': key_gini
+        }
 
-    def _write_counts(self, barcodes_by_key: Dict[str, Set[str]], filepath: str, sep: str, detailed: bool = False):
+    def _write_counts(self, barcodes_by_key: Dict[str, Set[str]], filepath: str, sep: str, detailed: bool, key_col: str):
         """Write barcode counts per key to CSV file"""
         with open(filepath, 'w', newline='') as f:
             if detailed:
                 writer = csv.writer(f, delimiter=sep)
-                writer.writerow(['key', 'unique_barcodes', 'count'])
+                writer.writerow([key_col, 'unique_barcodes', 'count'])
                 for key, barcodes in sorted(barcodes_by_key.items()):
                     writer.writerow([key, ','.join(sorted(barcodes)), len(barcodes)])
             else:
                 writer = csv.writer(f, delimiter=sep)
-                writer.writerow(['key', 'count'])
+                writer.writerow([key_col, 'count'])
                 for key, barcodes in sorted(barcodes_by_key.items()):
                     writer.writerow([key, len(barcodes)])
 
-    def _write_metrics(self, metrics: Dict[str, Any], filepath: str):
-        """Write metrics to YAML file"""
-        with open(filepath, 'w') as f:
-            yaml.dump(metrics, f, default_flow_style=False)
-
     def run(self):
         """Run the count command"""
+        # Set up logging
+        logger = setup_logging(log_file=self.args.log_file)
+        
         # Load config if provided
         if self.args.config:
             self._load_config(self.args.config)
@@ -203,13 +211,13 @@ class CountCommand(BaseCommand):
                 raise ValueError("Downsample probability must be between 0 and 1")
             if self.args.random_seed is not None:
                 random.seed(self.args.random_seed)
-                print(f"Using random seed: {self.args.random_seed}", file=sys.stderr)
+                logger.info(f"Using random seed: {self.args.random_seed}")
         
         # Read allowed keys if specified
         allowed_keys = None
         if self.args.allowed_list:
             allowed_keys = self._read_allowed_keys(self.args.allowed_list)
-            print(f"Loaded {len(allowed_keys)} allowed keys from {self.args.allowed_list}", file=sys.stderr)
+            logger.info(f"Loaded {len(allowed_keys)} allowed keys from {self.args.allowed_list}")
         
         # Handle single file case
         if self.args.input_file:
@@ -220,39 +228,18 @@ class CountCommand(BaseCommand):
             os.makedirs(os.path.dirname(self.args.output_file), exist_ok=True)
             
             try:
-                stats = self._process_single_file(
+                self._process_single_file(
                     self.args.input_file, self.args.output_file,
                     self.args.barcode_column, self.args.key_column,
                     self.args.sep, self.args.row_limit, allowed_keys,
                     self.args.detailed, self.args.downsample
                 )
                 
-                # Print statistics
-                print(f"\nStatistics for {os.path.basename(self.args.input_file)}:", file=sys.stderr)
-                for category, values in stats.items():
-                    print(f"\n{category}:", file=sys.stderr)
-                    if category == 'missing_keys':
-                        print(f"  Total missing keys: {values['total_missing']}", file=sys.stderr)
-                        if values['total_missing'] > 0 and self.args.detailed:
-                            print("  Missing keys:", file=sys.stderr)
-                            for key in values['missing_keys_list'][:10]:  # Show first 10 missing keys
-                                print(f"    {key}", file=sys.stderr)
-                            if len(values['missing_keys_list']) > 10:
-                                print(f"    ... and {len(values['missing_keys_list']) - 10} more", file=sys.stderr)
-                    else:
-                        for key, value in values.items():
-                            print(f"  {key}: {value:.3f}" if isinstance(value, float) else f"  {key}: {value}", file=sys.stderr)
-                
-                # Write metrics to YAML file if specified
-                if self.args.metrics:
-                    self._write_metrics({os.path.basename(self.args.input_file): stats}, self.args.metrics)
-                    print(f"\nMetrics written to: {self.args.metrics}", file=sys.stderr)
-                
             except Exception as e:
-                print(f"Error processing {self.args.input_file}: {e}", file=sys.stderr)
+                logger.error(f"Error processing {self.args.input_file}: {e}")
                 raise e
             
-            print(f"\nProcessing complete. Barcode counts written to: {self.args.output_file}", file=sys.stderr)
+            logger.info(f"Processing complete. Barcode counts written to: {self.args.output_file}")
             return
         
         # Handle directory case
@@ -267,10 +254,7 @@ class CountCommand(BaseCommand):
         if not input_files:
             raise ValueError(f"No CSV files found in {self.args.input_dir}")
         
-        print(f"Found {len(input_files)} CSV files to process", file=sys.stderr)
-        
-        # Collect metrics for all files
-        all_metrics = {}
+        logger.info(f"Found {len(input_files)} CSV files to process")
         
         # Process each file
         for input_file in tqdm(input_files, desc="Processing files"):
@@ -278,39 +262,14 @@ class CountCommand(BaseCommand):
             output_file = os.path.join(self.args.output_dir, os.path.basename(input_file))
             
             try:
-                stats = self._process_single_file(
+                self._process_single_file(
                     input_file, output_file, self.args.barcode_column,
                     self.args.key_column, self.args.sep, self.args.row_limit,
                     allowed_keys, self.args.detailed, self.args.downsample
                 )
                 
-                # Store metrics for this file
-                all_metrics[os.path.basename(input_file)] = stats
-                
-                # Print statistics for this file
-                print(f"\nStatistics for {os.path.basename(input_file)}:", file=sys.stderr)
-                for category, values in stats.items():
-                    print(f"\n{category}:", file=sys.stderr)
-                    if category == 'missing_keys':
-                        print(f"  Total missing keys: {values['total_missing']}", file=sys.stderr)
-                        if values['total_missing'] > 0 and self.args.detailed:
-                            print("  Missing keys:", file=sys.stderr)
-                            for key in values['missing_keys_list'][:10]:  # Show first 10 missing keys
-                                print(f"    {key}", file=sys.stderr)
-                            if len(values['missing_keys_list']) > 10:
-                                print(f"    ... and {len(values['missing_keys_list']) - 10} more", file=sys.stderr)
-                    else:
-                        for key, value in values.items():
-                            print(f"  {key}: {value:.3f}" if isinstance(value, float) else f"  {key}: {value}", file=sys.stderr)
-                
             except Exception as e:
-                print(f"Error processing {input_file}: {e}", file=sys.stderr)
+                logger.error(f"Error processing {input_file}: {e}")
                 raise e
-                continue
         
-        # Write metrics to YAML file if specified
-        if self.args.metrics:
-            self._write_metrics(all_metrics, self.args.metrics)
-            print(f"\nMetrics written to: {self.args.metrics}", file=sys.stderr)
-        
-        print(f"\nProcessing complete. Barcode counts written to: {self.args.output_dir}", file=sys.stderr) 
+        logger.info(f"Processing complete. Barcode counts written to: {self.args.output_dir}") 

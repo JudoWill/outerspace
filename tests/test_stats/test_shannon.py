@@ -60,15 +60,13 @@ def test_shannon_mixed_zero_counts():
 def test_shannon_end_to_end(equal_umi):
     """Test end-to-end Shannon diversity calculation"""
     result = ShannonDiversity.calculate(equal_umi)
-    assert 'shannon_diversity' in result
-    assert result['shannon_diversity'] is not None
-    assert result['shannon_diversity'] > 0
+    assert result is not None
+    assert result > 0
 
 
 def test_shannon_with_allowed_list(partial_umi):
     """Test Shannon diversity calculation with allowed list"""
     allowed_list = ["AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG", "ATATAT"]
     result = ShannonDiversity.calculate(partial_umi, allowed_list=allowed_list)
-    assert 'shannon_diversity' in result
-    assert result['shannon_diversity'] is not None
-    assert result['shannon_diversity'] > 0 
+    assert result is not None
+    assert result > 0 

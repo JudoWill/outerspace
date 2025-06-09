@@ -94,8 +94,7 @@ class GiniCoefficient(UMIStats):
         else:
             counts = self._counts
 
-        gini = GiniCoefficient.calculate_gini(counts.values())
-        return {'gini_coefficient': gini}
+        return GiniCoefficient.calculate_gini(list(counts.values()))
 
 
 class ShannonDiversity(UMIStats):
@@ -158,8 +157,7 @@ class ShannonDiversity(UMIStats):
         else:
             counts = self._counts
         
-        shannon = ShannonDiversity.calculate_shannon(list(counts.values()), self.base)
-        return {'shannon_diversity': shannon}
+        return ShannonDiversity.calculate_shannon(list(counts.values()), self.base)
 
 
 class SimpsonDiversity(UMIStats):
@@ -220,8 +218,7 @@ class SimpsonDiversity(UMIStats):
         else:
             counts = self._counts
 
-        simpson = SimpsonDiversity.calculate_simpson(counts.values())
-        return {'simpson_diversity': simpson}
+        return SimpsonDiversity.calculate_simpson(list(counts.values()))
 
 
 class UMIRecoveryRate(UMIStats):
@@ -258,11 +255,9 @@ class UMIRecoveryRate(UMIStats):
             Dictionary containing UMI recovery rate
         """
         if not self.allowed_list:
-            return {'umi_recovery_rate': None}
+            return None
         
-        recovery_rate = UMIRecoveryRate.calculate_recovery_rate_limited(self._counts, self._allowed_list)
-        
-        return {'umi_recovery_rate': recovery_rate}
+        return UMIRecoveryRate.calculate_recovery_rate_limited(self._counts, self._allowed_list)
 
 
 class UMIEfficiencyRate(UMIStats):
@@ -314,11 +309,9 @@ class UMIEfficiencyRate(UMIStats):
             Dictionary containing UMI efficiency rate
         """
         if not self.allowed_list:
-            return {'umi_efficiency_rate': None}
+            return None
         
-
-        efficiency_rate = UMIEfficiencyRate.calculate_efficiency_rate(self._counts, self._allowed_list)
-        return {'umi_efficiency_rate': efficiency_rate}
+        return UMIEfficiencyRate.calculate_efficiency_rate(self._counts, self._allowed_list)
         
 
 class UMIErrorRate(BaseStatistic):
@@ -382,10 +375,9 @@ class UMIErrorRate(BaseStatistic):
             Dictionary containing UMI error rate
         """
         if not self.umi._mapping or not self.umi._counts:
-            return {'umi_error_rate': None}
+            return None
         
-        error_rate = UMIErrorRate.calculate_error_rate(self.umi._mapping, self.umi._counts)
-        return {'umi_error_rate': error_rate}
+        return UMIErrorRate.calculate_error_rate(self.umi._mapping, self.umi._counts)
 
 
 class UMIRedundancy(UMIStats):
@@ -434,7 +426,6 @@ class UMIRedundancy(UMIStats):
             counts = self._counts
         
         if not counts:
-            return {'umi_redundancy': None}
+            return None
         
-        redundancy = UMIRedundancy.calculate_redundancy(counts) 
-        return {'umi_redundancy': redundancy}
+        return UMIRedundancy.calculate_redundancy(counts) 

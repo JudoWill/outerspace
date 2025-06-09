@@ -62,16 +62,14 @@ def test_redundancy_mixed_zero_counts():
 def test_redundancy_end_to_end(equal_umi):
     """Test end-to-end redundancy calculation"""
     result = UMIRedundancy.calculate(equal_umi)
-    assert 'umi_redundancy' in result
-    assert result['umi_redundancy'] is not None
-    assert result['umi_redundancy'] >= 1.0
+    assert result is not None
+    assert result >= 1.0
 
 
 def test_redundancy_with_allowed_list(partial_umi):
     """Test redundancy calculation with allowed list"""
     allowed_list = ["AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG", "ATATAT"]
     result = UMIRedundancy.calculate(partial_umi, allowed_list=allowed_list)
-    assert 'umi_redundancy' in result
-    assert result['umi_redundancy'] is not None
-    assert result['umi_redundancy'] >= 1.0
+    assert result is not None
+    assert result >= 1.0
 
