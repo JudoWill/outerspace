@@ -6,6 +6,7 @@ from umi_tools import UMIClusterer
 import csv
 import os
 from pathlib import Path
+import sys
 
 
 class UMI:
@@ -24,7 +25,7 @@ class UMI:
         self._mapping: Dict[bytes, bytes] = {}
         self._corrected_counts: Optional[Dict[bytes, int]] = None
     
-    def consume(self, umi: Union[str, bytes]) -> None:
+    def consume(self, umi: Union[str, bytes], n: int = 1) -> None:
         """Add a UMI to the counts dictionary
         
         Args:
@@ -32,7 +33,7 @@ class UMI:
         """
         if isinstance(umi, str):
             umi = umi.encode('ascii')
-        self._counts[umi] = self._counts.get(umi, 0) + 1
+        self._counts[umi] = self._counts.get(umi, 0) + n
         self._corrected_counts = None  # Reset corrected counts
     
     def create_mapping(self) -> None:
@@ -104,52 +105,12 @@ class UMI:
                     self._corrected_counts[corrected] = self._corrected_counts.get(corrected, 0) + count
         return self._corrected_counts
     
-    def gini_coefficient(self, use_corrected: bool = True, allowed_list: Optional[List[str]] = None) -> Optional[float]:
-        """Calculate the Gini coefficient for the UMI counts.
-        
-        The Gini coefficient measures the inequality of distribution.
-        Returns a value between 0 (perfect equality) and 1 (perfect inequality).
-        Returns None if there are no counts or all keys are missing.
-        
-        Args:
-            use_corrected: If True, use corrected counts. If False, use original counts.
-            allowed_list: Optional list of allowed keys. If provided, missing keys will be
-                         treated as having zero counts in the calculation.
-            
-        Returns:
-            Gini coefficient or None if no data available
-        """
-        counts = self.corrected_counts if use_corrected else self._counts
-        
-        if allowed_list:
-            # Create a dictionary with all allowed keys, using 0 for missing ones
-            # Convert string keys to bytes for lookup
-            all_counts = {key.encode('ascii'): counts.get(key.encode('ascii'), 0) for key in allowed_list}
-        else:
-            all_counts = counts
-            
-        if not all_counts:
-            return None
-        
-        # Sort counts in ascending order
-        sorted_counts = sorted(all_counts.values())
-        n = len(sorted_counts)
-        
-        # If all counts are zero, return None (no data to measure inequality)
-        total = sum(sorted_counts)
-        if total == 0:
-            return None
-            
-        
-        # Calculate the Lorenz curve
-        index = list(range(1, n + 1))
-        return ((2 * sum(i * y for i, y in zip(index, sorted_counts))) / 
-                (n * total)) - ((n + 1) / n)
-    
     @classmethod
     def from_csv(cls, filepath: Union[str, Path], column: str, 
                  mismatches: int = 2, method: str = "adjacency",
-                 sep: str = ",", correct: bool = True) -> 'UMI':
+                 sep: str = ",", correct: bool = True,
+                 count_column: Optional[str] = None,
+                 scale: Optional[float] = None) -> 'UMI':
         """Create UMI object from CSV file
         
         Args:
@@ -159,6 +120,8 @@ class UMI:
             method: Clustering method to use
             sep: CSV separator
             correct: If True, perform clustering. If False, assume data is pre-clustered.
+            count_column: Optional column containing pre-counted values
+            scale: Optional scale factor for normalized values
             
         Returns:
             UMI object
@@ -169,9 +132,29 @@ class UMI:
             reader = csv.DictReader(f, delimiter=sep)
             if column not in reader.fieldnames:
                 raise ValueError(f"Column {column} not found in CSV file")
+            if count_column and count_column not in reader.fieldnames:
+                raise ValueError(f"Count column {count_column} not found in CSV file")
             
             for row in reader:
-                umi.consume(row[column])
+                value = row[column]
+                if not value:  # Skip empty values
+                    continue
+                    
+                if count_column:
+                    try:
+                        count = float(row[count_column])
+                        if scale:
+                            count = int(round(count * scale))
+                        else:
+                            count = int(round(count))
+                    except (ValueError, TypeError):
+                        print(f"Warning: Invalid count value '{row[count_column]}' for {value}", file=sys.stderr)
+                        continue
+                    
+                    # Add the value count times
+                    umi.consume(value, count)
+                else:
+                    umi.consume(value)
         
         if correct:
             umi.create_mapping()

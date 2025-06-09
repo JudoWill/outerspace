@@ -8,6 +8,7 @@ import sys
 from typing import List, Optional
 from outerspace.cli.commands.base import BaseCommand
 from outerspace.umi import UMI
+from outerspace.stats import GiniCoefficient
 
 class GiniCommand(BaseCommand):
     """Command for calculating Gini coefficient from counts in a CSV column"""
@@ -52,43 +53,21 @@ class GiniCommand(BaseCommand):
         Returns:
             Gini coefficient or None if no data available
         """
-        # Create UMI object (with no correction)
-        umi = UMI(mismatches=0)
+        # Create UMI object from CSV
+        umi = UMI.from_csv(
+            filepath=input_file,
+            column=column,
+            mismatches=0,  # No correction needed for Gini calculation
+            method="adjacency",  # Method doesn't matter since mismatches=0
+            sep=sep,
+            correct=False,  # No correction needed for Gini calculation
+            count_column=count_column,
+            scale=scale
+        )
         
-        # Read CSV and count values
-        with open(input_file, 'r') as f:
-            reader = csv.DictReader(f, delimiter=sep)
-            
-            # Verify columns exist
-            if column not in reader.fieldnames:
-                raise ValueError(f"Column '{column}' not found in CSV file")
-            if count_column and count_column not in reader.fieldnames:
-                raise ValueError(f"Count column '{count_column}' not found in CSV file")
-            
-            for row in reader:
-                value = row[column]
-                if not value:  # Skip empty values
-                    continue
-                    
-                if count_column:
-                    try:
-                        count = float(row[count_column])
-                        if scale:
-                            count = int(round(count * scale))
-                        else:
-                            count = int(round(count))
-                    except (ValueError, TypeError):
-                        print(f"Warning: Invalid count value '{row[count_column]}' for {value}", file=sys.stderr)
-                        continue
-                    
-                    # Add the value count times
-                    for _ in range(count):
-                        umi.consume(value)
-                else:
-                    umi.consume(value)
-        
-        # Calculate Gini coefficient
-        gini = umi.gini_coefficient(allowed_list=allowed_list)
+        # Calculate Gini coefficient using the stats module
+        result = GiniCoefficient.calculate(umi, allowed_list=allowed_list)
+        gini = result['gini_coefficient']
         
         # Get some statistics for reporting
         counts = umi.corrected_counts

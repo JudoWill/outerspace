@@ -2,6 +2,7 @@
 
 import pytest
 from outerspace.umi import UMI
+from outerspace.stats import GiniCoefficient
 from pathlib import Path
 import tempfile
 import csv
@@ -161,8 +162,12 @@ def test_gini_perfect_equality():
     
     umi.create_mapping()
     
+    # Calculate Gini coefficient
+    result = GiniCoefficient.calculate(umi)
+    gini = result['gini_coefficient']
+    
     # Gini coefficient should be 0 for perfect equality
-    assert abs(umi.gini_coefficient()) < 0.0001
+    assert abs(gini) < 0.0001
 
 
 def test_gini_perfect_inequality():
@@ -187,8 +192,12 @@ def test_gini_perfect_inequality():
     
     umi.create_mapping()
     
+    # Calculate Gini coefficient
+    result = GiniCoefficient.calculate(umi)
+    gini = result['gini_coefficient']
+    
     # Gini coefficient should be close to 1 for perfect inequality
-    assert 0.8 < umi.gini_coefficient() < 1.0
+    assert 0.8 < gini < 1.0
 
 
 def test_gini_moderate_inequality():
@@ -210,8 +219,11 @@ def test_gini_moderate_inequality():
     
     umi.create_mapping()
     
+    # Calculate Gini coefficient
+    result = GiniCoefficient.calculate(umi)
+    gini = result['gini_coefficient']
+    
     # Gini coefficient should be between 0 and 1
-    gini = umi.gini_coefficient()
     assert 0 <= gini < 1
     
     # For this specific distribution, Gini should be around 0.2-0.3
@@ -236,20 +248,23 @@ def test_gini_with_allowed_list():
     allowed_list = ["AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG", "ATATAT", "MISSING1", "MISSING2"]
     
     # Calculate Gini with and without allowed list
-    gini_without = umi.gini_coefficient()
-    gini_with = umi.gini_coefficient(allowed_list=allowed_list)
-    print(gini_without, gini_with)
+    result_without = GiniCoefficient.calculate(umi)
+    result_with = GiniCoefficient.calculate(umi, allowed_list=allowed_list)
+    gini_without = result_without['gini_coefficient']
+    gini_with = result_with['gini_coefficient']
     
     # Gini with allowed list should be higher because it includes zero counts
     assert gini_with > gini_without
     
     # Test with all missing keys
     all_missing = ["MISSING1", "MISSING2", "MISSING3", "MISSING4", "MISSING5"]
-    gini_all_missing = umi.gini_coefficient(allowed_list=all_missing)
+    result_all_missing = GiniCoefficient.calculate(umi, allowed_list=all_missing)
+    gini_all_missing = result_all_missing['gini_coefficient']
     assert gini_all_missing is None  # No data should return None
     
     # Test with mix of present and missing keys
     mixed_list = ["AAAAAA", "MISSING1", "TTTTTT", "MISSING2", "CCCCCC"]
-    gini_mixed = umi.gini_coefficient(allowed_list=mixed_list)
+    result_mixed = GiniCoefficient.calculate(umi, allowed_list=mixed_list)
+    gini_mixed = result_mixed['gini_coefficient']
     assert 0 < gini_mixed < 1  # Should be between 0 and 1
     assert gini_mixed > gini_without  # Should be higher than without allowed list

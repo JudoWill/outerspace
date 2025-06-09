@@ -15,6 +15,7 @@ import yaml
 
 from outerspace.cli.commands.base import BaseCommand
 from outerspace.umi import UMI
+from outerspace.stats import GiniCoefficient
 
 class CountCommand(BaseCommand):
     """Command for counting unique barcodes per key value in CSV files"""
@@ -72,6 +73,7 @@ class CountCommand(BaseCommand):
         """Process a single CSV file and return summary statistics"""
         # Create UMI object for this file
         umi = UMI(mismatches=0)
+        key_umi = UMI(mismatches=0)  # For key counts
         
         # Read rows and collect barcodes per key
         barcodes_by_key = defaultdict(set)
@@ -106,24 +108,22 @@ class CountCommand(BaseCommand):
                         if key and barcode:  # Skip empty values
                             barcodes_by_key[key].add(barcode)
                             umi.consume(barcode)
+                            key_umi.consume(key)
                 else:
                     if key and barcode:  # Skip empty values
                         barcodes_by_key[key].add(barcode)
                         umi.consume(barcode)
+                        key_umi.consume(key)
         
         # Calculate summary statistics
         total_keys = len(barcodes_by_key)
         total_barcodes = sum(len(barcodes) for barcodes in barcodes_by_key.values())
         
-        # Calculate Gini coefficient for barcodes (using UMI class)
-        barcode_gini = umi.gini_coefficient()
-        
-        # Calculate Gini coefficient for keys using a new UMI instance
-        key_umi = UMI(mismatches=0)  # No mismatches since keys are already corrected
-        for key, barcodes in barcodes_by_key.items():
-            key_umi.consume(key)
-        key_umi.create_mapping()
-        key_gini = key_umi.gini_coefficient(allowed_list=list(allowed_keys) if allowed_keys else None)
+        # Calculate Gini coefficients using the stats module
+        barcode_result = GiniCoefficient.calculate(umi)
+        key_result = GiniCoefficient.calculate(key_umi, allowed_list=list(allowed_keys) if allowed_keys else None)
+        barcode_gini = barcode_result['gini_coefficient']
+        key_gini = key_result['gini_coefficient']
         
         stats = {
             'file_stats': {
