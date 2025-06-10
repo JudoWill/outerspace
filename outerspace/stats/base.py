@@ -19,7 +19,7 @@ class BaseStatistic(ABC):
         self.umi = umi
     
     @abstractmethod
-    def run(self) -> Dict[str, T]:
+    def run(self) -> T:
         """Run the statistical calculation
         
         Returns:
@@ -40,7 +40,7 @@ class BaseStatistic(ABC):
         pass
     
     @classmethod
-    def calculate(cls, umi: UMI, **kwargs) -> Dict[str, T]:
+    def calculate(cls, umi: UMI, **kwargs) -> T:
         """Create an instance and run the calculation
         
         Args:
@@ -72,7 +72,7 @@ class BasePairwiseStatistic(ABC):
         self._result: Optional[Dict[str, T]] = None
     
     @abstractmethod
-    def run(self) -> Dict[str, T]:
+    def run(self) -> T:
         """Run the pairwise statistical calculation
         
         Returns:
@@ -93,7 +93,7 @@ class BasePairwiseStatistic(ABC):
         pass
     
     @classmethod
-    def calculate(cls, umi1: UMI, umi2: UMI, **kwargs) -> Dict[str, T]:
+    def calculate(cls, umi1: UMI, umi2: UMI, **kwargs) -> T:
         """Create an instance and run the calculation
         
         Args:
@@ -128,7 +128,7 @@ class BaseDifferentialStatistic(ABC):
         self._result: Optional[Dict[str, T]] = None
     
     @abstractmethod
-    def run(self) -> Dict[str, T]:
+    def run(self) -> T:
         """Run the differential statistical calculation
         
         Returns:
@@ -149,7 +149,7 @@ class BaseDifferentialStatistic(ABC):
         pass
     
     @classmethod
-    def calculate(cls, umis: List[UMI], groups: List[str], **kwargs) -> Dict[str, T]:
+    def calculate(cls, umis: List[UMI], groups: List[str], **kwargs) -> T:
         """Create an instance and run the calculation
         
         Args:

@@ -36,17 +36,9 @@ Here are important statistical metrics for analyzing UMI distributions:
    - 1: All expected UMIs recovered
    - Typical values: 0.7-0.9 for good quality data
 
-7. **UMI Complexity** - The number of unique UMIs per million reads, normalized for sequencing depth to compare samples with different coverage.
-   - Range: 0 to infinity
-   - Higher values: More diverse library
-   - Lower values: Less diverse library
-   - Typical values: 1000-10000 per million reads
-
-8. **UMI Error Rate** - The proportion of UMIs that are corrected during the error correction process, indicating the quality of the sequencing.
-   - Range: 0 to 1
+8. **UMI Error Rate** - The infered sequencing error rate calculated from the merged barcode.
+   - Range: 0 to barcode_length
    - 0: No errors
-   - 1: All UMIs contain errors
-   - Typical values: 0.05-0.15 for good quality sequencing
 
 9. **UMI Redundancy** - The average number of reads per unique UMI, useful for assessing the efficiency of the UMI-based deduplication process.
     - Range: 1 to infinity

@@ -17,6 +17,14 @@ from .single import (
     UMIRedundancy
 )
 
+from .multi import (
+    JaccardSimilarity,
+    BrayCurtisDissimilarity,
+    SpearmanCorrelation,
+    FoldChange,
+    DifferentialAbundance
+)
+
 # from .pairwise import (
 #     JaccardSimilarity,
 #     BrayCurtisDissimilarity,
