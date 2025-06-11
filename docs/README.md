@@ -10,6 +10,8 @@ It contains tools to extract regions of interest, correct sequencing error, asse
 - [Basic Commands](commands.md)
 - [Configuration](config.md)
 - [Detailed Walkthrough](walkthrough.md)
+- [Command Line Interface Documentation](cli_api.md)
+- [Snakemake Documentation](snakemake.md)
 
 ## Quick Start
 
