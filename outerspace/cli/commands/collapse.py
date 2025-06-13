@@ -30,7 +30,7 @@ class CollapseCommand(BaseCommand):
             help='Output CSV file for corrected barcodes')
         output_group.add_argument('--output-dir',
             help='Output directory for corrected CSV files')
-        parser.add_argument('--columns', required=True,
+        parser.add_argument('--columns',
             help='Column(s) containing barcodes to correct. Can be a single column or comma-separated list')
         parser.add_argument('--mismatches', type=int, default=2,
             help='Number of mismatches allowed for clustering (default: 2)')
@@ -165,11 +165,11 @@ class CollapseCommand(BaseCommand):
         self._merge_config_and_args(defaults)
         
         # Validate required arguments
-        if not self.args.columns:
-            raise ValueError("Please provide columns to correct")
+        if not self.args.columns and not self.args.config:
+            raise ValueError("Please provide either --columns or --config")
 
         # Parse columns argument
-        columns = self._parse_columns(self.args.columns)
+        columns = self._parse_columns(self.args.columns) if self.args.columns else []
         
         # Validate input/output arguments
         if not self.args.input_file and not self.args.input_dir:

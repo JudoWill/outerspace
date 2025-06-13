@@ -28,8 +28,8 @@ class StatsCommand(BaseCommand):
             help='Calculate all single-library statistics from counts in a CSV column')
         parser.add_argument('input_files', nargs='+',
             help='Input CSV file(s) to process (supports glob patterns)')
-        parser.add_argument('--umi-column', required=True,
-            help='Column containing UMIs')
+        parser.add_argument('--key-column',
+            help='Column containing keys')
         parser.add_argument('--count-column',
             help='Column containing pre-counted values')
         parser.add_argument('--scale', type=float,
@@ -123,8 +123,8 @@ class StatsCommand(BaseCommand):
         self._merge_config_and_args(defaults)
 
         # Validate required arguments
-        if not self.args.umi_column:
-            raise ValueError("Please provide a UMI column")
+        if not self.args.key_column and not self.args.config:
+            raise ValueError("Please provide either --key-column or --config")
 
         # Validate scale if provided
         if self.args.scale is not None and self.args.scale <= 0:
@@ -147,7 +147,7 @@ class StatsCommand(BaseCommand):
                 try:
                     stats = self._calculate_stats(
                         input_file,
-                        self.args.umi_column,
+                        self.args.key_column,
                         count_column=self.args.count_column,
                         scale=self.args.scale,
                         sep=self.args.sep,
@@ -156,6 +156,7 @@ class StatsCommand(BaseCommand):
                     all_stats.append(stats)
                 except Exception as e:
                     logger.error(f"Error processing {input_file}: {e}")
+                    
                     continue
             
             if not all_stats:

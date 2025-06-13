@@ -68,27 +68,55 @@ def test_count_missing_output():
 
 def test_count_missing_barcode_column():
     """Test that count command handles missing barcode column"""
-    args = [
-        'count',
-        '--input-dir', 'test_input',
-        '--output-dir', 'test_output',
-        '--key-column', 'protospacer'
-    ]
-    with pytest.raises(SystemExit) as excinfo:
-        cli = Cli(args)
-    assert excinfo.value.code == 2
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create config file
+        config_file = os.path.join(temp_dir, 'config.toml')
+        with open(config_file, 'w') as f:
+            f.write("""[count]
+barcode_column = "UMI_5prime_UMI_3prime_corrected"
+key_column = "protospacer"
+""")
+
+        # Create test input file
+        input_file = os.path.join(temp_dir, 'test.csv')
+        with open(input_file, 'w') as f:
+            f.write('header1,header2\nvalue1,value2\n')
+
+        args = [
+            'count',
+            '--input-file', input_file,
+            '--output-file', os.path.join(temp_dir, 'output.csv'),
+            '--key-column', 'protospacer'
+        ]
+        with pytest.raises(ValueError, match="Please provide either --barcode-column or --config"):
+            cli = Cli(args)
+            cli.run()
 
 def test_count_missing_key_column():
     """Test that count command handles missing key column"""
-    args = [
-        'count',
-        '--input-dir', 'test_input',
-        '--output-dir', 'test_output',
-        '--barcode-column', 'umi3_umi5_corrected'
-    ]
-    with pytest.raises(SystemExit) as excinfo:
-        cli = Cli(args)
-    assert excinfo.value.code == 2
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create config file
+        config_file = os.path.join(temp_dir, 'config.toml')
+        with open(config_file, 'w') as f:
+            f.write("""[count]
+barcode_column = "UMI_5prime_UMI_3prime_corrected"
+key_column = "protospacer"
+""")
+
+        # Create test input file
+        input_file = os.path.join(temp_dir, 'test.csv')
+        with open(input_file, 'w') as f:
+            f.write('header1,header2\nvalue1,value2\n')
+
+        args = [
+            'count',
+            '--input-file', input_file,
+            '--output-file', os.path.join(temp_dir, 'output.csv'),
+            '--barcode-column', 'umi3_umi5_corrected'
+        ]
+        with pytest.raises(ValueError, match="Please provide either --key-column or --config"):
+            cli = Cli(args)
+            cli.run()
 
 def test_count_invalid_downsample():
     """Test that count command handles invalid downsample value"""

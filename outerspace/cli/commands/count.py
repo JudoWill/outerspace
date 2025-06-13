@@ -35,9 +35,9 @@ class CountCommand(BaseCommand):
             help='Output CSV file for barcode counts')
         output_group.add_argument('--output-dir',
             help='Output directory for barcode counts')
-        parser.add_argument('--barcode-column', required=True,
+        parser.add_argument('--barcode-column',
             help='Column containing barcodes')
-        parser.add_argument('--key-column', required=True,
+        parser.add_argument('--key-column',
             help='Column to group by')
         parser.add_argument('--sep', default=',',
             help='CSV separator (default: ,)')
@@ -165,12 +165,12 @@ class CountCommand(BaseCommand):
         with open(filepath, 'w', newline='') as f:
             if detailed:
                 writer = csv.writer(f, delimiter=sep)
-                writer.writerow([key_col, 'unique_barcodes', 'count'])
+                writer.writerow([key_col, 'unique_barcodes', f'{self.args.barcode_column}_count'])
                 for key, barcodes in sorted(barcodes_by_key.items()):
                     writer.writerow([key, ','.join(sorted(barcodes)), len(barcodes)])
             else:
                 writer = csv.writer(f, delimiter=sep)
-                writer.writerow([key_col, 'count'])
+                writer.writerow([key_col, f'{self.args.barcode_column}_count'])
                 for key, barcodes in sorted(barcodes_by_key.items()):
                     writer.writerow([key, len(barcodes)])
 
@@ -194,10 +194,10 @@ class CountCommand(BaseCommand):
         self._merge_config_and_args(defaults)
 
         # Validate required arguments
-        if not self.args.barcode_column:
-            raise ValueError("Please provide a barcode column")
-        if not self.args.key_column:
-            raise ValueError("Please provide a key column")
+        if not self.args.barcode_column and not self.args.config:
+            raise ValueError("Please provide either --barcode-column or --config")
+        if not self.args.key_column and not self.args.config:
+            raise ValueError("Please provide either --key-column or --config")
 
         # Validate input/output arguments
         if not self.args.input_file and not self.args.input_dir:
