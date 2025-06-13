@@ -7,29 +7,33 @@ import csv
 import os
 from pathlib import Path
 import sys
+import logging
 
 
 class UMI:
     """Class for handling UMI clustering and correction"""
     
-    def __init__(self, mismatches: int = 2, method: str = "adjacency"):
+    def __init__(self, mismatches: int = 2, method: str = "adjacency", correct: bool = True):
         """Initialize UMI clusterer
         
         Args:
             mismatches: Number of mismatches allowed for clustering
             method: Clustering method to use (cluster, adjacency, or directional)
+            correct: Whether to perform clustering (default: True)
         """
         self.clusterer = UMIClusterer(cluster_method=method)
         self.mismatches = mismatches
         self._counts: Dict[bytes, int] = {}
         self._mapping: Dict[bytes, bytes] = {}
         self._corrected_counts: Optional[Dict[bytes, int]] = None
+        self.correct = correct
     
     def consume(self, umi: Union[str, bytes], n: int = 1) -> None:
         """Add a UMI to the counts dictionary
         
         Args:
             umi: UMI sequence to add
+            n: Number of times to add the UMI (default: 1)
         """
         if isinstance(umi, str):
             umi = umi.encode('ascii')
@@ -41,8 +45,8 @@ class UMI:
         if not self._counts:
             return
             
-        # If no mismatches allowed, each barcode maps to itself
-        if self.mismatches == 0:
+        # If no mismatches allowed or correction disabled, each barcode maps to itself
+        if self.mismatches == 0 or not self.correct:
             self._mapping = {bc: bc for bc in self._counts.keys()}
             self._corrected_counts = self._counts.copy()
             return
@@ -126,7 +130,7 @@ class UMI:
         Returns:
             UMI object
         """
-        umi = cls(mismatches=mismatches, method=method)
+        umi = cls(mismatches=mismatches, method=method, correct=correct)
         
         with open(filepath, 'r') as f:
             reader = csv.DictReader(f, delimiter=sep)
@@ -164,42 +168,161 @@ class UMI:
             umi._corrected_counts = umi._counts.copy()
         
         return umi
+
+class UmiCollection:
+    """Class for managing collections of UMI objects across samples"""
     
-    @classmethod
-    def from_csvs(cls, directory: Union[str, Path], column: str,
-                  mismatches: int = 2, method: str = "adjacency",
-                  sep: str = ",", correct: bool = True) -> 'UMI':
-        """Create UMI object from multiple CSV files
+    def __init__(self, umis: Dict[str, UMI] = None):
+        """Initialize UmiCollection
         
         Args:
-            directory: Directory containing CSV files
+            umis: Dictionary mapping sample names to UMI objects
+        """
+        self.umis = umis or {}
+        self.logger = logging.getLogger(__name__)
+    
+    @classmethod
+    def from_csvs(cls, filepaths: List[Union[str, Path]], 
+                  column: str,
+                  sample_names: Optional[List[str]] = None,
+                  mismatches: int = 0,
+                  method: str = "adjacency",
+                  sep: str = ",",
+                  count_column: Optional[str] = None) -> 'UmiCollection':
+        """Create UmiCollection from multiple CSV files
+        
+        Args:
+            filepaths: List of paths to CSV files
             column: Column containing UMIs
+            sample_names: Optional list of sample names. If not provided, uses basenames
             mismatches: Number of mismatches allowed for clustering
             method: Clustering method to use
             sep: CSV separator
-            correct: If True, perform clustering. If False, assume data is pre-clustered.
+            count_column: Optional column containing counts
             
         Returns:
-            UMI object
+            UmiCollection object
         """
-        umi = cls(mismatches=mismatches, method=method)
-        directory = Path(directory)
+        logger = logging.getLogger(__name__)
         
-        for csv_file in directory.glob("*.csv"):
-            with open(csv_file, 'r') as f:
+        if sample_names and len(sample_names) != len(filepaths):
+            raise ValueError("Number of sample names must match number of files")
+            
+        umis = {}
+        for i, filepath in enumerate(filepaths):
+            # Use provided sample name or basename
+            sample_name = sample_names[i] if sample_names else Path(filepath).stem
+            logger.info(f"Processing file {i+1}/{len(filepaths)}: {filepath} as sample {sample_name}")
+            
+            # Create UMI object for this file
+            umi = UMI(mismatches=mismatches, method=method, correct=False)
+            
+            # Read CSV and add counts
+            with open(filepath, 'r') as f:
                 reader = csv.DictReader(f, delimiter=sep)
                 if column not in reader.fieldnames:
-                    print(f"Warning: Column {column} not found in {csv_file}")
-                    continue
+                    raise ValueError(f"Column {column} not found in {filepath}")
+                if count_column and count_column not in reader.fieldnames:
+                    raise ValueError(f"Count column {count_column} not found in {filepath}")
                 
                 for row in reader:
-                    umi.consume(row[column])
+                    value = row[column]
+                    if not value:  # Skip empty values
+                        continue
+                        
+                    if count_column:
+                        try:
+                            count = int(float(row[count_column]))
+                            umi.consume(value, count)
+                        except (ValueError, TypeError):
+                            logger.warning(f"Invalid count value '{row[count_column]}' for {value}")
+                            continue
+                    else:
+                        umi.consume(value)
+            
+            umis[sample_name] = umi
+            
+        return cls(umis)
+    
+    @classmethod
+    def from_df(cls, df: 'pd.DataFrame',
+                sample_col: str,
+                umi_col: str,
+                count_col: Optional[str] = None) -> 'UmiCollection':
+        """Create UmiCollection from pandas DataFrame
         
-        if correct:
-            umi.create_mapping()
-        else:
-            # For pre-clustered data, use each UMI as its own cluster
-            umi._mapping = {bc: bc for bc in umi._counts.keys()}
-            umi._corrected_counts = umi._counts.copy()
+        Args:
+            df: DataFrame containing UMI data
+            sample_col: Column containing sample names
+            umi_col: Column containing UMIs
+            count_col: Optional column containing counts
+            
+        Returns:
+            UmiCollection object
+        """
+        logger = logging.getLogger(__name__)
+        umis = {}
         
-        return umi 
+        for sample in df[sample_col].unique():
+            logger.info(f"Processing sample: {sample}")
+            sample_df = df[df[sample_col] == sample]
+            umi = UMI(mismatches=0, correct=False)
+            
+            if count_col:
+                for _, row in sample_df.iterrows():
+                    umi.consume(row[umi_col], int(row[count_col]))
+            else:
+                for umi_seq in sample_df[umi_col]:
+                    umi.consume(umi_seq)
+                    
+            umis[sample] = umi
+            
+        return cls(umis)
+    
+    def to_df(self, format: str = 'wide') -> 'pd.DataFrame':
+        """Convert UmiCollection to pandas DataFrame
+        
+        Args:
+            format: Output format, either 'wide' or 'long'
+                  - wide: Each sample is a column, rows are UMIs
+                  - long: Three columns: sample, umi, count
+        
+        Returns:
+            DataFrame in specified format
+        """
+        import pandas as pd
+        
+        if format not in ['wide', 'long']:
+            raise ValueError("Format must be either 'wide' or 'long'")
+            
+    
+        rows = []
+        for sample, umi in self.umis.items():
+            for bc, count in umi.corrected_counts.items():
+                rows.append({
+                    'sample': sample,
+                    'umi': bc.decode('ascii'),
+                    'count': count
+                })
+        long = pd.DataFrame(rows)
+        if format == 'wide':
+            return pd.pivot_table(long,
+                                    values='count',
+                                    index='umi',
+                                    columns='sample',
+                                    fill_value=0)
+                
+        return long
+    
+    def write(self, path: Union[str, Path], sep: str = ",", format: str = 'wide') -> None:
+        """Write UmiCollection to CSV file
+        
+        Args:
+            path: Path to output CSV file
+            sep: CSV separator
+            format: Output format, either 'wide' or 'long'
+        """
+        self.logger.info(f"Writing data to {path} in {format} format")
+        df = self.to_df(format=format)
+        df.to_csv(path, sep=sep, index=(format == 'wide'))
+        self.logger.info(f"Successfully wrote {len(df)} rows to {path}") 
