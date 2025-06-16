@@ -21,30 +21,33 @@ from .multi import (
     JaccardSimilarity,
     BrayCurtisDissimilarity,
     SpearmanCorrelation,
-    FoldChange,
-    DifferentialAbundance
+    FoldChange
 )
 
-# from .pairwise import (
-#     JaccardSimilarity,
-#     BrayCurtisDissimilarity,
-#     FoldChange,
-#     SpearmanCorrelation,
-#     DifferentialAbundanceScore
-# )
+from .differential import (
+    SingleSampleDifferentialAbundance,
+    MannWhitneyDifferentialAbundance,
+    PairedTTestDifferentialAbundance
+)
 
-# from .differential import (
-#     LogFoldChange,
-#     PValue,
-#     EffectSize,
-#     AbundanceRankChange,
-#     StandardError
-# )
 
 __all__ = [
     'BaseStatistic',
     'BasePairwiseStatistic',
     'BaseDifferentialStatistic',
     'GiniCoefficient',
+    'ShannonDiversity',
+    'SimpsonDiversity',
+    'UMIRecoveryRate',
+    'UMIEfficiencyRate',
+    'UMIErrorRate',
+    'UMIRedundancy',
+    'JaccardSimilarity',
+    'BrayCurtisDissimilarity',
+    'SpearmanCorrelation',
+    'FoldChange',
+    'SingleSampleDifferentialAbundance',
+    'MannWhitneyDifferentialAbundance',
+    'PairedTTestDifferentialAbundance'
     # Add other classes as they are implemented
 ] 

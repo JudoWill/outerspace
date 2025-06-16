@@ -13,7 +13,7 @@ class UMIStats(BaseStatistic):
     A class with some helpful methods for calculating UMI statistics.
     """
 
-    def __init__(self, umi: UMI, use_corrected: bool = True, allowed_list: Optional[List[str]] = None):
+    def __init__(self, umi: UMI, use_corrected: bool = True, allowed_list: Optional[List[str]] = None, **kwargs):
         """Initialize UMI stats calculator
         
         """
@@ -317,7 +317,7 @@ class UMIEfficiencyRate(UMIStats):
 class UMIErrorRate(BaseStatistic):
     """Calculate UMI error rate based on mismatches between original and corrected UMIs"""
     
-    def __init__(self, umi: UMI):
+    def __init__(self, umi: UMI, **kwargs):
         """Initialize UMI error rate calculator
         
         Args:

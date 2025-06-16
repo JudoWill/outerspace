@@ -1,8 +1,8 @@
 """Base classes for UMI statistics calculations"""
 
-from typing import Dict, List, Optional, TypeVar
+from typing import Dict, List, Optional, TypeVar, Union
 from abc import ABC, abstractmethod
-from ..umi import UMI
+from ..umi import UMI, UmiCollection
 
 T = TypeVar('T')
 
@@ -23,7 +23,7 @@ class BaseStatistic(ABC):
         """Run the statistical calculation
         
         Returns:
-            Dictionary of calculated statistics
+            Calculated statistic value
         """
         pass
     
@@ -48,12 +48,28 @@ class BaseStatistic(ABC):
             **kwargs: Additional arguments specific to the statistic
             
         Returns:
-            Dictionary of calculated statistics
+            Calculated statistic value
         """
         instance = cls(umi, **kwargs)
         instance.validate()
         instance.normalize()
         return instance.run()
+
+    @classmethod
+    def calculate_collection(cls, collection: UmiCollection, **kwargs) -> Dict[str, T]:
+        """Calculate statistics for each UMI in a collection
+        
+        Args:
+            collection: UmiCollection object containing multiple UMIs
+            **kwargs: Additional arguments specific to the statistic
+            
+        Returns:
+            Dictionary mapping sample names to calculated statistics
+        """
+        results = {}
+        for sample_name, umi in collection.umis.items():
+            results[sample_name] = cls.calculate(umi, **kwargs)
+        return results
 
 
 class BasePairwiseStatistic(ABC):
@@ -76,7 +92,7 @@ class BasePairwiseStatistic(ABC):
         """Run the pairwise statistical calculation
         
         Returns:
-            Dictionary of calculated statistics
+            Calculated statistic value
         """
         pass
     
@@ -102,12 +118,34 @@ class BasePairwiseStatistic(ABC):
             **kwargs: Additional arguments specific to the statistic
             
         Returns:
-            Dictionary of calculated statistics
+            Calculated statistic value
         """
         instance = cls(umi1, umi2, **kwargs)
         instance.validate()
         instance.normalize()
         return instance.run()
+
+    @classmethod
+    def calculate_collection(cls, collection: UmiCollection, **kwargs) -> Dict[tuple[str, str], T]:
+        """Calculate pairwise statistics for all pairs of UMIs in a collection
+        
+        Args:
+            collection: UmiCollection object containing multiple UMIs
+            **kwargs: Additional arguments specific to the statistic
+            
+        Returns:
+            Dictionary mapping (sample1, sample2) tuples to calculated statistics
+        """
+        results = {}
+        samples = list(collection.umis.keys())
+        for i, sample1 in enumerate(samples):
+            for sample2 in samples[i+1:]:
+                results[(sample1, sample2)] = cls.calculate(
+                    collection.umis[sample1],
+                    collection.umis[sample2],
+                    **kwargs
+                )
+        return results
 
 
 class BaseDifferentialStatistic(ABC):
@@ -132,7 +170,7 @@ class BaseDifferentialStatistic(ABC):
         """Run the differential statistical calculation
         
         Returns:
-            Dictionary of calculated statistics
+            Calculated statistic value
         """
         pass
     
@@ -158,9 +196,38 @@ class BaseDifferentialStatistic(ABC):
             **kwargs: Additional arguments specific to the statistic
             
         Returns:
-            Dictionary of calculated statistics
+            Calculated statistic value
         """
         instance = cls(umis, groups, **kwargs)
         instance.validate()
         instance.normalize()
-        return instance.run() 
+        return instance.run()
+
+    @classmethod
+    def calculate_collection(cls, collection: UmiCollection, groups: Dict[str, str], **kwargs) -> T:
+        """Calculate differential statistics for a collection of UMIs
+        
+        Args:
+            collection: UmiCollection object containing multiple UMIs
+            groups: Dictionary mapping sample names to group labels
+            **kwargs: Additional arguments specific to the statistic
+            
+        Returns:
+            Calculated statistic value
+            
+        Raises:
+            ValueError: If any sample in collection is not in groups
+        """
+        # Validate that all samples have group assignments
+        missing = set(collection.umis.keys()) - set(groups.keys())
+        if missing:
+            raise ValueError(f"Samples missing group assignments: {missing}")
+            
+        # Create ordered lists of UMIs and groups
+        umis = []
+        group_labels = []
+        for sample in collection.umis.keys():
+            umis.append(collection.umis[sample])
+            group_labels.append(groups[sample])
+            
+        return cls.calculate(umis, group_labels, **kwargs) 
