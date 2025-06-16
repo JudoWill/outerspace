@@ -65,7 +65,9 @@ class MergeCommand(BaseCommand):
                 raise ValueError(f"Input file not found: {file}")
 
         # Create output directory if needed
-        os.makedirs(os.path.dirname(self.args.output_file), exist_ok=True)
+        output_dir = os.path.dirname(self.args.output_file)
+        if output_dir:  # Only create directory if there is a path component
+            os.makedirs(output_dir, exist_ok=True)
 
         try:
             logger.info(f"Starting merge of {len(self.args.files)} files")
