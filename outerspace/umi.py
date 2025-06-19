@@ -31,11 +31,18 @@ def _cluster_umis(counts: Dict[bytes, int],
     # If no mismatches allowed, each barcode maps to itself
     if mismatches == 0:
         return counts.copy(), {bc: bc for bc in counts.keys()}
-        
+    
+    # Each UMI should only occur once
+    allowed_set = set(allowed_list) if allowed_list else set()
+
     # Create clusters
     clusterer = UMIClusterer(cluster_method=method)
     clusters = clusterer(counts, mismatches)
     
+    # Sort clusters by size
+    # Processing the largest cluster first
+    clusters = sorted(clusters, key=lambda x: _cluster_size(counts, x), reverse=True)
+
     # Create mapping
     mapping = {}
     collapsed_counts = {}
@@ -47,7 +54,7 @@ def _cluster_umis(counts: Dict[bytes, int],
             # Find the UMI in the cluster that is in the allowed list
             # and has the highest count
             for bc in cluster:
-                if bc in allowed_list:
+                if bc in allowed_set:
                     if key is None or counts[bc] > counts[key]:
                         key = bc
             if key is None:
@@ -61,8 +68,16 @@ def _cluster_umis(counts: Dict[bytes, int],
         for item in cluster:
             mapping[item] = key
             collapsed_counts[key] = collapsed_counts.get(key, 0) + counts[item]
+        
+        # Remove the key from the allowed set
+        allowed_set.discard(key)
     
     return collapsed_counts, mapping
+
+
+def _cluster_size(counts: Dict[bytes, int], cluster: List[bytes]) -> int:
+    """Return the size of the largest cluster in the counts dictionary"""
+    return sum(counts[bc] for bc in cluster)
 
 
 class UMI:
