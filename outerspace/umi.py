@@ -1,6 +1,6 @@
 """Module for handling UMI clustering and correction"""
 
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Tuple
 from collections import Counter
 from umi_tools import UMIClusterer
 import csv
@@ -8,6 +8,61 @@ import os
 from pathlib import Path
 import sys
 import logging
+
+
+def _cluster_umis(counts: Dict[bytes, int], 
+                 mismatches: int = 2, 
+                 method: str = "adjacency",
+                 allowed_list: Optional[List[bytes]] = None) -> Tuple[Dict[bytes, int], Dict[bytes, bytes]]:
+    """Cluster UMIs and return collapsed counts and mapping
+    
+    Args:
+        counts: Dictionary mapping UMIs to their counts
+        mismatches: Number of mismatches allowed for clustering
+        method: Clustering method to use
+        allowed_list: Optional list of allowed UMIs. If provided, highest priority UMI in cluster will be used as representative
+        
+    Returns:
+        Tuple of (collapsed_counts, mapping)
+    """
+    if not counts:
+        return {}, {}
+        
+    # If no mismatches allowed, each barcode maps to itself
+    if mismatches == 0:
+        return counts.copy(), {bc: bc for bc in counts.keys()}
+        
+    # Create clusters
+    clusterer = UMIClusterer(cluster_method=method)
+    clusters = clusterer(counts, mismatches)
+    
+    # Create mapping
+    mapping = {}
+    collapsed_counts = {}
+    
+    for cluster in clusters:
+        if allowed_list:
+            # Find highest priority UMI in cluster that's in allowed_list
+            key = None
+            # Find the UMI in the cluster that is in the allowed list
+            # and has the highest count
+            for bc in cluster:
+                if bc in allowed_list:
+                    if key is None or counts[bc] > counts[key]:
+                        key = bc
+            if key is None:
+                # If no allowed UMIs in cluster, use most common
+                key = max(cluster, key=lambda x: counts[x])
+        else:
+            # Use most common UMI as representative
+            key = max(cluster, key=lambda x: counts[x])
+            
+        # Map all UMIs in cluster to representative
+        for item in cluster:
+            mapping[item] = key
+            collapsed_counts[key] = collapsed_counts.get(key, 0) + counts[item]
+    
+    return collapsed_counts, mapping
 
 
 class UMI:
@@ -23,6 +78,7 @@ class UMI:
         """
         self.clusterer = UMIClusterer(cluster_method=method)
         self.mismatches = mismatches
+        self.method = method  # Store the method name
         self._counts: Dict[bytes, int] = {}
         self._mapping: Dict[bytes, bytes] = {}
         self._corrected_counts: Optional[Dict[bytes, int]] = None
@@ -40,32 +96,32 @@ class UMI:
         self._counts[umi] = self._counts.get(umi, 0) + n
         self._corrected_counts = None  # Reset corrected counts
     
-    def create_mapping(self) -> None:
-        """Create mapping between original and corrected barcodes"""
+    def create_mapping(self, allowed_list: Optional[List[Union[str, bytes]]] = None) -> None:
+        """Create mapping between original and corrected barcodes
+        
+        Args:
+            allowed_list: Optional list of allowed UMIs. If provided, highest priority UMI in cluster will be used as representative
+        """
         if not self._counts:
             return
             
-        # If no mismatches allowed or correction disabled, each barcode maps to itself
-        if self.mismatches == 0 or not self.correct:
+        # Convert allowed_list to bytes if provided
+        if allowed_list:
+            allowed_list = [x.encode('ascii') if isinstance(x, str) else x for x in allowed_list]
+            
+        # If correction disabled, each barcode maps to itself
+        if not self.correct:
             self._mapping = {bc: bc for bc in self._counts.keys()}
             self._corrected_counts = self._counts.copy()
             return
             
-        # Create clusters
-        clusters = self.clusterer(self._counts, self.mismatches)
-        
-        # Create mapping
-        self._mapping = {}
-        for cluster in clusters:
-            key = cluster[0]  # Use first barcode in cluster as representative
-            for item in cluster:
-                self._mapping[item] = key
-        
-        # Update corrected counts
-        self._corrected_counts = {}
-        for orig_bc, count in self._counts.items():
-            corrected = self._mapping.get(orig_bc, orig_bc)
-            self._corrected_counts[corrected] = self._corrected_counts.get(corrected, 0) + count
+        # Use private clustering function
+        self._corrected_counts, self._mapping = _cluster_umis(
+            self._counts, 
+            self.mismatches, 
+            self.method,  # Use stored method name
+            allowed_list
+        )
     
     def __getitem__(self, umi: Union[str, bytes]) -> bytes:
         """Get corrected UMI for a given UMI
@@ -180,6 +236,53 @@ class UmiCollection:
         """
         self.umis = umis or {}
         self.logger = logging.getLogger(__name__)
+    
+    def collapse_umis(self, mismatches: int = 2, method: str = "adjacency", 
+                     allowed_list: Optional[List[Union[str, bytes]]] = None) -> 'UmiCollection':
+        """Collapse UMIs across all samples using clustering
+        
+        Args:
+            mismatches: Number of mismatches allowed for clustering
+            method: Clustering method to use
+            allowed_list: Optional list of allowed UMIs. If provided, highest priority UMI in cluster will be used as representative
+            
+        Returns:
+            New UmiCollection with collapsed UMIs
+        """
+        # Combine all UMIs from all samples
+        combined_counts = {}
+        for umi_obj in self.umis.values():
+            for bc, count in umi_obj._counts.items():
+                combined_counts[bc] = combined_counts.get(bc, 0) + count
+        
+        # Convert allowed_list to bytes if provided
+        if allowed_list:
+            allowed_list = [x.encode('ascii') if isinstance(x, str) else x for x in allowed_list]
+        
+        # Use private clustering function
+        collapsed_counts, mapping = _cluster_umis(
+            combined_counts,
+            mismatches,
+            method,
+            allowed_list
+        )
+        
+        # Create new collection with collapsed counts
+        new_umis = {}
+        for sample_name, umi_obj in self.umis.items():
+            new_umi = UMI(mismatches=mismatches, method=method, correct=False)
+            new_umi._mapping = mapping
+            new_umi._counts = umi_obj._counts.copy()
+            
+            # Update corrected counts using the mapping
+            new_umi._corrected_counts = {}
+            for orig_bc, count in umi_obj._counts.items():
+                corrected = mapping.get(orig_bc, orig_bc)
+                new_umi._corrected_counts[corrected] = new_umi._corrected_counts.get(corrected, 0) + count
+                
+            new_umis[sample_name] = new_umi
+            
+        return UmiCollection(new_umis)
     
     @classmethod
     def from_csvs(cls, filepaths: List[Union[str, Path]], 

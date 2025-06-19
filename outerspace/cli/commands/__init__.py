@@ -7,6 +7,6 @@ from .base import BaseCommand
 from .findseq import FindSeqCommand
 from .collapse import CollapseCommand
 from .count import CountCommand
-from .gini import GiniCommand
 from .visualize import VisualizeCommand
+from .merge import MergeCommand
 from .pipeline import PipelineCommand 

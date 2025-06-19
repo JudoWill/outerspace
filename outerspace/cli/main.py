@@ -9,7 +9,6 @@ from sys import exit as sys_exit
 from outerspace.cli.commands.findseq import FindSeqCommand
 from outerspace.cli.commands.collapse import CollapseCommand
 from outerspace.cli.commands.count import CountCommand
-from outerspace.cli.commands.gini import GiniCommand
 from outerspace.cli.commands.merge import MergeCommand
 from outerspace.cli.commands.stats import StatsCommand
 from outerspace.cli.commands.visualize import VisualizeCommand
@@ -37,7 +36,7 @@ class Cli:
         
         # Register each command
         for cmd_cls in [FindSeqCommand, CollapseCommand, CountCommand, MergeCommand,
-                       GiniCommand, StatsCommand, VisualizeCommand, PipelineCommand]:
+                       StatsCommand, VisualizeCommand, PipelineCommand]:
             cmd = cmd_cls()
             cmd._init_parser(subparsers)
         
@@ -53,7 +52,6 @@ class Cli:
             'collapse': CollapseCommand,
             'count': CountCommand,
             'merge': MergeCommand,
-            'gini': GiniCommand,
             'visualize': VisualizeCommand,
             'pipeline': PipelineCommand,
             'stats': StatsCommand

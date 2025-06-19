@@ -36,7 +36,21 @@ class MergeCommand(BaseCommand):
             help='TOML configuration file containing command settings')
         parser.add_argument('--log-file',
             help='Path to log file')
+        # Add collapse-related arguments
+        parser.add_argument('--mismatches', type=int, default=0,
+            help='Number of mismatches allowed for clustering (default: 0)')
+        parser.add_argument('--method', choices=['cluster', 'adjacency', 'directional'],
+            default='directional',
+            help='Clustering method to use (default: directional)')
+        parser.add_argument('--metrics',
+            help='Output YAML file for metrics')
         return parser
+
+    def _write_metrics(self, metrics: dict, filepath: str):
+        """Write metrics to YAML file"""
+        import yaml
+        with open(filepath, 'w') as f:
+            yaml.dump(metrics, f, default_flow_style=False)
 
     def run(self):
         """Run the merge command"""
@@ -51,7 +65,9 @@ class MergeCommand(BaseCommand):
         defaults = {
             'sep': ',',
             'sample_names': None,
-            'format': 'wide'
+            'format': 'wide',
+            'mismatches': 2,
+            'method': 'none'
         }
         self._merge_config_and_args(defaults)
 
@@ -80,6 +96,30 @@ class MergeCommand(BaseCommand):
                 sep=self.args.sep,
                 count_column=self.args.count_column
             )
+            
+            # Collapse UMIs if mismatches > 0
+            if self.args.mismatches > 0:
+                logger.info(f"Collapsing UMIs with {self.args.mismatches} mismatches using {self.args.method} method")
+                collection = collection.collapse_umis(
+                    mismatches=self.args.mismatches,
+                    method=self.args.method
+                )
+                
+                # Generate metrics if requested
+                if self.args.metrics:
+                    metrics = {
+                        'barcode_counts': {
+                            'unique_barcodes_before': sum(len(umi._counts) for umi in collection.umis.values()),
+                            'unique_barcodes_after': sum(len(umi.corrected_counts) for umi in collection.umis.values()),
+                            'total_reads': sum(sum(umi._counts.values()) for umi in collection.umis.values())
+                        },
+                        'correction_details': {
+                            'clusters_formed': sum(len(set(umi._mapping.values())) for umi in collection.umis.values()),
+                            'barcodes_corrected': sum(len(umi._mapping) - len(umi.corrected_counts) for umi in collection.umis.values())
+                        }
+                    }
+                    self._write_metrics(metrics, self.args.metrics)
+                    logger.info(f"Metrics written to: {self.args.metrics}")
             
             # Write merged data to output file
             collection.write(
