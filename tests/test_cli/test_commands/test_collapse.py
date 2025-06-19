@@ -72,16 +72,31 @@ def test_collapse_missing_output():
 
 def test_collapse_missing_columns():
     """Test that collapse command handles missing columns"""
-    args = [
-        'collapse',
-        '--input-dir', 'test_input',
-        '--output-dir', 'test_output',
-        '--mismatches', '2',
-        '--method', 'directional'
-    ]
-    with pytest.raises(SystemExit) as excinfo:
-        cli = Cli(args)
-    assert excinfo.value.code == 2
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create config file
+        config_file = os.path.join(temp_dir, 'config.toml')
+        with open(config_file, 'w') as f:
+            f.write("""[collapse]
+columns = "UMI_5prime,UMI_3prime"
+mismatches = 2
+method = "directional"
+""")
+
+        # Create test input file
+        input_file = os.path.join(temp_dir, 'test.csv')
+        with open(input_file, 'w') as f:
+            f.write('header1,header2\nvalue1,value2\n')
+
+        args = [
+            'collapse',
+            '--input-file', input_file,
+            '--output-file', os.path.join(temp_dir, 'output.csv'),
+            '--mismatches', '2',
+            '--method', 'directional'
+        ]
+        with pytest.raises(ValueError, match="Please provide either --columns or --config"):
+            cli = Cli(args)
+            cli.run()
 
 def test_collapse_invalid_method():
     """Test that collapse command handles invalid clustering method"""

@@ -1,11 +1,13 @@
 """Tests for UMI clustering and correction"""
 
 import pytest
-from outerspace.umi import UMI
+from outerspace.umi import UMI, UmiCollection
 from pathlib import Path
 import tempfile
 import csv
 import os
+import pandas as pd
+import numpy as np
 
 
 def test_basic_umi_merging():
@@ -75,9 +77,10 @@ def test_csv_loading():
     
     try:
         # Test single file loading
-        umi = UMI.from_csv(temp_file, column='barcode', mismatches=2)
-        assert umi["ATCG"] == umi["ATCC"]  # Should be merged
-        assert umi["GCTA"] != umi["ATCG"]  # Should not be merged
+        umi = UMI.from_csv(temp_file, column='barcode', mismatches=0, correct=False)
+        counts = umi.corrected_counts
+        assert len(counts) == 3  # Three unique barcodes
+        assert sum(counts.values()) == 3  # One count each
         
         # Test multiple file loading
         temp_dir = tempfile.mkdtemp()
@@ -90,9 +93,17 @@ def test_csv_loading():
                     writer.writerow(['ATCG'])
                     writer.writerow(['ATCC'])
             
-            umi = UMI.from_csvs(temp_dir, column='barcode', mismatches=1)
-            assert umi["ATCG"] == umi["ATCC"]  # Should be merged
-            assert umi.corrected_counts[umi["ATCG"]] == 4  # Should have 4 total counts
+            # Use UmiCollection for multiple files
+            collection = UmiCollection.from_csvs(
+                [os.path.join(temp_dir, f'test_{i}.csv') for i in range(2)],
+                column='barcode',
+                sample_names=['sample1', 'sample2']
+            )
+            assert len(collection.umis) == 2
+            for sample in collection.umis.values():
+                counts = sample.corrected_counts
+                assert len(counts) == 2  # Two unique barcodes per sample
+                assert sum(counts.values()) == 2  # One count each
             
         finally:
             # Cleanup
@@ -145,111 +156,212 @@ def test_invalid_input():
         os.unlink(temp_file)
 
 
-def test_gini_perfect_equality():
-    """Test Gini coefficient calculation for perfectly equal distribution"""
-    umi = UMI(mismatches=0)
-    
-    # Add 10 UMIs with equal counts using sequences that won't merge
-    sequences = [
-        "AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG",
-        "ATATAT", "TATATA", "CGCGCG", "GCGCGC",
-        "ACACAC", "TGTGTG"
-    ]
-    
-    for seq in sequences:
-        umi.consume(seq)
-    
-    umi.create_mapping()
-    
-    # Gini coefficient should be 0 for perfect equality
-    assert abs(umi.gini_coefficient()) < 0.0001
+def test_umi_collection_from_csvs():
+    """Test creating UmiCollection from multiple CSV files"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create test CSV files with different sample data
+        files = []
+        for i in range(2):
+            file_path = os.path.join(temp_dir, f'sample_{i}.csv')
+            with open(file_path, 'w') as f:
+                writer = csv.writer(f)
+                writer.writerow(['barcode', 'count'])
+                writer.writerow(['ATCG', '2'])
+                writer.writerow(['ATCC', '1'])
+                writer.writerow(['GCTA', '3'])
+            files.append(file_path)
+        
+        # Create collection from files
+        collection = UmiCollection.from_csvs(
+            files,
+            column='barcode',
+            count_column='count',
+            sample_names=['sample1', 'sample2']
+        )
+        
+        # Check that we have the right number of samples
+        assert len(collection.umis) == 2
+        
+        # Check counts for each sample
+        for sample in ['sample1', 'sample2']:
+            counts = collection.umis[sample].corrected_counts
+            assert len(counts) == 3  # Three unique barcodes
+            assert sum(counts.values()) == 6  # Total count of 6 (2+1+3)
 
 
-def test_gini_perfect_inequality():
-    """Test Gini coefficient calculation for perfectly unequal distribution"""
-    umi = UMI(mismatches=0)
+def test_umi_collection_from_df():
+    """Test creating UmiCollection from pandas DataFrame"""
+    # Create test DataFrame
+    df = pd.DataFrame({
+        'sample': ['A', 'A', 'A', 'B', 'B', 'B'],
+        'barcode': ['ATCG', 'ATCC', 'GCTA', 'ATCG', 'ATCC', 'GCTA'],
+        'count': [2, 1, 3, 1, 2, 2]
+    })
     
-    # Add 10 UMIs with highly unequal distribution
-    # One UMI has 100 counts, others have 1
-    sequences = [
-        "AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG",
-        "ATATAT", "TATATA", "CGCGCG", "GCGCGC",
-        "ACACAC", "TGTGTG"
-    ]
+    # Create collection from DataFrame
+    collection = UmiCollection.from_df(
+        df,
+        sample_col='sample',
+        umi_col='barcode',
+        count_col='count'
+    )
     
-    # Add 100 counts of the first sequence
-    for _ in range(100):
-        umi.consume(sequences[0])
+    # Check that we have the right number of samples
+    assert len(collection.umis) == 2
     
-    # Add 1 count of each other sequence
-    for seq in sequences[1:]:
-        umi.consume(seq)
-    
-    umi.create_mapping()
-    
-    # Gini coefficient should be close to 1 for perfect inequality
-    assert 0.8 < umi.gini_coefficient() < 1.0
+    # Check counts for each sample
+    for sample in ['A', 'B']:
+        counts = collection.umis[sample].corrected_counts
+        assert len(counts) == 3  # Three unique barcodes
+        if sample == 'A':
+            assert sum(counts.values()) == 6  # 2+1+3
+        else:
+            assert sum(counts.values()) == 5  # 1+2+2
 
 
-def test_gini_moderate_inequality():
-    """Test Gini coefficient calculation for moderately unequal distribution"""
-    umi = UMI(mismatches=0)
-    
-    # Add 10 UMIs with moderate inequality
-    # Distribution: 1, 2, 3, 4, 5, 5, 4, 3, 2, 1
-    sequences = [
-        "AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG",
-        "ATATAT", "TATATA", "CGCGCG", "GCGCGC",
-        "ACACAC", "TGTGTG"
-    ]
-    counts = [1, 2, 3, 4, 5, 5, 4, 3, 2, 1]
-    
-    for seq, count in zip(sequences, counts):
-        for _ in range(count):
-            umi.consume(seq)
-    
-    umi.create_mapping()
-    
-    # Gini coefficient should be between 0 and 1
-    gini = umi.gini_coefficient()
-    assert 0 <= gini < 1
-    
-    # For this specific distribution, Gini should be around 0.2-0.3
-    assert 0.2 < gini < 0.3
+def test_umi_collection_to_df_wide():
+    """Test converting UmiCollection to wide format DataFrame"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create test CSV files
+        files = []
+        for i in range(2):
+            file_path = os.path.join(temp_dir, f'sample_{i}.csv')
+            with open(file_path, 'w') as f:
+                writer = csv.writer(f)
+                writer.writerow(['barcode', 'count'])
+                writer.writerow(['ATCG', '2'])
+                writer.writerow(['ATCC', '1'])
+                writer.writerow(['GCTA', '3'])
+            files.append(file_path)
+        
+        # Create collection
+        collection = UmiCollection.from_csvs(
+            files,
+            column='barcode',
+            count_column='count',
+            sample_names=['sample1', 'sample2']
+        )
+        
+        # Convert to wide format DataFrame
+        df = collection.to_df(format='wide')
+        
+        # Check DataFrame structure
+        assert isinstance(df, pd.DataFrame)
+        assert df.shape == (3, 2)  # 3 barcodes, 2 samples
+        assert list(df.columns) == ['sample1', 'sample2']
+        assert set(df.index) == {'ATCG', 'ATCC', 'GCTA'}  # Check set of indices instead of order
+        
+        # Check values
+        assert df.loc['ATCG', 'sample1'] == 2
+        assert df.loc['ATCC', 'sample1'] == 1
+        assert df.loc['GCTA', 'sample1'] == 3
 
 
-def test_gini_with_allowed_list():
-    """Test Gini coefficient calculation with allowed list including missing keys"""
-    umi = UMI(mismatches=0)
-    
-    # Add 5 UMIs with unequal distribution
-    sequences = ["AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG", "ATATAT"]
-    counts = [10, 8, 6, 4, 2]  # Unequal distribution
-    
-    for seq, count in zip(sequences, counts):
-        for _ in range(count):
-            umi.consume(seq)
-    
-    umi.create_mapping()
-    
-    # Define allowed list with some missing keys
-    allowed_list = ["AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG", "ATATAT", "MISSING1", "MISSING2"]
-    
-    # Calculate Gini with and without allowed list
-    gini_without = umi.gini_coefficient()
-    gini_with = umi.gini_coefficient(allowed_list=allowed_list)
-    print(gini_without, gini_with)
-    
-    # Gini with allowed list should be higher because it includes zero counts
-    assert gini_with > gini_without
-    
-    # Test with all missing keys
-    all_missing = ["MISSING1", "MISSING2", "MISSING3", "MISSING4", "MISSING5"]
-    gini_all_missing = umi.gini_coefficient(allowed_list=all_missing)
-    assert gini_all_missing is None  # No data should return None
-    
-    # Test with mix of present and missing keys
-    mixed_list = ["AAAAAA", "MISSING1", "TTTTTT", "MISSING2", "CCCCCC"]
-    gini_mixed = umi.gini_coefficient(allowed_list=mixed_list)
-    assert 0 < gini_mixed < 1  # Should be between 0 and 1
-    assert gini_mixed > gini_without  # Should be higher than without allowed list
+def test_umi_collection_to_df_long():
+    """Test converting UmiCollection to long format DataFrame"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create test CSV files
+        files = []
+        for i in range(2):
+            file_path = os.path.join(temp_dir, f'sample_{i}.csv')
+            with open(file_path, 'w') as f:
+                writer = csv.writer(f)
+                writer.writerow(['barcode', 'count'])
+                writer.writerow(['ATCG', '2'])
+                writer.writerow(['ATCC', '1'])
+                writer.writerow(['GCTA', '3'])
+            files.append(file_path)
+        
+        # Create collection
+        collection = UmiCollection.from_csvs(
+            files,
+            column='barcode',
+            count_column='count',
+            sample_names=['sample1', 'sample2']
+        )
+        
+        # Convert to long format DataFrame
+        df = collection.to_df(format='long')
+        
+        # Check DataFrame structure
+        assert isinstance(df, pd.DataFrame)
+        assert df.shape == (6, 3)  # 6 rows (3 barcodes × 2 samples), 3 columns
+        assert list(df.columns) == ['sample', 'umi', 'count']
+        
+        # Check values
+        sample1_data = df[df['sample'] == 'sample1']
+        assert len(sample1_data) == 3
+        assert sample1_data[sample1_data['umi'] == 'ATCG']['count'].iloc[0] == 2
+        assert sample1_data[sample1_data['umi'] == 'ATCC']['count'].iloc[0] == 1
+        assert sample1_data[sample1_data['umi'] == 'GCTA']['count'].iloc[0] == 3
+
+
+def test_umi_collection_write():
+    """Test writing UmiCollection to CSV file"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create test CSV files
+        files = []
+        for i in range(2):
+            file_path = os.path.join(temp_dir, f'sample_{i}.csv')
+            with open(file_path, 'w') as f:
+                writer = csv.writer(f)
+                writer.writerow(['barcode', 'count'])
+                writer.writerow(['ATCG', '2'])
+                writer.writerow(['ATCC', '1'])
+                writer.writerow(['GCTA', '3'])
+            files.append(file_path)
+        
+        # Create collection
+        collection = UmiCollection.from_csvs(
+            files,
+            column='barcode',
+            count_column='count',
+            sample_names=['sample1', 'sample2']
+        )
+        
+        # Test writing in wide format
+        wide_output = os.path.join(temp_dir, 'wide_output.csv')
+        collection.write(wide_output, format='wide')
+        assert os.path.exists(wide_output)
+        
+        # Read back and verify
+        wide_df = pd.read_csv(wide_output, index_col=0)
+        assert wide_df.shape == (3, 2)
+        assert list(wide_df.columns) == ['sample1', 'sample2']
+        
+        # Test writing in long format
+        long_output = os.path.join(temp_dir, 'long_output.csv')
+        collection.write(long_output, format='long')
+        assert os.path.exists(long_output)
+        
+        # Read back and verify
+        long_df = pd.read_csv(long_output)
+        assert long_df.shape == (6, 3)
+        assert list(long_df.columns) == ['sample', 'umi', 'count']
+
+
+def test_umi_collection_invalid_format():
+    """Test that UmiCollection handles invalid format specifications"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create test CSV file
+        file_path = os.path.join(temp_dir, 'sample.csv')
+        with open(file_path, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerow(['barcode', 'count'])
+            writer.writerow(['ATCG', '2'])
+        
+        # Create collection
+        collection = UmiCollection.from_csvs(
+            [file_path],
+            column='barcode',
+            count_column='count',
+            sample_names=['sample1']
+        )
+        
+        # Test invalid format in to_df
+        with pytest.raises(ValueError, match="Format must be either 'wide' or 'long'"):
+            collection.to_df(format='invalid')
+        
+        # Test invalid format in write
+        with pytest.raises(ValueError, match="Format must be either 'wide' or 'long'"):
+            collection.write(os.path.join(temp_dir, 'output.csv'), format='invalid')

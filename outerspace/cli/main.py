@@ -9,7 +9,8 @@ from sys import exit as sys_exit
 from outerspace.cli.commands.findseq import FindSeqCommand
 from outerspace.cli.commands.collapse import CollapseCommand
 from outerspace.cli.commands.count import CountCommand
-from outerspace.cli.commands.gini import GiniCommand
+from outerspace.cli.commands.merge import MergeCommand
+from outerspace.cli.commands.stats import StatsCommand
 from outerspace.cli.commands.visualize import VisualizeCommand
 from outerspace.cli.commands.pipeline import PipelineCommand
 
@@ -34,8 +35,8 @@ class Cli:
         subparsers = parser.add_subparsers(dest='command', help='Available commands')
         
         # Register each command
-        for cmd_cls in [FindSeqCommand, CollapseCommand, CountCommand, 
-                       GiniCommand, VisualizeCommand, PipelineCommand]:
+        for cmd_cls in [FindSeqCommand, CollapseCommand, CountCommand, MergeCommand,
+                       StatsCommand, VisualizeCommand, PipelineCommand]:
             cmd = cmd_cls()
             cmd._init_parser(subparsers)
         
@@ -50,9 +51,10 @@ class Cli:
             'findseq': FindSeqCommand,
             'collapse': CollapseCommand,
             'count': CountCommand,
-            'gini': GiniCommand,
+            'merge': MergeCommand,
             'visualize': VisualizeCommand,
-            'pipeline': PipelineCommand
+            'pipeline': PipelineCommand,
+            'stats': StatsCommand
         }
         return command_map[self.args.command](self.args)
 

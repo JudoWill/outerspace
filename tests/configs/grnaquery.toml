@@ -22,7 +22,15 @@ barcode_column = 'UMI_5prime_UMI_3prime_corrected'
 key_column = 'protospacer'
 
 [gini]
-column = 'count'
+column = 'UMI_5prime_UMI_3prime_corrected_count'
+
+[merge]
+column = 'UMI_5prime_UMI_3prime_corrected_count'
+key_column = 'protospacer'
+
+[stats]
+key_column = 'protospacer'
+count_column = 'UMI_5prime_UMI_3prime_corrected_count'
 
 [owner]
 name = "SCB, DK, WND, RB"
