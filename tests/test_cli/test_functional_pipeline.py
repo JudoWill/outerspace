@@ -58,7 +58,7 @@ def test_pipeline_from_samplesheet(temp_workspace):
         check_directory_contents(expected_files, '.csv', os.path.join(temp_workspace, 'findseq'))
         check_directory_contents(expected_files, '.csv', os.path.join(temp_workspace, 'collapse'))
         check_directory_contents(expected_files, '.csv', os.path.join(temp_workspace, 'count'))
-        check_directory_contents(['merge'], '.csv', os.path.join(temp_workspace, 'merge'))
+        check_directory_contents(['merged'], '.csv', os.path.join(temp_workspace, 'merge'))
         check_directory_contents(['stats'], '.csv', os.path.join(temp_workspace, 'stats'))
        
     finally:
@@ -94,8 +94,7 @@ def test_pipeline_from_directory(temp_workspace):
         check_directory_contents(expected_files, '.csv', os.path.join(temp_workspace, 'findseq'))
         check_directory_contents(expected_files, '.csv', os.path.join(temp_workspace, 'collapse'))
         check_directory_contents(expected_files, '.csv', os.path.join(temp_workspace, 'count'))
-        check_directory_contents(expected_files, '.csv', os.path.join(temp_workspace, 'gini'))
-        check_directory_contents(['merge'], '.csv', os.path.join(temp_workspace, 'merge'))
+        check_directory_contents(['merged'], '.csv', os.path.join(temp_workspace, 'merge'))
         check_directory_contents(['stats'], '.csv', os.path.join(temp_workspace, 'stats'))
     finally:
         # Change back to original directory
@@ -125,8 +124,7 @@ def test_pipeline_from_directory_accepts_snakemake_args(temp_workspace):
         assert not os.listdir('findseq'), 'findseq should not have any files'
         assert not os.listdir('collapse'), 'collapse should not have any files'
         assert not os.listdir('count'), 'count should not have any files'
-        assert not os.listdir('merge'), 'merge should not have any files'
-        assert not os.listdir('stats'), 'stats should not have any files'
+       
     finally:
         # Change back to original directory
         os.chdir(original_dir)

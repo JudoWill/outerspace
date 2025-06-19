@@ -13,7 +13,7 @@ if "snakemake" not in locals():
     import snakemake  # type: ignore
 
 # Get input and output files
-input_files = snakemake.input
+input_files = snakemake.input.csv  # Only get the CSV files, not the TOML
 output_file = snakemake.output[0]
 toml_file = snakemake.input.get("toml", None)
 
@@ -38,7 +38,7 @@ args = [
     '--method', method
 ]
 
-# Add input files
+# Add input files (only CSV files)
 args.extend(input_files)
 
 if toml_file:
