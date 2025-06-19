@@ -13,5 +13,6 @@ def test_cli_help(capsys):
     cli = Cli([])
     cli.run()
     captured = capsys.readouterr()
-    assert "outerspace [-h] {findseq,collapse,count,gini,visualize,pipeline}" in captured.out
+    print(captured.out)
+    assert "{findseq,collapse,count,merge,stats,visualize,pipeline}" in captured.out
 

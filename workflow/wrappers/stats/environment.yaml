@@ -1,4 +1,4 @@
-name: outerspace-collapse
+name: outerspace-stats
 channels:
   - conda-forge
   - defaults

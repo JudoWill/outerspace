@@ -32,10 +32,20 @@ elif 'direc' in config:
             
     SAMPLES = pd.DataFrame.from_dict(samples_dict, orient='index')
 
-
-rule gini_all:
+rule all:
     input:
-        expand('gini/{sample}.csv', sample=SAMPLES.index)
+        'merge/merged.csv',
+        'stats/stats.csv'
+
+
+rule stats_all:
+    input:
+        'stats/stats.csv'
+
+
+rule merge_all:
+    input:
+        'merged/merged.csv'
 
 
 rule count_all:
@@ -52,8 +62,10 @@ def get_input_files(wildcards):
     return SAMPLES.loc[sample, 'reads'].split('|')
 
 def get_toml_file(wildcards):
-    sample = wildcards.sample
-    return SAMPLES.loc[sample].get('toml', config['toml'])
+    if hasattr(wildcards, 'sample'):
+        sample = wildcards.sample
+        return SAMPLES.loc[sample].get('toml', config['toml'])
+    return config['toml']
 
 rule findseq:
     input:
@@ -84,11 +96,23 @@ rule collapse:
         f'file:{WORKFLOW_DIR}/wrappers/collapse'
 
 
-rule gini:
+rule merge:
     input:
-        csv = 'count/{sample}.csv',
+        csv = expand('count/{sample}.csv',
+               sample=SAMPLES.index),
         toml = get_toml_file
     output:
-        'gini/{sample}.csv'
+        'merge/merged.csv'
     wrapper:
-        f'file:{WORKFLOW_DIR}/wrappers/gini'
+        f'file:{WORKFLOW_DIR}/wrappers/merge'
+
+
+rule stats:
+    input:
+        csv = expand('count/{sample}.csv',
+               sample=SAMPLES.index),
+        toml = get_toml_file
+    output:
+        'stats/stats.csv'
+    wrapper:
+        f'file:{WORKFLOW_DIR}/wrappers/stats'

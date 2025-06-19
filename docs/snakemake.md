@@ -35,10 +35,12 @@ The OUTERSPACE Snakemake workflow (`workflow/Snakefile`) implements a complete a
    - Supports downsampling and filtering
    - Calculates detailed metrics
 
-4. **gini**: Calculates Gini coefficients
-   - Analyzes count distributions
-   - Supports scaling and filtering
-   - Generates final analysis metrics
+4. **merge**: Merges multiple csvs into a single file
+   - Can do joint UMI correction
+
+5. **stats**: Calculcates sample level metrics about the library
+   - See [Stats](docs/stats.md) for more details.
+
 
 The workflow automatically handles:
 - Sample discovery from input directories
@@ -66,7 +68,8 @@ Each wrapper corresponds to a CLI command:
 - `findseq`: Wraps the sequence extraction command
 - `collapse`: Wraps the barcode correction command
 - `count`: Wraps the barcode counting command
-- `gini`: Wraps the Gini coefficient calculation
+- `merge`: Merges all data into a single csv file.
+- `stats`: Calculates sample-level metrics across the inputs.
 
 The wrappers are located in `workflow/wrappers/` and can be customized for specific cluster environments or requirements.
 
