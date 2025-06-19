@@ -27,6 +27,8 @@ class GiniCommand(BaseCommand):
             help='CSV separator (default: ,)')
         parser.add_argument('--allowed-list',
             help='Text file containing allowed values (one per line)')
+        parser.add_argument('--config',
+            help='TOML configuration file containing command settings')
         return parser
 
     def _read_allowed_list(self, filepath: str) -> List[str]:
@@ -113,6 +115,17 @@ class GiniCommand(BaseCommand):
 
     def run(self):
         """Run the gini command"""
+        # Load config if provided
+        if self.args.config:
+            self._load_config(self.args.config)
+        
+        # Merge config and args with defaults
+        defaults = {
+            'sep': ',',
+            'scale': None
+        }
+        self._merge_config_and_args(defaults)
+
         # Validate required arguments
         if not self.args.input_file:
             raise ValueError("Please provide an input file")

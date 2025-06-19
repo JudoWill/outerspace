@@ -1,0 +1,5 @@
+# Snakemake config for directory-based workflow
+direc: 'reads'
+paired: true
+toml: 'grnaquery.toml'
+config_file: 'directory_config.yaml'

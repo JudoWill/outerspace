@@ -1,0 +1,94 @@
+import pandas as pd
+from pathlib import Path
+
+WORKFLOW_DIR = Path(workflow.snakefile).parent
+
+# Use config file from snakemake config if provided, otherwise use default
+configfile: config.get('config_file', 'config.yaml')
+
+if 'samples' in config:
+    SAMPLES = pd.read_csv(config['samples']).set_index('sample_name')
+elif 'direc' in config:
+    # List all files in directory
+    direc = Path(config['direc'])
+    paired = config.get('paired', False)
+    
+    files = list(direc.glob('*'))
+    samples_dict = {}
+    
+    if paired:
+        # Group files by sample name (assuming _R1/_R2 naming)
+        for f in files:
+            if '_R1' in f.name:
+                sample = f.name.split('_R1')[0]
+                r2 = f.parent / f.name.replace('_R1', '_R2')
+                if r2.exists():
+                    samples_dict[sample] = {'reads': f'{f}|{r2}'}
+    else:
+        # Each file is a separate sample
+        for f in files:
+            sample = f.stem
+            samples_dict[sample] = {'reads': str(f)}
+            
+    SAMPLES = pd.DataFrame.from_dict(samples_dict, orient='index')
+
+
+rule gini_all:
+    input:
+        expand('gini/{sample}.csv', sample=SAMPLES.index)
+
+
+rule count_all:
+    input:
+        expand('count/{sample}.csv', sample=SAMPLES.index)
+
+rule findseq_all:
+    input:
+        expand('findseq/{sample}.csv', sample=SAMPLES.index)
+
+
+def get_input_files(wildcards):
+    sample = wildcards.sample
+    return SAMPLES.loc[sample, 'reads'].split('|')
+
+def get_toml_file(wildcards):
+    sample = wildcards.sample
+    return SAMPLES.loc[sample].get('toml', config['toml'])
+
+rule findseq:
+    input:
+        reads = get_input_files,
+        toml = get_toml_file
+    output:
+        'findseq/{sample}.csv'
+    wrapper:
+        f'file:{WORKFLOW_DIR}/wrappers/findseq'
+
+
+rule count:
+    input:
+        csv = 'collapse/{sample}.csv',
+        toml = get_toml_file
+    output:
+        'count/{sample}.csv'
+    wrapper:
+        f'file:{WORKFLOW_DIR}/wrappers/count'
+
+rule collapse:
+    input:
+        'findseq/{sample}.csv',
+        toml = get_toml_file
+    output:
+        'collapse/{sample}.csv'
+    wrapper:
+        f'file:{WORKFLOW_DIR}/wrappers/collapse'
+
+
+rule gini:
+    input:
+        csv = 'count/{sample}.csv',
+        toml = get_toml_file
+    output:
+        'gini/{sample}.csv'
+    wrapper:
+        f'file:{WORKFLOW_DIR}/wrappers/gini'

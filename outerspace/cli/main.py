@@ -23,7 +23,8 @@ class Cli:
             self.args = self.parser.parse_args(args)
         self.command = self._init_command()
 
-    def _init_parser(self):
+    @staticmethod
+    def _init_parser():
         """Initialize the main argument parser with subcommands"""
         parser = ArgumentParser(
             prog='outerspace',
@@ -54,14 +55,6 @@ class Cli:
             'pipeline': PipelineCommand
         }
         return command_map[self.args.command](self.args)
-
-    def _prt_args(self):
-        """Print the command line arguments"""
-        print("ARGS:", end=' ')
-        for key, value in vars(self.args).items():
-            if value is not None:
-                print(f"{key}={value}", end=', ')
-        print()
 
     def run(self):
         """Run the selected command"""

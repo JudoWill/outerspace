@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "outerspace"
+version = "0.0a1"
+description = "A code to extract sequences from fastq files when the surrounding sequence is known"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "GPL-3.0-or-later"}
+authors = [
+    {name = "SB, DVK, REB, WD", email = "wnd22@drexel.edu"}
+]
+dependencies = [
+    "tomlkit",
+    "tqdm",
+    "pyfastx",
+    "regex",
+    "umi_tools",
+    "pyyaml",
+    "snakemake",
+    "pulp>=2.3.1,<3.3"
+]
+
+[project.scripts]
+outerspace = "outerspace.cli:main"
+
+[tool.setuptools]
+packages = [
+    "outerspace",
+    "outerspace.cli",
+    "outerspace.cli.commands",
+    "outerspace.cli.utils"
+] 

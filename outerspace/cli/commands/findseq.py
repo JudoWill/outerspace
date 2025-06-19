@@ -10,8 +10,36 @@ from datetime import timedelta
 from sys import exit as sys_exit
 
 from outerspace.cli.commands.base import BaseCommand
-from outerspace.outerspace import TopLevel
+from outerspace.config import Cfg
+from outerspace.top_search import TopSearch
+from outerspace.read_fastq import ReadPairedFastq
 from outerspace.strcmp import get_readpair_files, get_readpairs
+
+def run(file_pathname_cfg, file_pathname_fastq1, file_pathname_fastq2=None, filename_csv=None):
+    """Parse reads, find user-given patterns, save sequence matches to csv.
+    
+    This is a convenience wrapper around the findseq command for programmatic use.
+    """
+    if not exists(file_pathname_cfg):
+        raise ValueError(f'Configuration file not found: {file_pathname_cfg}')
+    if not exists(file_pathname_fastq1):
+        raise ValueError(f'Read 1 file not found: {file_pathname_fastq1}')
+    if file_pathname_fastq2 and not exists(file_pathname_fastq2):
+        raise ValueError(f'Read 2 file not found: {file_pathname_fastq2}')
+
+    # Create command object
+    cmd = FindSeqCommand()
+    
+    # Set up arguments
+    cmd.args = type('Args', (), {
+        'config': file_pathname_cfg,
+        'read1_filename': file_pathname_fastq1,
+        'read2_filename': file_pathname_fastq2,
+        'output_filename': filename_csv
+    })()
+
+    # Run the command
+    cmd.run()
 
 class FindSeqCommand(BaseCommand):
     """Command for extracting sequences from FASTQ files"""
@@ -19,7 +47,7 @@ class FindSeqCommand(BaseCommand):
         """Initialize command-specific argument parser"""
         parser = subparsers.add_parser('findseq',
             help='Extract sequences from FASTQ files based on configuration patterns')
-        parser.add_argument('config_filename', nargs='?',
+        parser.add_argument('config',
             help='Configuration file with search patterns')
         parser.add_argument('-1', '--read1_filename',
             help='Zipped FASTQ file for read 1, or a single read')
@@ -31,11 +59,47 @@ class FindSeqCommand(BaseCommand):
             help='Directory containing paired FASTQ read files')
         parser.add_argument('--outdir',
             help='Output directory for processed files')
+        parser.add_argument('--read_regxlist',
+            help='Regular expression list for either read. This is usually defined in the config file but can be overridden on the command line.')
+        parser.add_argument('--read1_regxlist',
+            help='Regular expression list for read 1. This is usually defined in the config file but can be overridden on the command line.')
+        parser.add_argument('--read2_regxlist',
+            help='Regular expression list for read 2. This is usually defined in the config file but can be overridden on the command line.')
         return parser
+
+    def _initialize_search(self):
+        """Initialize search configuration and objects"""
+        
+        assert any([self.args.read_regxlist, self.args.read1_regxlist, self.args.read2_regxlist]), \
+            'No search patterns provided'
+
+        # Initialize search object
+        search = TopSearch(read_regxlist=self.args.read_regxlist,
+                           read1_regxlist=self.args.read1_regxlist,
+                           read2_regxlist=self.args.read2_regxlist)
+
+        # Create reader object
+        reader = ReadPairedFastq(search)
+
+        return reader
 
     def run(self):
         """Run the findseq command"""
-        if self.args.config_filename is None:
+        # Load config if provided
+        if self.args.config:
+            self._load_config(self.args.config)
+        
+        # Merge config and args with defaults
+        defaults = {
+            'read1_filename': None,
+            'read2_filename': None,
+            'output_filename': None,
+            'fastqfiles': None,
+            'outdir': None
+        }
+        self._merge_config_and_args(defaults)
+
+        if self.args.config is None:
             raise ValueError('Please provide a config filename')
 
         if (self.args.read1_filename is not None or \
@@ -59,13 +123,16 @@ class FindSeqCommand(BaseCommand):
     def _runpairedreads(self):
         """Run on paired reads"""
         self._chk_exists([self.args.read1_filename, self.args.read2_filename])
-        top = TopLevel(self.args.config_filename)
-        top.run(self.args.output_filename, self.args.read1_filename, self.args.read2_filename)
+        reader = self._initialize_search()
+        reader.process_paired_read_file(
+            self.args.output_filename,
+            self.args.read1_filename,
+            self.args.read2_filename
+        )
 
     def _runsingleread(self):
         """Run on a single read"""
         raise NotImplementedError("Single read processing not implemented")
-
 
     def _run_pairedreads_all(self, fastqfiles, outdir):
         """Run on all paired reads in a directory"""
@@ -79,12 +146,12 @@ class FindSeqCommand(BaseCommand):
         nts = get_readpair_files(readpairs)
         len_nts = len(nts)
         
-        top = TopLevel(self.args.config_filename)
+        reader = self._initialize_search(self.args.config)
         for idx, ntd in enumerate(nts, 1):
             hms = timedelta(seconds=default_timer() - tic)
             print(f'hours:mins:secs {hms} -- {idx:4} of {len_nts} readpair {ntd}')
             output = join(outdir, ntd.fcsv)
             try:
-                top.run(output, ntd.fread1, ntd.fread2)
+                reader.process_paired_read_file(output, ntd.fread1, ntd.fread2)
             except ValueError as err:
                 print(f'Failed analyzing read pair: {ntd.fread1} {ntd.fread2}') 

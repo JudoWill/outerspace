@@ -88,10 +88,8 @@ class Search:
     def _run_findall_(self, ret, idx, cmp, sequence, name):
         # TODO FIRST: Add findall option to check we don't have multiple matches, search gives back first match
         find_list = cmp.findall(sequence)
-        print(f'FINDALL  RESULT{idx}: {find_list}')
         if len(find_list) == 1:
             ret.append(self._name_to_captured(name, find_list[0]))
-            print(f'RETURN   RESULT{idx}:  {find_list[0]}')
         return ret
 
 
@@ -102,7 +100,6 @@ class Search:
     @staticmethod
     def _name_to_captured(self, name, result):
         ret = {}
-        print(f'MATCHING:{name}, RESULT: {result}')
         if isinstance(result, str):
             assert len(name) == 1
             ret[name[0]] = result

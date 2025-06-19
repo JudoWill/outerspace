@@ -1,0 +1,7 @@
+# Basic testing config
+# paths should be relative to a root directory created by conftest.py
+
+# Snakemake config for samplesheet-based workflow
+samples: 'samplesheet.csv'
+toml: 'grnaquery.toml'
+config_file: 'samplesheet_config.yaml'

@@ -1,0 +1,223 @@
+[findseq]
+# 
+# Configuration file with search patterns
+# Type: str
+config = "positional"
+# 
+# Zipped FASTQ file for read 1, or a single read
+# Type: str
+read1_filename = "optional"
+# 
+# Zipped FASTQ file for read 2, or a single read
+# Type: str
+read2_filename = "optional"
+# 
+# Captured read file name output CSV
+# Type: str
+output_filename = "optional"
+# 
+# Directory containing paired FASTQ read files
+# Type: str
+fastqfiles = "optional"
+# 
+# Output directory for processed files
+# Type: str
+outdir = "optional"
+# 
+# Regular expression list for either read. This is usually defined in the config file but can be overridden on the command line.
+# Type: str
+read_regxlist = "optional"
+# 
+# Regular expression list for read 1. This is usually defined in the config file but can be overridden on the command line.
+# Type: str
+read1_regxlist = "optional"
+# 
+# Regular expression list for read 2. This is usually defined in the config file but can be overridden on the command line.
+# Type: str
+read2_regxlist = "optional"
+
+[collapse]
+# 
+# Input CSV file to process
+# Type: str
+input_file = "optional"
+# 
+# Input directory containing CSV files to process
+# Type: str
+input_dir = "optional"
+# 
+# Output CSV file for corrected barcodes
+# Type: str
+output_file = "optional"
+# 
+# Output directory for corrected CSV files
+# Type: str
+output_dir = "optional"
+# 
+# Column(s) containing barcodes to correct. Can be a single column or comma-separated list
+# Type: str
+columns = "required"
+# 
+# Number of mismatches allowed for clustering (default: 2)
+# Type: int
+mismatches = 2
+# 
+# CSV separator (default: ,)
+# Type: str
+sep = ","
+# 
+# Process only the first N rows (for testing)
+# Type: int
+row_limit = "optional"
+# 
+# Clustering method to use (default: directional)
+# Type: str
+method = "directional"
+# 
+# Output YAML file for metrics
+# Type: str
+metrics = "optional"
+# 
+# TOML configuration file containing command settings
+# Type: str
+config = "optional"
+
+[count]
+# 
+# Input CSV file to process
+# Type: str
+input_file = "optional"
+# 
+# Input directory containing CSV files to process
+# Type: str
+input_dir = "optional"
+# 
+# Output CSV file for barcode counts
+# Type: str
+output_file = "optional"
+# 
+# Output directory for barcode counts
+# Type: str
+output_dir = "optional"
+# 
+# Column containing barcodes
+# Type: str
+barcode_column = "required"
+# 
+# Column to group by
+# Type: str
+key_column = "required"
+# 
+# CSV separator (default: ,)
+# Type: str
+sep = ","
+# 
+# Process only the first N rows (for testing)
+# Type: int
+row_limit = "optional"
+# 
+# Text file containing allowed keys (one per line)
+# Type: str
+allowed_list = "optional"
+# 
+# Include barcode lists in output
+# Type: str
+detailed = false
+# 
+# Randomly sample reads with probability between 0 and 1
+# Type: float
+downsample = "optional"
+# 
+# Random seed for downsampling
+# Type: int
+random_seed = "optional"
+# 
+# Output YAML file for metrics
+# Type: str
+metrics = "optional"
+# 
+# YAML configuration file for command
+# Type: str
+config = "optional"
+
+[gini]
+# 
+# Input CSV file
+# Type: str
+input_file = "positional"
+# 
+# Column to calculate Gini coefficient from
+# Type: str
+column = "required"
+# 
+# Column containing pre-counted values
+# Type: str
+count_column = "optional"
+# 
+# Scale factor for normalized values (e.g., if normalized to mean=1)
+# Type: float
+scale = "optional"
+# 
+# CSV separator (default: ,)
+# Type: str
+sep = ","
+# 
+# Text file containing allowed values (one per line)
+# Type: str
+allowed_list = "optional"
+# 
+# TOML configuration file containing command settings
+# Type: str
+config = "optional"
+
+[visualize]
+# 
+# Input directory containing CSV files with barcode counts
+# Type: str
+input_dir = "positional"
+# 
+# Output directory for visualization plots
+# Type: str
+output_dir = "positional"
+# 
+# CSV separator (default: ,)
+# Type: str
+sep = ","
+# 
+# Number of histogram bins (default: 50)
+# Type: int
+bins = 50
+# 
+# Prefix for plot titles (default: filename)
+# Type: str
+title_prefix = "optional"
+# 
+# X-axis label (default: Number of Unique Barcodes)
+# Type: str
+xlabel = "optional"
+# 
+# Y-axis label (default: Count)
+# Type: str
+ylabel = "optional"
+# 
+# Use log scale for y-axis
+# Type: str
+log_scale = false
+# 
+# Output image format (default: png)
+# Type: str
+format = "png"
+
+[pipeline]
+# 
+# TOML configuration file with search patterns
+# Type: str
+config_file = "positional"
+# 
+# YAML configuration file for Snakemake workflow
+# Type: str
+snakemake_config = "positional"
+# 
+# Additional arguments to pass to Snakemake (e.g. --snakemake-args="--dry-run --cores 4")
+# Type: str
+snakemake_args = "optional"

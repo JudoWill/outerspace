@@ -19,22 +19,10 @@ def test_findseq_initialization():
         '-o', 'test_output.csv'
     ]
     cli = Cli(args)
-    assert cli.args.config_filename == 'test_config.toml'
+    assert cli.args.config == 'test_config.toml'
     assert cli.args.read1_filename == 'test_r1.fastq'
     assert cli.args.read2_filename == 'test_r2.fastq'
     assert cli.args.output_filename == 'test_output.csv'
-
-def test_findseq_missing_config():
-    """Test that findseq command handles missing config file"""
-    args = [
-        'findseq',
-        '-1', 'test_r1.fastq',
-        '-2', 'test_r2.fastq',
-        '-o', 'test_output.csv'
-    ]
-    cli = Cli(args)
-    with pytest.raises(ValueError):
-        cli.run()
 
 def test_findseq_missing_reads():
     """Test that findseq command handles missing read files"""
@@ -47,17 +35,6 @@ def test_findseq_missing_reads():
     with pytest.raises(ValueError):
         cli.run()
 
-def test_findseq_single_read_not_implemented():
-    """Test that single read processing is not implemented"""
-    args = [
-        'findseq',
-        'test_config.toml',
-        '-1', 'test_r1.fastq',
-        '-o', 'test_output.csv'
-    ]
-    cli = Cli(args)
-    with pytest.raises(NotImplementedError):
-        cli.run()
 
 def test_findseq_no_reads():
     """Test that findseq command handles no reads case"""
@@ -75,7 +52,7 @@ def test_findseq_with_example_data():
     with tempfile.TemporaryDirectory() as temp_dir:
         args = [
             'findseq',
-            'tests/configs/grnaquery.cfg',
+            'tests/configs/grnaquery.toml',
             '-1', 'tests/data/409-4_S1_L002_R1_001.fastq.gz',
             '-2', 'tests/data/409-4_S1_L002_R2_001.fastq.gz',
             '-o', os.path.join(temp_dir, 'shuffle.csv')
