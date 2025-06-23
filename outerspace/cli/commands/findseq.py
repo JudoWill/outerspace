@@ -4,16 +4,12 @@ __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reser
 __author__ = "WND"
 
 from argparse import ArgumentParser
-from os.path import join, exists, isdir
-from timeit import default_timer
-from datetime import timedelta
-from sys import exit as sys_exit
+from os.path import exists
 
 from outerspace.cli.commands.base import BaseCommand
 from outerspace.config import Cfg
-from outerspace.top_search import TopSearch
-from outerspace.read_fastq import ReadPairedFastq
-from outerspace.strcmp import get_readpair_files, get_readpairs
+from outerspace.pattern import Pattern
+from outerspace.read import Read
 
 def run(file_pathname_cfg, file_pathname_fastq1, file_pathname_fastq2=None, filename_csv=None):
     """Parse reads, find user-given patterns, save sequence matches to csv.
@@ -42,46 +38,125 @@ def run(file_pathname_cfg, file_pathname_fastq1, file_pathname_fastq2=None, file
     cmd.run()
 
 class FindSeqCommand(BaseCommand):
-    """Command for extracting sequences from FASTQ files"""
+    """Command for extracting sequences from various file formats"""
+    
     def _init_parser(self, subparsers):
         """Initialize command-specific argument parser"""
         parser = subparsers.add_parser('findseq',
-            help='Extract sequences from FASTQ files based on configuration patterns')
+            help='Extract sequences from files based on configuration patterns')
         parser.add_argument('config',
             help='Configuration file with search patterns')
         parser.add_argument('-1', '--read1_filename',
-            help='Zipped FASTQ file for read 1, or a single read')
+            help='Input file for read 1 (FASTQ, FASTA, SAM, BAM) or single read file')
         parser.add_argument('-2', '--read2_filename',
-            help='Zipped FASTQ file for read 2, or a single read')
+            help='Input file for read 2 (FASTQ, FASTA, SAM, BAM) for paired reads')
         parser.add_argument('-o', '--output_filename',
-            help='Captured read file name output CSV')
-        parser.add_argument('--fastqfiles', nargs='*',
-            help='Directory containing paired FASTQ read files')
-        parser.add_argument('--outdir',
-            help='Output directory for processed files')
-        parser.add_argument('--read_regxlist',
-            help='Regular expression list for either read. This is usually defined in the config file but can be overridden on the command line.')
-        parser.add_argument('--read1_regxlist',
-            help='Regular expression list for read 1. This is usually defined in the config file but can be overridden on the command line.')
-        parser.add_argument('--read2_regxlist',
-            help='Regular expression list for read 2. This is usually defined in the config file but can be overridden on the command line.')
+            help='Output CSV file name')
+        parser.add_argument('--region',
+            help='SAM/BAM region specification (e.g., "chr1:1-1000")')
+        parser.add_argument('--fetch',
+            help='SAM/BAM fetch mode (mapped, unmapped, all)')
         return parser
 
-    def _initialize_search(self):
-        """Initialize search configuration and objects"""
+    def _detect_file_format(self, filename):
+        """Auto-detect file format based on extension"""
+        key = filename.lower().replace('.gz', '')
+        if key.endswith(('.fastq', '.fq')):
+            return 'fastq'
+        elif key.endswith(('.fasta', '.fa')):
+            return 'fasta'
+        elif key.endswith('.sam'):
+            return 'sam'
+        elif key.endswith('.bam'):
+            return 'bam'
+        else:
+            raise ValueError(f"Cannot detect format for file: {filename}. Please use a file with .fastq, .fasta, .sam, or .bam extension.")
+
+    def _process_single_file(self, filename):
+        """Process a single file of any supported format"""
+        format_type = self._detect_file_format(filename)
         
-        assert any([self.args.read_regxlist, self.args.read1_regxlist, self.args.read2_regxlist]), \
-            'No search patterns provided'
+        if format_type in ['sam', 'bam']:
+            # Handle SAM/BAM with optional region and fetch parameters
+            fetch_param = None
+            if self.args.region:
+                fetch_param = self.args.region
+            elif self.args.fetch:
+                if self.args.fetch == 'mapped':
+                    fetch_param = True
+                elif self.args.fetch == 'unmapped':
+                    fetch_param = False
+                elif self.args.fetch == 'all':
+                    fetch_param = None
+                else:
+                    raise ValueError(f"Invalid fetch mode: {self.args.fetch}")
+            
+            return Read.from_bam(filename, fetch=fetch_param)
+        elif format_type == 'fasta':
+            return Read.from_fasta(filename)
+        elif format_type == 'fastq':
+            return Read.from_fastq(filename)
+        else:
+            raise ValueError(f"Unsupported format: {format_type}")
 
-        # Initialize search object
-        search = TopSearch(read_regxlist=self.args.read_regxlist,
-                           read1_regxlist=self.args.read1_regxlist,
-                           read2_regxlist=self.args.read2_regxlist)
+    def _process_paired_files(self, file1, file2):
+        """Process paired files of any supported format"""
+        format1 = self._detect_file_format(file1)
+        format2 = self._detect_file_format(file2)
+        
+        if format1 != format2:
+            raise ValueError(f"Paired files must have the same format. Got {format1} and {format2}")
+        
+        return Read.from_paired_fastx(file1, file2, format=format1)
 
-        # Create reader object
-        reader = ReadPairedFastq(search)
+    def _process_reads_with_patterns(self, reads):
+        """Process reads using Pattern objects and return results"""
+        patterns = self._parse_patterns_from_config()
+        results = []
+        
+        for read in reads:
+            read_results = {}
+            for pattern in patterns:
+                hits = pattern.search(read)
+                if hits:
+                    # Handle multiple, first, last logic
+                    if pattern.multiple == 'first':
+                        hits = [hits] if not isinstance(hits, list) else [hits[0]]
+                    elif pattern.multiple == 'last':
+                        hits = [hits] if not isinstance(hits, list) else [hits[-1]]
+                    # hits is already a list for 'all'
+                    
+                    for hit in hits:
+                        read_results.update(hit.captured)
+            
+            if read_results:
+                read_results['read_id'] = read.name
+                results.append(read_results)
+        
+        return results
 
-        return reader
+    def _write_results_to_csv(self, results, output_filename):
+        """Write results to CSV file"""
+        import csv
+        
+        if not results:
+            print("No matches found")
+            return
+        
+        # Get all unique keys from all results
+        all_keys = set()
+        for result in results:
+            all_keys.update(result.keys())
+        
+        # Sort keys for consistent output
+        fieldnames = sorted(all_keys)
+        
+        with open(output_filename, 'w', newline='') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(results)
+        
+        print(f"Results written to {output_filename}")
 
     def run(self):
         """Run the findseq command"""
@@ -94,64 +169,32 @@ class FindSeqCommand(BaseCommand):
             'read1_filename': None,
             'read2_filename': None,
             'output_filename': None,
-            'fastqfiles': None,
-            'outdir': None
+            'region': None,
+            'fetch': None
         }
         self._merge_config_and_args(defaults)
 
         if self.args.config is None:
             raise ValueError('Please provide a config filename')
 
-        if (self.args.read1_filename is not None or \
-           self.args.read2_filename is not None) and \
-           self.args.output_filename is not None:
-            self._run_reads_one(self.args.read1_filename, self.args.read2_filename)
-        elif self.args.fastqfiles and self.args.outdir:
-            self._run_pairedreads_all(self.args.fastqfiles, self.args.outdir)
+        # Check for required output file
+        if not self.args.output_filename:
+            raise ValueError('Please provide an output filename with -o')
+
+        # Process based on input files
+        if self.args.read1_filename and self.args.read2_filename:
+            # Paired files
+            self._chk_exists([self.args.read1_filename, self.args.read2_filename])
+            reads = self._process_paired_files(self.args.read1_filename, self.args.read2_filename)
+        elif self.args.read1_filename:
+            # Single file
+            self._chk_exists([self.args.read1_filename])
+            reads = self._process_single_file(self.args.read1_filename)
         else:
-            raise ValueError("Please provide either read1/read2/output files or fastqfiles/outdir")
+            raise ValueError("Please provide either -1 for single file or -1/-2 for paired files")
 
-    def _run_reads_one(self, read1_filename, read2_filename):
-        """Run on a single pair of reads"""
-        if read1_filename is not None and read2_filename is not None:
-            self._runpairedreads()
-        elif read1_filename is not None and read2_filename is None:
-            self._runsingleread()
-        else:
-            raise ValueError("No read files provided")
-
-    def _runpairedreads(self):
-        """Run on paired reads"""
-        self._chk_exists([self.args.read1_filename, self.args.read2_filename])
-        reader = self._initialize_search()
-        reader.process_paired_read_file(
-            self.args.output_filename,
-            self.args.read1_filename,
-            self.args.read2_filename
-        )
-
-    def _runsingleread(self):
-        """Run on a single read"""
-        raise NotImplementedError("Single read processing not implemented")
-
-    def _run_pairedreads_all(self, fastqfiles, outdir):
-        """Run on all paired reads in a directory"""
-        if not exists(outdir) or not isdir(outdir):
-            raise ValueError(f'Output directory either does not exist or is not a directory: {outdir}')
-        if not fastqfiles:
-            raise ValueError(f'No fastq files were found with --fastqfiles {fastqfiles}')
-
-        tic = default_timer()
-        readpairs = get_readpairs(fastqfiles)
-        nts = get_readpair_files(readpairs)
-        len_nts = len(nts)
+        # Process reads with patterns
+        results = self._process_reads_with_patterns(reads)
         
-        reader = self._initialize_search(self.args.config)
-        for idx, ntd in enumerate(nts, 1):
-            hms = timedelta(seconds=default_timer() - tic)
-            print(f'hours:mins:secs {hms} -- {idx:4} of {len_nts} readpair {ntd}')
-            output = join(outdir, ntd.fcsv)
-            try:
-                reader.process_paired_read_file(output, ntd.fread1, ntd.fread2)
-            except ValueError as err:
-                print(f'Failed analyzing read pair: {ntd.fread1} {ntd.fread2}') 
+        # Write results
+        self._write_results_to_csv(results, self.args.output_filename) 

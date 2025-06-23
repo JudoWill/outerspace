@@ -6,8 +6,10 @@ __author__ = "WND"
 import os
 from argparse import ArgumentParser, Namespace
 from sys import exit as sys_exit
-from typing import Dict, Any, Optional, Set, Type
+from typing import Dict, Any, Optional, Set, Type, List
 from tomlkit import parse as toml_parse
+from outerspace.config import Cfg
+from outerspace.pattern import Pattern
 
 class BaseCommand:
     """Base class for all commands"""
@@ -31,23 +33,40 @@ class BaseCommand:
         
         with open(config_file, 'r') as f:
             # Parse TOML and convert to dictionary
-            toml_doc = toml_parse(f.read())
+            self._toml_doc = toml_parse(f.read())
+            
+            # Parse global patterns
+            self._global_patterns = Cfg.parse_global_patterns(self._toml_doc)
             
             # Get command-specific section or empty dict if not found
             # Command name is derived from the class name (e.g., CollapseCommand -> collapse)
             section = self.__class__.__name__.lower().replace('command', '')
             
             # Get the section data directly from the TOML document
-            if section in toml_doc:
+            if section in self._toml_doc:
                 # Convert the TOML table to a dictionary
                 section_data = {}
-                for key, value in toml_doc[section].items():
+                for key, value in self._toml_doc[section].items():
                     section_data[key] = value
                 self._config = section_data
             else:
                 self._config = {}
             
             return self._config
+
+    def _parse_patterns_from_config(self) -> List[Pattern]:
+        """Parse Pattern objects from the loaded config.
+        
+        Returns:
+            List of Pattern objects
+            
+        Raises:
+            ValueError: If no config is loaded or pattern configuration is invalid
+        """
+        if not self._config:
+            raise ValueError("No configuration loaded. Call _load_config() first.")
+        
+        return Cfg.parse_patterns_from_config(self._config, self._global_patterns)
 
     def _merge_config_and_args(self, defaults: Optional[Dict[str, Any]] = None) -> None:
         """Merge command line arguments, config file settings, and defaults into self.args.
