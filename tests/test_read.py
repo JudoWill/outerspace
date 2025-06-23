@@ -110,8 +110,8 @@ def test_pair_assignment():
     assert read2.pair == "R2"
     
     # Test other pair names
-    read3 = Read(seq="ATCG", pair="both")
-    assert read3.pair == "both"
+    with pytest.raises(ValueError):
+        Read(seq="ATCG", pair="both")
 
 
 def test_sequence_mutation():
