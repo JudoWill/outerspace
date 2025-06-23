@@ -33,6 +33,12 @@ This integrated toolset helps researchers accurately measure changes in gRNA abu
 outerspace findseq config.toml -1 ctrl_r1.fastq.gz -2 ctrl_r2.fastq.gz -o ctrl_output.csv
 outerspace findseq config.toml -1 exp_r1.fastq.gz -2 exp_r2.fastq.gz -o exp_output.csv
 
+# Single file processing
+outerspace findseq config.toml -1 single_reads.fasta -o single_output.csv
+
+# SAM/BAM with region specification
+outerspace findseq config.toml -1 aligned_reads.bam --region "chr1:1-1000" -o region_output.csv
+
 # Correct barcodes
 outerspace collapse --input-file ctrl_output.csv --output-file ctrl_output_collapsed.csv \
     --columns umi3,umi5 --mismatches 2 --method directional
@@ -92,21 +98,33 @@ OUTERSPACE is well-suited for analyzing barcode sequencing data from these exper
 For analyzing viral barcode data, you can use the `pipeline` command to run all steps automatically:
 
 ```bash
-outerspace pipeline config.toml \
-    --input-dir fastq_files/ \
-    --output-dir results/ \
-    --barcode-columns UMI_5prime,UMI_3prime \
-    --key-column viral_barcode \
-    --mismatches 2 \
-    --method directional \
-    --metrics
+outerspace pipeline config.toml snakemake_config.yaml \
+    --snakemake-args="--cores 4"
 ```
 
 This will:
-1. Process all FASTQ files in the input directory
-2. Extract and correct barcodes
+1. Process all FASTQ files specified in the Snakemake configuration
+2. Extract and correct barcodes using patterns in `config.toml`
 3. Count unique barcodes per sample
 4. Generate metrics and visualizations
 5. Save all results in the output directory
+
+Alternatively, you can run individual commands:
+
+```bash
+# Extract viral barcodes
+outerspace findseq config.toml -1 viral_reads.fastq.gz -o viral_barcodes.csv
+
+# Correct barcode errors
+outerspace collapse --input-file viral_barcodes.csv --output-file corrected_barcodes.csv \
+    --columns UMI_5prime,UMI_3prime --mismatches 2 --method directional
+
+# Count barcodes per sample
+outerspace count --input-file corrected_barcodes.csv --output-file barcode_counts.csv \
+    --barcode-column UMI_5prime_UMI_3prime_corrected --key-column viral_barcode
+
+# Analyze distribution
+outerspace gini barcode_counts.csv --column UMI_5prime_UMI_3prime_corrected_count
+```
 
 Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.
