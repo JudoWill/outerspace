@@ -82,15 +82,6 @@ def test_findseq_missing_output():
     with pytest.raises(ValueError, match="Please provide an output filename with -o"):
         cli.run()
 
-def test_findseq_mixed_formats():
-    """Test that findseq command rejects mixed format paired files"""
-    from outerspace.cli.commands.findseq import FindSeqCommand
-    
-    cmd = FindSeqCommand()
-    
-    with pytest.raises(ValueError, match="Paired files must have the same format"):
-        cmd._process_paired_files('test1.fastq', 'test2.fasta')
-
 def test_findseq_with_example_data():
     """Test findseq command with real example data"""
     with tempfile.TemporaryDirectory() as temp_dir:

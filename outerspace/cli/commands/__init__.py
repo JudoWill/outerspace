@@ -9,4 +9,4 @@ from .collapse import CollapseCommand
 from .count import CountCommand
 from .visualize import VisualizeCommand
 from .merge import MergeCommand
-from .pipeline import PipelineCommand 
+from .pipeline import PipelineCommand
