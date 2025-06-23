@@ -64,6 +64,8 @@ def test_spearman_empty():
 def test_spearman_with_allowed_list(partial_umi):
     """Test Spearman correlation calculation with allowed list"""
     allowed_list = ["AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG", "ATATAT"]
-    result = SpearmanCorrelation.calculate(partial_umi, partial_umi, allowed_list=allowed_list)
+    result = SpearmanCorrelation.calculate(
+        partial_umi, partial_umi, allowed_list=allowed_list
+    )
     assert result is not None
-    assert -1 <= result <= 1 
+    assert -1 <= result <= 1

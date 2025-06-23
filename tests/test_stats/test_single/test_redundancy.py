@@ -72,4 +72,3 @@ def test_redundancy_with_allowed_list(partial_umi):
     result = UMIRedundancy.calculate(partial_umi, allowed_list=allowed_list)
     assert result is not None
     assert result >= 1.0
-

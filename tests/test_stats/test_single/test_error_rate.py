@@ -95,4 +95,4 @@ def test_error_rate_end_to_end(merged_umi):
 def test_error_rate_no_mapping(empty_umi):
     """Test error rate calculation with no mapping"""
     result = UMIErrorRate.calculate(empty_umi)
-    assert result is None 
+    assert result is None

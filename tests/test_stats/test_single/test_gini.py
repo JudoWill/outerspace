@@ -29,23 +29,33 @@ def test_gini_moderate_inequality(moderate_umi):
 def test_gini_with_allowed_list(partial_umi):
     """Test Gini coefficient calculation with allowed list including missing keys"""
     # Define allowed list with some missing keys
-    allowed_list = ["AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG", "ATATAT", "MISSING1", "MISSING2"]
-    
+    allowed_list = [
+        "AAAAAA",
+        "TTTTTT",
+        "CCCCCC",
+        "GGGGGG",
+        "ATATAT",
+        "MISSING1",
+        "MISSING2",
+    ]
+
     # Calculate Gini with and without allowed list
     result_without = GiniCoefficient.calculate(partial_umi)
     result_with = GiniCoefficient.calculate(partial_umi, allowed_list=allowed_list)
     gini_without = result_without
     gini_with = result_with
-    
+
     # Gini with allowed list should be higher because it includes zero counts
     assert gini_with > gini_without
-    
+
     # Test with all missing keys
     all_missing = ["MISSING1", "MISSING2", "MISSING3", "MISSING4", "MISSING5"]
-    result_all_missing = GiniCoefficient.calculate(partial_umi, allowed_list=all_missing)
+    result_all_missing = GiniCoefficient.calculate(
+        partial_umi, allowed_list=all_missing
+    )
     gini_all_missing = result_all_missing
     assert gini_all_missing is None  # No data should return None
-    
+
     # Test with mix of present and missing keys
     mixed_list = ["AAAAAA", "MISSING1", "TTTTTT", "MISSING2", "CCCCCC"]
     result_mixed = GiniCoefficient.calculate(partial_umi, allowed_list=mixed_list)
@@ -63,12 +73,12 @@ def test_gini_empty_input(empty_umi):
 def test_gini_zero_counts():
     """Test Gini coefficient calculation with all zero counts"""
     from outerspace.umi import UMI
+
     umi = UMI(mismatches=0)
     sequences = ["AAAAAA", "TTTTTT", "CCCCCC"]
     for seq in sequences:
         umi.consume(seq, 0)  # Add with zero count
     umi.create_mapping()
-    
+
     result = GiniCoefficient.calculate(umi)
     assert result is None
-

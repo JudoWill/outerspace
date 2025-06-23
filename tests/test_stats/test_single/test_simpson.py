@@ -60,4 +60,4 @@ def test_simpson_with_allowed_list(partial_umi):
     allowed_list = ["AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG", "ATATAT"]
     result = SimpsonDiversity.calculate(partial_umi, allowed_list=allowed_list)
     assert result is not None
-    assert 0 < result < 1 
+    assert 0 < result < 1

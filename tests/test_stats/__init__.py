@@ -1,1 +1,1 @@
-"""Tests for UMI statistics calculations""" 
+"""Tests for UMI statistics calculations"""
