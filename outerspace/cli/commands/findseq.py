@@ -28,6 +28,8 @@ def run(
     file_pathname_fastq1: str,
     file_pathname_fastq2: Optional[str] = None,
     filename_csv: Optional[str] = None,
+    long_format: bool = False,
+    matches_only: bool = False,
 ) -> None:
     """Parse reads, find user-given patterns, save sequence matches to CSV.
 
@@ -43,6 +45,10 @@ def run(
         Path to read 2 file for paired-end data
     filename_csv : Optional[str], default=None
         Path to output CSV file for results
+    long_format : bool, default=False
+        Output in long format (one row per pattern match)
+    matches_only : bool, default=False
+        Only output reads that have at least one pattern match
 
     Raises
     ------
@@ -68,6 +74,8 @@ def run(
             "read1_filename": file_pathname_fastq1,
             "read2_filename": file_pathname_fastq2,
             "output_filename": filename_csv,
+            "long_format": long_format,
+            "matches_only": matches_only,
         },
     )()
 
@@ -112,6 +120,16 @@ class FindSeqCommand(BaseCommand):
         )
         parser.add_argument(
             "--fetch", help="SAM/BAM fetch mode (mapped, unmapped, all)"
+        )
+        parser.add_argument(
+            "--long-format",
+            action="store_true",
+            help="Output in long format (one row per pattern match instead of one row per read)",
+        )
+        parser.add_argument(
+            "--matches-only",
+            action="store_true",
+            help="Only output reads that have at least one pattern match",
         )
 
     def _detect_file_format(self, filename: str) -> str:
@@ -228,39 +246,39 @@ class FindSeqCommand(BaseCommand):
 
     def _process_reads_with_patterns(
         self, reads: Generator[Read, None, None]
-    ) -> List[Dict[str, Any]]:
-        """Process reads using Pattern objects and return results.
+    ) -> Generator[tuple[str, Any], None, None]:
+        """Process reads using Pattern objects and yield (readname, hit) tuples.
 
         Parameters
         ----------
         reads : Generator[Read, None, None]
             Generator of Read objects to process
 
-        Returns
-        -------
-        List[Dict[str, Any]]
-            List of dictionaries containing pattern match results
+        Yields
+        ------
+        tuple[str, Any]
+            Tuples of (readname, hit) where hit contains pattern match information
 
         Notes
         -----
-        This method applies all configured patterns to each read and collects
-        captured groups from successful matches. It handles the 'multiple'
+        This method applies all configured patterns to each read and yields
+        (readname, hit) tuples for each pattern match. It handles the 'multiple'
         parameter for each pattern (first, last, all).
         """
         patterns = self._parse_patterns_from_config()
         logger.info(f"Processing reads with {len(patterns)} patterns")
 
-        results = []
         read_count = 0
         match_count = 0
 
         for read in reads:
             read_count += 1
-            read_results = {}
+            read_has_matches = False
 
             for pattern in patterns:
                 hits = pattern.search(read)
                 if hits:
+                    read_has_matches = True
                     # Handle multiple, first, last logic
                     if pattern.multiple == "first":
                         hits = [hits] if not isinstance(hits, list) else [hits[0]]
@@ -269,53 +287,127 @@ class FindSeqCommand(BaseCommand):
                     # hits is already a list for 'all'
 
                     for hit in hits:
-                        read_results.update(hit.captured)
+                        # Add pattern information to the hit
+                        hit.pattern_name = getattr(
+                            pattern, "name", f"pattern_{patterns.index(pattern)}"
+                        )
+                        yield (read.name, hit)
+                        match_count += 1
 
-            if read_results:
-                read_results["read_id"] = read.name
-                results.append(read_results)
-                match_count += 1
+            # If not matches-only and no matches found, yield empty hit for wide format
+            if not read_has_matches and not self.args.matches_only:
+                # Create an empty hit object for reads with no matches
+                empty_hit = type(
+                    "EmptyHit",
+                    (),
+                    {"captured": {}, "pattern_name": None, "match": "", "start": -1},
+                )()
+                yield (read.name, empty_hit)
 
         logger.info(f"Processed {read_count} reads, found {match_count} matches")
-        return results
 
-    def _write_results_to_csv(
-        self, results: List[Dict[str, Any]], output_filename: str
+    def _write_results_to_csv_wide(
+        self, results: Generator[tuple[str, Any], None, None], output_filename: str
     ) -> None:
-        """Write results to CSV file.
+        """Write results to CSV file in wide format (one row per read).
 
         Parameters
         ----------
-        results : List[Dict[str, Any]]
-            List of result dictionaries to write
+        results : Generator[tuple[str, Any], None, None]
+            Generator of (readname, hit) tuples
         output_filename : str
             Path to output CSV file
 
         Notes
         -----
-        This method automatically determines all unique keys from the results
-        and creates a CSV with consistent column ordering.
+        This method combines all pattern matches for each read into a single row.
         """
-        if not results:
+        # Collect all results to group by read_id
+        read_data = {}
+        all_keys = set()
+
+        for readname, hit in results:
+            if readname not in read_data:
+                read_data[readname] = {"read_id": readname}
+
+            # Add captured groups to the read's data
+            for key, value in hit.captured.items():
+                read_data[readname][key] = value
+                all_keys.add(key)
+
+        if not read_data:
             logger.warning("No matches found")
             return
 
-        # Get all unique keys from all results
-        all_keys = set()
-        for result in results:
-            all_keys.update(result.keys())
+        # Sort keys for consistent output, but ensure read_id comes first
+        fieldnames = ["read_id"] + sorted(all_keys)
 
-        # Sort keys for consistent output
-        fieldnames = sorted(all_keys)
-
-        logger.info(f"Writing {len(results)} results to {output_filename}")
+        logger.info(f"Writing {len(read_data)} results to {output_filename}")
 
         with open(output_filename, "w", newline="") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerows(results)
+            writer.writerows(read_data.values())
 
         logger.info(f"Results written to {output_filename}")
+
+    def _write_results_to_csv_long(
+        self, results: Generator[tuple[str, Any], None, None], output_filename: str
+    ) -> None:
+        """Write results to CSV file in long format (one row per pattern match).
+
+        Parameters
+        ----------
+        results : Generator[tuple[str, Any], None, None]
+            Generator of (readname, hit) tuples
+        output_filename : str
+            Path to output CSV file
+
+        Notes
+        -----
+        This method creates one row per pattern match with columns: read_id, pattern_name, match, start.
+        """
+        fieldnames = ["read_id", "pattern_name", "match", "start"]
+
+        logger.info(f"Writing long format results to {output_filename}")
+
+        with open(output_filename, "w", newline="") as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+
+            row_count = 0
+            for readname, hit in results:
+                # Skip empty hits (reads with no matches)
+                if hit.pattern_name is None:
+                    continue
+
+                row = {
+                    "read_id": readname,
+                    "pattern_name": hit.pattern_name,
+                    "match": getattr(hit, "match", ""),
+                    "start": getattr(hit, "start", -1),
+                }
+                writer.writerow(row)
+                row_count += 1
+
+        logger.info(f"Results written to {output_filename} ({row_count} rows)")
+
+    def _write_results_to_csv(
+        self, results: Generator[tuple[str, Any], None, None], output_filename: str
+    ) -> None:
+        """Write results to CSV file in the appropriate format.
+
+        Parameters
+        ----------
+        results : Generator[tuple[str, Any], None, None]
+            Generator of (readname, hit) tuples
+        output_filename : str
+            Path to output CSV file
+        """
+        if self.args.long_format:
+            self._write_results_to_csv_long(results, output_filename)
+        else:
+            self._write_results_to_csv_wide(results, output_filename)
 
     def run(self) -> None:
         """Run the findseq command.
@@ -342,6 +434,8 @@ class FindSeqCommand(BaseCommand):
             "output_filename": None,
             "region": None,
             "fetch": None,
+            "long_format": False,
+            "matches_only": False,
         }
         self._merge_config_and_args(defaults)
 
