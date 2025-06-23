@@ -1,10 +1,6 @@
 """Statistics module for UMI analysis"""
 
-from .base import (
-    BaseStatistic,
-    BasePairwiseStatistic,
-    BaseDifferentialStatistic
-)
+from .base import BaseStatistic, BasePairwiseStatistic, BaseDifferentialStatistic
 
 # Import statistics as they are implemented
 from .single import (
@@ -14,40 +10,40 @@ from .single import (
     UMIRecoveryRate,
     UMIEfficiencyRate,
     UMIErrorRate,
-    UMIRedundancy
+    UMIRedundancy,
 )
 
 from .multi import (
     JaccardSimilarity,
     BrayCurtisDissimilarity,
     SpearmanCorrelation,
-    FoldChange
+    FoldChange,
 )
 
 from .differential import (
     SingleSampleDifferentialAbundance,
     MannWhitneyDifferentialAbundance,
-    PairedTTestDifferentialAbundance
+    PairedTTestDifferentialAbundance,
 )
 
 
 __all__ = [
-    'BaseStatistic',
-    'BasePairwiseStatistic',
-    'BaseDifferentialStatistic',
-    'GiniCoefficient',
-    'ShannonDiversity',
-    'SimpsonDiversity',
-    'UMIRecoveryRate',
-    'UMIEfficiencyRate',
-    'UMIErrorRate',
-    'UMIRedundancy',
-    'JaccardSimilarity',
-    'BrayCurtisDissimilarity',
-    'SpearmanCorrelation',
-    'FoldChange',
-    'SingleSampleDifferentialAbundance',
-    'MannWhitneyDifferentialAbundance',
-    'PairedTTestDifferentialAbundance'
+    "BaseStatistic",
+    "BasePairwiseStatistic",
+    "BaseDifferentialStatistic",
+    "GiniCoefficient",
+    "ShannonDiversity",
+    "SimpsonDiversity",
+    "UMIRecoveryRate",
+    "UMIEfficiencyRate",
+    "UMIErrorRate",
+    "UMIRedundancy",
+    "JaccardSimilarity",
+    "BrayCurtisDissimilarity",
+    "SpearmanCorrelation",
+    "FoldChange",
+    "SingleSampleDifferentialAbundance",
+    "MannWhitneyDifferentialAbundance",
+    "PairedTTestDifferentialAbundance"
     # Add other classes as they are implemented
-] 
+]

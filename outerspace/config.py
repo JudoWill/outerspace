@@ -20,8 +20,6 @@ from outerspace.pattern import Pattern
 logger = logging.getLogger(__name__)
 
 
-
-
 class Cfg:
     """Configuration manager for defining motifs and handling TOML configuration files.
 

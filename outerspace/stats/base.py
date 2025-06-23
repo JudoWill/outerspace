@@ -1,53 +1,95 @@
-"""Base classes for UMI statistics calculations"""
+"""Base classes for UMI statistics calculations.
 
-from typing import Dict, List, Optional, TypeVar, Union
+This module provides abstract base classes for different types of UMI statistics
+calculations including single-sample, pairwise, and differential analysis.
+"""
+
+import logging
 from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional, TypeVar, Union
+
 from ..umi import UMI, UmiCollection
 
-T = TypeVar('T')
+# Set up logging
+logger = logging.getLogger(__name__)
+
+__copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
+
+T = TypeVar("T")
+
 
 class BaseStatistic(ABC):
-    """Base class for all statistics calculations"""
-    
-    def __init__(self, umi: UMI):
-        """Initialize the statistic calculator
-        
-        Args:
-            umi: UMI object to calculate statistics on
-            **kwargs: Additional arguments specific to the statistic
+    """Base class for all statistics calculations.
+
+    This abstract base class provides a common interface for all UMI statistics
+    calculations with validation, normalization, and execution methods.
+    """
+
+    def __init__(self, umi: UMI, **kwargs: Any) -> None:
+        """Initialize the statistic calculator.
+
+        Parameters
+        ----------
+        umi : UMI
+            UMI object to calculate statistics on
+        **kwargs : Any
+            Additional arguments specific to the statistic
         """
         self.umi = umi
-    
+        logger.debug(f"Initialized {self.__class__.__name__} with UMI object")
+
     @abstractmethod
     def run(self) -> T:
-        """Run the statistical calculation
-        
-        Returns:
+        """Run the statistical calculation.
+
+        Returns
+        -------
+        T
             Calculated statistic value
+
+        Notes
+        -----
+        This method must be implemented by all subclasses to perform the
+        actual statistical calculation.
         """
         pass
-    
+
     def validate(self) -> None:
-        """Validate input parameters
-        
-        Raises:
-            ValueError: If validation fails
+        """Validate input parameters.
+
+        This method can be overridden by subclasses to perform validation
+        of input parameters before calculation.
+
+        Raises
+        ------
+        ValueError
+            If validation fails
         """
         pass
-    
+
     def normalize(self) -> None:
-        """Normalize data before calculation if needed"""
+        """Normalize data before calculation if needed.
+
+        This method can be overridden by subclasses to perform data
+        normalization before statistical calculation.
+        """
         pass
-    
+
     @classmethod
-    def calculate(cls, umi: UMI, **kwargs) -> T:
-        """Create an instance and run the calculation
-        
-        Args:
-            umi: UMI object to calculate statistics on
-            **kwargs: Additional arguments specific to the statistic
-            
-        Returns:
+    def calculate(cls, umi: UMI, **kwargs: Any) -> T:
+        """Create an instance and run the calculation.
+
+        Parameters
+        ----------
+        umi : UMI
+            UMI object to calculate statistics on
+        **kwargs : Any
+            Additional arguments specific to the statistic
+
+        Returns
+        -------
+        T
             Calculated statistic value
         """
         instance = cls(umi, **kwargs)
@@ -56,68 +98,107 @@ class BaseStatistic(ABC):
         return instance.run()
 
     @classmethod
-    def calculate_collection(cls, collection: UmiCollection, **kwargs) -> Dict[str, T]:
-        """Calculate statistics for each UMI in a collection
-        
-        Args:
-            collection: UmiCollection object containing multiple UMIs
-            **kwargs: Additional arguments specific to the statistic
-            
-        Returns:
+    def calculate_collection(
+        cls, collection: UmiCollection, **kwargs: Any
+    ) -> Dict[str, T]:
+        """Calculate statistics for each UMI in a collection.
+
+        Parameters
+        ----------
+        collection : UmiCollection
+            UmiCollection object containing multiple UMIs
+        **kwargs : Any
+            Additional arguments specific to the statistic
+
+        Returns
+        -------
+        Dict[str, T]
             Dictionary mapping sample names to calculated statistics
         """
         results = {}
         for sample_name, umi in collection.umis.items():
+            logger.debug(f"Calculating {cls.__name__} for sample {sample_name}")
             results[sample_name] = cls.calculate(umi, **kwargs)
         return results
 
 
 class BasePairwiseStatistic(ABC):
-    """Base class for pairwise statistics"""
-    
-    def __init__(self, umi1: UMI, umi2: UMI):
-        """Initialize the pairwise statistic calculator
-        
-        Args:
-            umi1: First UMI object
-            umi2: Second UMI object
-            **kwargs: Additional arguments specific to the statistic
+    """Base class for pairwise statistics.
+
+    This abstract base class provides a common interface for pairwise UMI
+    statistics calculations between two UMI objects.
+    """
+
+    def __init__(self, umi1: UMI, umi2: UMI, **kwargs: Any) -> None:
+        """Initialize the pairwise statistic calculator.
+
+        Parameters
+        ----------
+        umi1 : UMI
+            First UMI object
+        umi2 : UMI
+            Second UMI object
+        **kwargs : Any
+            Additional arguments specific to the statistic
         """
         self.umi1 = umi1
         self.umi2 = umi2
         self._result: Optional[Dict[str, T]] = None
-    
+        logger.debug(f"Initialized {self.__class__.__name__} with two UMI objects")
+
     @abstractmethod
     def run(self) -> T:
-        """Run the pairwise statistical calculation
-        
-        Returns:
+        """Run the pairwise statistical calculation.
+
+        Returns
+        -------
+        T
             Calculated statistic value
+
+        Notes
+        -----
+        This method must be implemented by all subclasses to perform the
+        actual pairwise statistical calculation.
         """
         pass
-    
+
     def validate(self) -> None:
-        """Validate input parameters
-        
-        Raises:
-            ValueError: If validation fails
+        """Validate input parameters.
+
+        This method can be overridden by subclasses to perform validation
+        of input parameters before calculation.
+
+        Raises
+        ------
+        ValueError
+            If validation fails
         """
         pass
-    
+
     def normalize(self) -> None:
-        """Normalize data before calculation if needed"""
+        """Normalize data before calculation if needed.
+
+        This method can be overridden by subclasses to perform data
+        normalization before statistical calculation.
+        """
         pass
-    
+
     @classmethod
-    def calculate(cls, umi1: UMI, umi2: UMI, **kwargs) -> T:
-        """Create an instance and run the calculation
-        
-        Args:
-            umi1: First UMI object
-            umi2: Second UMI object
-            **kwargs: Additional arguments specific to the statistic
-            
-        Returns:
+    def calculate(cls, umi1: UMI, umi2: UMI, **kwargs: Any) -> T:
+        """Create an instance and run the calculation.
+
+        Parameters
+        ----------
+        umi1 : UMI
+            First UMI object
+        umi2 : UMI
+            Second UMI object
+        **kwargs : Any
+            Additional arguments specific to the statistic
+
+        Returns
+        -------
+        T
             Calculated statistic value
         """
         instance = cls(umi1, umi2, **kwargs)
@@ -126,76 +207,122 @@ class BasePairwiseStatistic(ABC):
         return instance.run()
 
     @classmethod
-    def calculate_collection(cls, collection: UmiCollection, **kwargs) -> Dict[tuple[str, str], T]:
-        """Calculate pairwise statistics for all pairs of UMIs in a collection
-        
-        Args:
-            collection: UmiCollection object containing multiple UMIs
-            **kwargs: Additional arguments specific to the statistic
-            
-        Returns:
+    def calculate_collection(
+        cls, collection: UmiCollection, **kwargs: Any
+    ) -> Dict[tuple[str, str], T]:
+        """Calculate pairwise statistics for all pairs of UMIs in a collection.
+
+        Parameters
+        ----------
+        collection : UmiCollection
+            UmiCollection object containing multiple UMIs
+        **kwargs : Any
+            Additional arguments specific to the statistic
+
+        Returns
+        -------
+        Dict[tuple[str, str], T]
             Dictionary mapping (sample1, sample2) tuples to calculated statistics
         """
         results = {}
         samples = list(collection.umis.keys())
+        logger.info(f"Calculating pairwise statistics for {len(samples)} samples")
+
         for i, sample1 in enumerate(samples):
-            for sample2 in samples[i+1:]:
+            for sample2 in samples[i + 1 :]:
+                logger.debug(f"Calculating {cls.__name__} for {sample1} vs {sample2}")
                 results[(sample1, sample2)] = cls.calculate(
-                    collection.umis[sample1],
-                    collection.umis[sample2],
-                    **kwargs
+                    collection.umis[sample1], collection.umis[sample2], **kwargs
                 )
         return results
 
 
 class BaseDifferentialStatistic(ABC):
-    """Base class for differential analysis statistics"""
-    
-    def __init__(self, umis: List[UMI], groups: List[str]):
-        """Initialize the differential statistic calculator
-        
-        Args:
-            umis: List of UMI objects
-            groups: List of group labels corresponding to UMI objects
-            **kwargs: Additional arguments specific to the statistic
+    """Base class for differential analysis statistics.
+
+    This abstract base class provides a common interface for differential
+    analysis statistics across multiple UMI objects with group assignments.
+    """
+
+    def __init__(self, umis: List[UMI], groups: List[str], **kwargs: Any) -> None:
+        """Initialize the differential statistic calculator.
+
+        Parameters
+        ----------
+        umis : List[UMI]
+            List of UMI objects
+        groups : List[str]
+            List of group labels corresponding to UMI objects
+        **kwargs : Any
+            Additional arguments specific to the statistic
+
+        Raises
+        ------
+        ValueError
+            If number of UMIs doesn't match number of groups
         """
         if len(umis) != len(groups):
             raise ValueError("Number of UMIs must match number of groups")
         self.umis = umis
         self.groups = groups
         self._result: Optional[Dict[str, T]] = None
-    
+        logger.debug(
+            f"Initialized {self.__class__.__name__} with {len(umis)} UMIs in {len(set(groups))} groups"
+        )
+
     @abstractmethod
     def run(self) -> T:
-        """Run the differential statistical calculation
-        
-        Returns:
+        """Run the differential statistical calculation.
+
+        Returns
+        -------
+        T
             Calculated statistic value
+
+        Notes
+        -----
+        This method must be implemented by all subclasses to perform the
+        actual differential statistical calculation.
         """
         pass
-    
+
     def validate(self) -> None:
-        """Validate input parameters
-        
-        Raises:
-            ValueError: If validation fails
+        """Validate input parameters.
+
+        This method can be overridden by subclasses to perform validation
+        of input parameters before calculation.
+
+        Raises
+        ------
+        ValueError
+            If validation fails
         """
         pass
-    
+
     def normalize(self) -> None:
-        """Normalize data before calculation if needed"""
+        """Normalize data before calculation if needed.
+
+        This method can be overridden by subclasses to perform data
+        normalization before statistical calculation.
+        """
         pass
-    
+
     @classmethod
-    def calculate(cls, umis: List[UMI], groups: List[str], **kwargs) -> T:
-        """Create an instance and run the calculation
-        
-        Args:
-            umis: List of UMI objects
-            groups: List of group labels corresponding to UMI objects
-            **kwargs: Additional arguments specific to the statistic
-            
-        Returns:
+    def calculate(cls, umis: List[UMI], groups: List[str], **kwargs: Any) -> T:
+        """Create an instance and run the calculation.
+
+        Parameters
+        ----------
+        umis : List[UMI]
+            List of UMI objects
+        groups : List[str]
+            List of group labels corresponding to UMI objects
+        **kwargs : Any
+            Additional arguments specific to the statistic
+
+        Returns
+        -------
+        T
             Calculated statistic value
         """
         instance = cls(umis, groups, **kwargs)
@@ -204,30 +331,46 @@ class BaseDifferentialStatistic(ABC):
         return instance.run()
 
     @classmethod
-    def calculate_collection(cls, collection: UmiCollection, groups: Dict[str, str], **kwargs) -> T:
-        """Calculate differential statistics for a collection of UMIs
-        
-        Args:
-            collection: UmiCollection object containing multiple UMIs
-            groups: Dictionary mapping sample names to group labels
-            **kwargs: Additional arguments specific to the statistic
-            
-        Returns:
+    def calculate_collection(
+        cls, collection: UmiCollection, groups: Dict[str, str], **kwargs: Any
+    ) -> T:
+        """Calculate differential statistics for a collection of UMIs.
+
+        Parameters
+        ----------
+        collection : UmiCollection
+            UmiCollection object containing multiple UMIs
+        groups : Dict[str, str]
+            Dictionary mapping sample names to group labels
+        **kwargs : Any
+            Additional arguments specific to the statistic
+
+        Returns
+        -------
+        T
             Calculated statistic value
-            
-        Raises:
-            ValueError: If any sample in collection is not in groups
+
+        Raises
+        ------
+        ValueError
+            If any sample in collection is not in groups
         """
         # Validate that all samples have group assignments
         missing = set(collection.umis.keys()) - set(groups.keys())
         if missing:
             raise ValueError(f"Samples missing group assignments: {missing}")
-            
+
         # Create ordered lists of UMIs and groups
         umis = []
         group_labels = []
         for sample in collection.umis.keys():
             umis.append(collection.umis[sample])
             group_labels.append(groups[sample])
-            
-        return cls.calculate(umis, group_labels, **kwargs) 
+
+        logger.info(
+            f"Calculating differential statistics for {len(umis)} samples in {len(set(group_labels))} groups"
+        )
+        return cls.calculate(umis, group_labels, **kwargs)
+
+
+# Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.
