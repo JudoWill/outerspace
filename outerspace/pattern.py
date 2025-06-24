@@ -91,7 +91,12 @@ class Pattern:
     VALID_MULTIPLE_OPTIONS = {"first", "last", "all"}
 
     def __init__(
-        self, reg_expr: str, read: str, orientation: str, multiple: str
+        self,
+        reg_expr: str,
+        read: str,
+        orientation: str,
+        multiple: str,
+        search_read_name: bool = False,
     ) -> None:
         """Initialize a Pattern object.
 
@@ -105,6 +110,8 @@ class Pattern:
             Search orientation ('forward', 'reverse-complement', or 'both')
         multiple : str
             How to handle multiple matches ('first', 'last', or 'all')
+        search_read_name : bool
+            Whether to search the read name for the pattern
 
         Raises
         ------
@@ -115,7 +122,7 @@ class Pattern:
         self.read = read
         self.orientation = orientation
         self.multiple = multiple
-
+        self.search_read_name = search_read_name
         # Validate parameters
         self._check_args()
 
@@ -152,6 +159,12 @@ class Pattern:
                 f"Must be one of {self.VALID_MULTIPLE_OPTIONS}"
             )
 
+        if not isinstance(self.search_read_name, bool):
+            raise ValueError(
+                f"Invalid search_read_name: {self.search_read_name}. "
+                f"Must be a boolean"
+            )
+
     def __str__(self) -> str:
         """Return string representation of the pattern.
 
@@ -162,7 +175,8 @@ class Pattern:
         """
         return (
             f"Pattern(reg_expr={self.reg_expr}, read={self.read}, "
-            f"orientation={self.orientation}, multiple={self.multiple})"
+            f"orientation={self.orientation}, multiple={self.multiple}, "
+            f"search_read_name={self.search_read_name})"
         )
 
     def __repr__(self) -> str:
@@ -238,15 +252,21 @@ class Pattern:
         Hit
             Hit objects for each match found
         """
-        # Check if this read should be searched
-        if (self.read == "both") or (read.pair == self.read):
-            # Search forward orientation
-            if self.orientation in ["forward", "both"]:
-                yield from self._search(self._regex, read.seq, "forward")
 
-            # Search reverse-complement orientation
-            if self.orientation in ["reverse-complement", "both"]:
-                yield from self._search(self._regex, read.seq_rc, "reverse-complement")
+        # Search the read name for the pattern
+        if self.search_read_name:
+            yield from self._search(self._regex, read.name, "forward")
+        else:
+            # Check if this read should be searched
+            if (self.read == "both") or (read.pair == self.read):
+                
+                # Search forward orientation
+                if (self.orientation == "forward") | (self.orientation == 'both'):
+                    yield from self._search(self._regex, read.seq, "forward")
+                
+                # Search reverse-complement orientation
+                if (self.orientation == "reverse-complement") | (self.orientation == 'both'):
+                    yield from self._search(self._regex, read.seq_rc, "reverse-complement")
 
     def search(self, read: Read) -> Optional[Union[Hit, List[Hit]]]:
         """Search for pattern matches in a read.
