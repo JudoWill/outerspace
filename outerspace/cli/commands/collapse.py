@@ -176,11 +176,17 @@ class CollapseCommand(BaseCommand):
         for row in rows:
             # Join multiple columns if specified
             if len(columns) > 1:
-                combined_bc = "".join(str(row[col]) for col in columns)
+                # Check if all columns are present
+                if all(row.get(col, '') for col in columns):
+                    combined_bc = "".join(str(row[col]) for col in columns)
+                    umi.consume(combined_bc)
+                    # TODO: maybe there is a way to do "composite" umis
+                else:
+                    logger.info(f"Skipping row with missing columns: {row}")
             else:
                 combined_bc = str(row[columns[0]])
-            if combined_bc:  # Skip empty values
-                umi.consume(combined_bc)
+                if combined_bc:  # Skip empty values
+                    umi.consume(combined_bc)
 
         # Create mapping
         logger.info(
