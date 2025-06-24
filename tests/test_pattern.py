@@ -94,9 +94,27 @@ def test_pattern_string_representation():
         search_read_name=True
     )
 
-    expected_str = "Pattern(reg_expr=GCTA, read=R2, orientation=reverse-complement, multiple=last, search_read_name=True)"
+    expected_str = "Pattern(reg_expr=GCTA, read=R2, orientation=reverse-complement, multiple=last, search_read_name=True, left_flank=0, right_flank=0)"
     assert str(pattern) == expected_str
     assert repr(pattern) == expected_str
+
+
+def test_pattern_string_representation_with_flanks():
+    """Test Pattern string representation includes flank parameters"""
+    pattern = Pattern(
+        reg_expr="ATCG",
+        read="R1",
+        orientation="forward",
+        multiple="first",
+        left_flank=5,
+        right_flank=10
+    )
+
+    expected_str = "Pattern(reg_expr=ATCG, read=R1, orientation=forward, multiple=first, search_read_name=False, left_flank=5, right_flank=10)"
+    assert str(pattern) == expected_str
+    assert repr(pattern) == expected_str
+
+
 
 
 def test_pattern_validation_valid_reads():
@@ -650,7 +668,7 @@ def test_pattern_static_search_method():
     sequence = "ATCGATCG"
     orientation = "forward"
     
-    hits = list(Pattern._search(regex, sequence, orientation))
+    hits = list(Pattern._search(regex, sequence, orientation, 0, 0))
     
     assert len(hits) == 2
     assert hits[0].start == 0
@@ -802,26 +820,28 @@ def test_pattern_search_both_orientations_with_matching_pattern():
     assert rc_hit.match == "CGAT"
 
 
-def test_pattern_search_with_overlapping_matches():
-    """Test Pattern search with overlapping regex matches"""
+def test_pattern_search_with_flanks_overlapping_matches():
+    """Test Pattern search with flanks and overlapping regex matches"""
     pattern = Pattern(
         reg_expr="A{1,2}",
         read="R1",
         orientation="forward",
-        multiple="all"
+        multiple="all",
+        left_flank=1,
+        right_flank=1
     )
     
-    read = Read(seq="AAA", pair="R1", name="test_read")
+    read = Read(seq="GAAAG", pair="R1", name="test_read")
     result = pattern.search(read)
     
     assert result is not None
     assert isinstance(result, list)
     assert len(result) == 2  # Should match "A" and "AA"
     
-    # Check matches
+    # Check matches with flanks - the match field contains the sequence with flanks
     matches = [hit.match for hit in result]
-    assert "A" in matches
-    assert "AA" in matches
+    assert "GAAA" in matches  # A with 1 base flank on each side
+    assert "AAG" in matches  # AA with 1 base flank on each side
 
 
 def test_pattern_search_with_zero_width_assertions():
@@ -885,4 +905,380 @@ def test_pattern_search_with_very_long_sequence():
     assert result[0].start == 0
     assert result[0].end == 4
     assert result[-1].start == 3996  # 999 * 4
-    assert result[-1].end == 4000 
+    assert result[-1].end == 4000
+
+
+def test_pattern_creation_with_flanks():
+    """Test Pattern creation with left_flank and right_flank parameters"""
+    pattern = Pattern(
+        reg_expr="ATCG",
+        read="R1",
+        orientation="forward",
+        multiple="first",
+        left_flank=2,
+        right_flank=3
+    )
+
+    assert pattern.left_flank == 2
+    assert pattern.right_flank == 3
+    assert pattern.reg_expr == "ATCG"
+    assert pattern.read == "R1"
+
+
+def test_pattern_creation_with_zero_flanks():
+    """Test Pattern creation with zero flank values"""
+    pattern = Pattern(
+        reg_expr="ATCG",
+        read="R1",
+        orientation="forward",
+        multiple="first",
+        left_flank=0,
+        right_flank=0
+    )
+
+    assert pattern.left_flank == 0
+    assert pattern.right_flank == 0
+
+
+def test_pattern_validation_invalid_flanks():
+    """Test Pattern validation with invalid flank values"""
+    # Test non-integer left_flank
+    with pytest.raises(ValueError, match="Invalid flanks"):
+        Pattern(
+            reg_expr="ATCG",
+            read="R1",
+            orientation="forward",
+            multiple="first",
+            left_flank="not_an_int",
+            right_flank=0
+        )
+
+    # Test non-integer right_flank
+    with pytest.raises(ValueError, match="Invalid flanks"):
+        Pattern(
+            reg_expr="ATCG",
+            read="R1",
+            orientation="forward",
+            multiple="first",
+            left_flank=0,
+            right_flank=3.14
+        )
+
+
+
+def test_pattern_search_with_left_flank():
+    """Test Pattern search with left flank only"""
+    pattern = Pattern(
+        reg_expr="ATCG",
+        read="R1",
+        orientation="forward",
+        multiple="first",
+        left_flank=2,
+        right_flank=0
+    )
+    
+    read = Read(seq="GGATCG", pair="R1", name="test_read")
+    result = pattern.search(read)
+    
+    assert result is not None
+    assert isinstance(result, Hit)
+    assert result.start == 0  # Should include 2 bases before ATCG
+    assert result.end == 6    # Should end at the end of ATCG
+    assert result.match == "GGATCG"  # Should include the flank
+    assert result.orientation == "forward"
+
+
+def test_pattern_search_with_right_flank():
+    """Test Pattern search with right flank only"""
+    pattern = Pattern(
+        reg_expr="ATCG",
+        read="R1",
+        orientation="forward",
+        multiple="first",
+        left_flank=0,
+        right_flank=3
+    )
+    
+    read = Read(seq="ATCGTTT", pair="R1", name="test_read")
+    result = pattern.search(read)
+    
+    assert result is not None
+    assert isinstance(result, Hit)
+    assert result.start == 0  # Should start at the beginning of ATCG
+    assert result.end == 7    # Should include 3 bases after ATCG
+    assert result.match == "ATCGTTT"  # Should include the flank
+    assert result.orientation == "forward"
+
+
+def test_pattern_search_with_both_flanks():
+    """Test Pattern search with both left and right flanks"""
+    pattern = Pattern(
+        reg_expr="ATCG",
+        read="R1",
+        orientation="forward",
+        multiple="first",
+        left_flank=1,
+        right_flank=2
+    )
+    
+    read = Read(seq="GATCGTT", pair="R1", name="test_read")
+    result = pattern.search(read)
+    
+    assert result is not None
+    assert isinstance(result, Hit)
+    assert result.start == 0  # Should include 1 base before ATCG
+    assert result.end == 7    # Should include 2 bases after ATCG
+    assert result.match == "GATCGTT"  # Should include both flanks
+    assert result.orientation == "forward"
+
+
+def test_pattern_search_with_flanks_at_sequence_boundaries():
+    """Test Pattern search with flanks that extend beyond sequence boundaries"""
+    pattern = Pattern(
+        reg_expr="ATCG",
+        read="R1",
+        orientation="forward",
+        multiple="first",
+        left_flank=5,
+        right_flank=5
+    )
+    
+    read = Read(seq="ATCG", pair="R1", name="test_read")
+    result = pattern.search(read)
+    
+    assert result is not None
+    assert isinstance(result, Hit)
+    assert result.start == 0  # Should be clamped to sequence start
+    assert result.end == 4    # Should be clamped to sequence end
+    assert result.match == "ATCG"  # Should include entire sequence
+    assert result.orientation == "forward"
+
+
+def test_pattern_search_with_flanks_multiple_matches():
+    """Test Pattern search with flanks and multiple matches"""
+    pattern = Pattern(
+        reg_expr="ATCG",
+        read="R1",
+        orientation="forward",
+        multiple="all",
+        left_flank=1,
+        right_flank=1
+    )
+    
+    read = Read(seq="GATCGATCG", pair="R1", name="test_read")
+    result = pattern.search(read)
+    
+    assert result is not None
+    assert isinstance(result, list)
+    assert len(result) == 2
+    
+    # First match: GATCGA (ATCG with 1 base flank on each side, but right flank overlaps with next match)
+    assert result[0].start == 0
+    assert result[0].end == 6
+    assert result[0].match == "GATCGA"  # Should include the flanks
+    
+    # Second match: GATCG (ATCG with 1 base flank on each side)
+    assert result[1].start == 4
+    assert result[1].end == 9
+    assert result[1].match == "GATCG"  # Should include the flanks
+
+
+def test_pattern_search_with_flanks_reverse_complement():
+    """Test Pattern search with flanks in reverse-complement orientation"""
+    pattern = Pattern(
+        reg_expr="CGAT",
+        read="R1",
+        orientation="reverse-complement",
+        multiple="first",
+        left_flank=2,
+        right_flank=1
+    )
+    
+    read = Read(seq="ATCG", pair="R1", name="test_read")  # Reverse complement is CGAT
+    result = pattern.search(read)
+    
+    assert result is not None
+    assert isinstance(result, Hit)
+    assert result.start == 0  # Should include 2 bases before CGAT (clamped to start)
+    assert result.end == 4    # Should include 1 base after CGAT (clamped to end)
+    assert result.match == "CGAT"  # Should contain the matched sequence from reverse complement
+    assert result.orientation == "reverse-complement"
+
+
+def test_pattern_search_with_flanks_read_name():
+    """Test Pattern search with flanks in read name"""
+    pattern = Pattern(
+        reg_expr="test",
+        read="R1",
+        orientation="forward",
+        multiple="first",
+        search_read_name=True,
+        left_flank=2,
+        right_flank=3
+    )
+    
+    read = Read(seq="ATCG", pair="R1", name="mytestread")
+    result = pattern.search(read)
+    
+    assert result is not None
+    assert isinstance(result, Hit)
+    assert result.start == 0  # Should include 2 characters before "test" (clamped to start)
+    assert result.end == 9    # Should include 3 characters after "test" (clamped to end)
+    assert result.match == "mytestrea"  # Should include the flanks (clamped to string end)
+    assert result.orientation == "forward"
+
+
+def test_pattern_search_with_flanks_complex_regex():
+    """Test Pattern search with flanks and complex regex patterns"""
+    pattern = Pattern(
+        reg_expr="A{2,4}CG",
+        read="R1",
+        orientation="forward",
+        multiple="all",
+        left_flank=1,
+        right_flank=2
+    )
+    
+    read = Read(seq="GAACGTTAACGT", pair="R1", name="test_read")
+    result = pattern.search(read)
+    
+    assert result is not None
+    assert isinstance(result, list)
+    assert len(result) == 2
+    
+    # First match: GAACGTT (AACG with 1 base before, 2 after)
+    assert result[0].start == 0
+    assert result[0].end == 7
+    assert result[0].match == "GAACGTT"  # Should include the flanks
+    
+    # Second match: TAACGT (AACG with 1 base before, 2 after)
+    assert result[1].start == 6  # Corrected: AACG starts at position 6
+    assert result[1].end == 12
+    assert result[1].match == "TAACGT"  # Should include the flanks
+
+
+def test_pattern_search_with_flanks_overlapping_matches():
+    """Test Pattern search with flanks and overlapping regex matches"""
+    pattern = Pattern(
+        reg_expr="A{1,2}",
+        read="R1",
+        orientation="forward",
+        multiple="all",
+        left_flank=1,
+        right_flank=1
+    )
+    
+    read = Read(seq="GAAAG", pair="R1", name="test_read")
+    result = pattern.search(read)
+    
+    assert result is not None
+    assert isinstance(result, list)
+    assert len(result) == 2  # Should match "A" and "AA"
+    
+    # Check matches with flanks - the match field contains the sequence with flanks
+    matches = [hit.match for hit in result]
+    assert "GAAA" in matches  # A with 1 base flank on each side
+    assert "AAG" in matches  # AA with 1 base flank on each side
+
+
+def test_pattern_search_with_flanks_anchors():
+    """Test Pattern search with flanks and regex anchors"""
+    pattern = Pattern(
+        reg_expr="^ATCG",
+        read="R1",
+        orientation="forward",
+        multiple="first",
+        left_flank=2,
+        right_flank=1
+    )
+    
+    read = Read(seq="ATCG", pair="R1", name="test_read")
+    result = pattern.search(read)
+    
+    assert result is not None
+    assert isinstance(result, Hit)
+    assert result.start == 0  # Should be clamped to sequence start
+    assert result.end == 4    # Should be clamped to sequence end (no extra base after)
+    assert result.match == "ATCG"  # Should include the flanks (clamped to sequence)
+    assert result.orientation == "forward"
+
+
+def test_pattern_search_with_flanks_edge_cases():
+    """Test Pattern search with flanks in edge cases"""
+    # Test with very large flank values
+    pattern = Pattern(
+        reg_expr="ATCG",
+        read="R1",
+        orientation="forward",
+        multiple="first",
+        left_flank=1000,
+        right_flank=1000
+    )
+    
+    read = Read(seq="ATCG", pair="R1", name="test_read")
+    result = pattern.search(read)
+    
+    assert result is not None
+    assert isinstance(result, Hit)
+    assert result.start == 0  # Should be clamped to sequence start
+    assert result.end == 4    # Should be clamped to sequence end
+    assert result.match == "ATCG"  # Should include entire sequence
+    
+    # Test with flank values equal to sequence length
+    pattern2 = Pattern(
+        reg_expr="ATCG",
+        read="R1",
+        orientation="forward",
+        multiple="first",
+        left_flank=4,
+        right_flank=4
+    )
+    
+    result2 = pattern2.search(read)
+    
+    assert result2 is not None
+    assert isinstance(result2, Hit)
+    assert result2.start == 0  # Should be clamped to sequence start
+    assert result2.end == 4    # Should be clamped to sequence end
+    assert result2.match == "ATCG"  # Should include entire sequence
+
+
+def test_pattern_search_with_flanks_static_method():
+    """Test Pattern._search static method with flanks"""
+    from regex import compile as regex_compile
+    
+    regex = regex_compile("ATCG")
+    sequence = "GATCGTT"
+    orientation = "forward"
+    left_flank = 1
+    right_flank = 2
+    
+    hits = list(Pattern._search(regex, sequence, orientation, left_flank, right_flank))
+    
+    assert len(hits) == 1
+    assert hits[0].start == 0  # Should include 1 base before ATCG
+    assert hits[0].end == 7    # Should include 2 bases after ATCG
+    assert hits[0].match == "GATCGTT"  # Should include the flanks
+    assert hits[0].orientation == "forward"
+
+
+def test_pattern_search_with_flanks_generator():
+    """Test Pattern._search_read generator with flanks"""
+    pattern = Pattern(
+        reg_expr="ATCG",
+        read="R1",
+        orientation="forward",
+        multiple="first",
+        left_flank=1,
+        right_flank=1
+    )
+    
+    read = Read(seq="GATCG", pair="R1", name="test_read")
+    
+    hits = list(pattern._search_read(read))
+    
+    assert len(hits) == 1
+    assert hits[0].start == 0  # Should include 1 base before ATCG
+    assert hits[0].end == 5    # Should include 1 base after ATCG
+    assert hits[0].match == "GATCG"  # Should include the flanks
+    assert hits[0].orientation == "forward" 
