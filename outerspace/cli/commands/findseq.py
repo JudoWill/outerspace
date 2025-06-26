@@ -91,19 +91,18 @@ class FindSeqCommand(BaseCommand):
     paired-end data with comprehensive pattern matching capabilities.
     """
 
-    def _init_parser(self, subparsers) -> None:
+    def _init_parser(self, subparser: ArgumentParser) -> None:
         """Initialize command-specific argument parser.
 
         Parameters
         ----------
-        subparsers
+        subparser : ArgumentParser
             Subparser group to add command arguments to
         """
-        parser = subparsers.add_parser(
+        parser = subparser.add_parser(
             "findseq",
             help="Extract sequences from files based on configuration patterns",
         )
-        parser.add_argument("config", help="Configuration file with search patterns")
         parser.add_argument(
             "-1",
             "--read1_filename",
@@ -131,6 +130,7 @@ class FindSeqCommand(BaseCommand):
             action="store_true",
             help="Only output reads that have at least one pattern match",
         )
+        self._add_common_args(parser)
 
     def _detect_file_format(self, filename: str) -> str:
         """Auto-detect file format based on extension.

@@ -70,6 +70,47 @@ class BaseCommand:
         """
         raise NotImplementedError("Each command must implement _init_parser")
 
+    def _add_common_args(self, subparser: ArgumentParser) -> None:
+        """Add common arguments to the command-specific parser.
+        
+        Parameters
+        ----------
+        subparser : ArgumentParser
+            Subparser group to add command arguments to
+        """
+
+        group = subparser.add_argument_group("Common Arguments")
+        group.add_argument(
+            "--config", '-c',
+            type=str,
+            help="Configuration file",
+            default=None,
+        )
+
+        # Progress bar
+        group.add_argument(
+            "--progress-bar", '-p',
+            action="store_true",
+            help="Enable progress bar",
+            default=False,
+        )
+
+        # Log file
+        group.add_argument(
+            "--log-file",
+            type=str,
+            help="Log file",
+            default=None,
+        )
+
+        # Log level
+        group.add_argument(
+            "--log-level",
+            type=str,
+            help="Log level",
+            default='WARNING',
+        )
+
     def run(self) -> None:
         """Execute the command.
 

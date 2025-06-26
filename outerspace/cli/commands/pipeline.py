@@ -11,6 +11,7 @@ import shlex
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from argparse import ArgumentParser
 
 import pulp
 import snakemake
@@ -47,15 +48,15 @@ class PipelineCommand(BaseCommand):
         """
         super().__init__(args=args)
 
-    def _init_parser(self, subparsers) -> None:
+    def _init_parser(self, subparser: ArgumentParser) -> None:
         """Initialize command-specific argument parser.
 
         Parameters
         ----------
-        subparsers
+        subparser : ArgumentParser
             Subparser group to add command arguments to
         """
-        parser = subparsers.add_parser(
+        parser = subparser.add_parser(
             "pipeline", help="Run the complete OUTERSPACE pipeline using Snakemake"
         )
 

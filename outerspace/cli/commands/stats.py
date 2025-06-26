@@ -11,6 +11,7 @@ import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from argparse import ArgumentParser
 
 from outerspace.cli.commands.base import BaseCommand
 from outerspace.umi import UMI
@@ -40,15 +41,15 @@ class StatsCommand(BaseCommand):
     redundancy analysis.
     """
 
-    def _init_parser(self, subparsers) -> None:
+    def _init_parser(self, subparser: ArgumentParser) -> None:
         """Initialize command-specific argument parser.
 
         Parameters
         ----------
-        subparsers
+        subparser : ArgumentParser
             Subparser group to add command arguments to
         """
-        parser = subparsers.add_parser(
+        parser = subparser.add_parser(
             "stats",
             help="Calculate all single-library statistics from counts in a CSV column",
         )
@@ -70,9 +71,7 @@ class StatsCommand(BaseCommand):
         parser.add_argument(
             "--allowed-list", help="Text file containing allowed values (one per line)"
         )
-        parser.add_argument(
-            "--config", help="TOML configuration file containing command settings"
-        )
+        self._add_common_args(parser)
 
     def _read_allowed_list(self, filepath: str) -> List[str]:
         """Read allowed values from a text file.

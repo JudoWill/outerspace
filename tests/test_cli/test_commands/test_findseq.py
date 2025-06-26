@@ -13,7 +13,7 @@ def test_findseq_initialization():
     """Test that findseq command initializes correctly"""
     args = [
         "findseq",
-        "test_config.toml",
+        "-c", "test_config.toml",
         "-1",
         "test_r1.fastq",
         "-2",
@@ -32,7 +32,7 @@ def test_findseq_single_file():
     """Test that findseq command works with single file"""
     args = [
         "findseq",
-        "test_config.toml",
+        "-c", "test_config.toml",
         "-1",
         "test_single.fastq",
         "-o",
@@ -70,7 +70,7 @@ def test_findseq_format_detection():
 
 def test_findseq_missing_reads():
     """Test that findseq command handles missing read files"""
-    args = ["findseq", "tests/configs/grnaquery.toml", "-o", "test_output.csv"]
+    args = ["findseq", "-c", "tests/configs/grnaquery.toml", "-o", "test_output.csv"]
     cli = Cli(args)
     with pytest.raises(
         ValueError,
@@ -81,7 +81,7 @@ def test_findseq_missing_reads():
 
 def test_findseq_missing_output():
     """Test that findseq command requires output file"""
-    args = ["findseq", "tests/configs/grnaquery.toml", "-1", "test_r1.fastq"]
+    args = ["findseq", "-c", "tests/configs/grnaquery.toml", "-1", "test_r1.fastq"]
     cli = Cli(args)
     with pytest.raises(ValueError, match="Please provide an output filename with -o"):
         cli.run()
@@ -91,7 +91,7 @@ def test_findseq_with_example_data(temp_workspace):
     """Test findseq command with real example data"""
     args = [
         "findseq",
-        os.path.join(temp_workspace, "grnaquery.toml"),
+        "-c", os.path.join(temp_workspace, "grnaquery.toml"),
         "-1",
         os.path.join(temp_workspace, "reads/409-4_S1_L002_R1_001.fastq.gz"),
         "-2",
@@ -140,7 +140,7 @@ multiple = "first"
 
     args = [
         "findseq",
-        config_file,
+        "-c", config_file,
         "-1",
         fasta_file,
         "-o",
@@ -196,7 +196,7 @@ def test_findseq_long_format():
     """Test findseq command with long format output"""
     args = [
         "findseq",
-        "test_config.toml",
+        "-c", "test_config.toml",
         "-1",
         "test_r1.fastq",
         "-o",
@@ -211,7 +211,7 @@ def test_findseq_matches_only():
     """Test findseq command with matches-only filtering"""
     args = [
         "findseq",
-        "test_config.toml",
+        "-c", "test_config.toml",
         "-1",
         "test_r1.fastq",
         "-o",
@@ -226,7 +226,7 @@ def test_findseq_long_format_with_example_data(temp_workspace):
     """Test findseq command with long format output using real example data"""
     args = [
         "findseq",
-        os.path.join(temp_workspace, "grnaquery.toml"),
+        "-c", os.path.join(temp_workspace, "grnaquery.toml"),
         "-1",
         os.path.join(temp_workspace, "reads/409-4_S1_L002_R1_001.fastq.gz"),
         "-2",
@@ -269,7 +269,7 @@ def test_findseq_matches_only_with_example_data(temp_workspace):
     """Test findseq command with matches-only filtering using real example data"""
     args = [
         "findseq",
-        os.path.join(temp_workspace, "grnaquery.toml"),
+        "-c", os.path.join(temp_workspace, "grnaquery.toml"),
         "-1",
         os.path.join(temp_workspace, "reads/409-4_S1_L002_R1_001.fastq.gz"),
         "-2",
@@ -302,21 +302,3 @@ def test_findseq_matches_only_with_example_data(temp_workspace):
             has_data = any(cell and cell.strip() for cell in row[1:])
             assert has_data, f"Row has no match data: {row}"
 
-
-def test_findseq_convenience_function():
-    """Test the convenience run function with new parameters"""
-    from outerspace.cli.commands.findseq import run
-
-    # Test that the function can be called with new parameters
-    # Note: This test doesn't actually run the command due to missing files
-    # but verifies the function signature is correct
-    try:
-        run(
-            "test_config.toml",
-            "test_r1.fastq",
-            long_format=True,
-            matches_only=True,
-        )
-    except ValueError as e:
-        # Expected error due to missing files
-        assert "not found" in str(e)

@@ -12,9 +12,9 @@ from outerspace.cli.commands.base import BaseCommand
 class VisualizeCommand(BaseCommand):
     """Command for creating visualizations of barcode counts"""
 
-    def _init_parser(self, subparsers):
+    def _init_parser(self, subparser: ArgumentParser) -> None:
         """Initialize command-specific argument parser"""
-        parser = subparsers.add_parser(
+        parser = subparser.add_parser(
             "visualize", help="Visualize barcode counts from CSV files"
         )
         parser.add_argument(
@@ -43,7 +43,7 @@ class VisualizeCommand(BaseCommand):
         parser.add_argument(
             "--format", default="png", help="Output image format (default: png)"
         )
-        return parser
+        self._add_common_args(parser)
 
     def run(self):
         """Run the visualize command"""

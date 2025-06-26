@@ -14,6 +14,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, Optional, Set, Union
+from argparse import ArgumentParser
 
 from tqdm import tqdm
 import yaml
@@ -38,15 +39,15 @@ class CountCommand(BaseCommand):
     analysis and supports various filtering and sampling options.
     """
 
-    def _init_parser(self, subparsers) -> None:
+    def _init_parser(self, subparser: ArgumentParser) -> None:
         """Initialize command-specific argument parser.
 
         Parameters
         ----------
-        subparsers
+        subparser : ArgumentParser
             Subparser group to add command arguments to
         """
-        parser = subparsers.add_parser(
+        parser = subparser.add_parser(
             "count", help="Count unique barcodes per key value in CSV files"
         )
 
@@ -92,8 +93,7 @@ class CountCommand(BaseCommand):
         parser.add_argument(
             "--random-seed", type=int, help="Random seed for downsampling"
         )
-        parser.add_argument("--config", help="YAML configuration file for command")
-        parser.add_argument("--log-file", help="Path to log file")
+        self._add_common_args(parser)
 
     def _read_allowed_keys(self, filepath: str) -> Set[str]:
         """Read allowed keys from a text file.

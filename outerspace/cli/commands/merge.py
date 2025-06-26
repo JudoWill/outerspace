@@ -9,6 +9,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Any, Dict
+from argparse import ArgumentParser
 
 from outerspace.cli.commands.base import BaseCommand
 from outerspace.umi import UmiCollection
@@ -29,15 +30,15 @@ class MergeCommand(BaseCommand):
     UMI clustering with various methods.
     """
 
-    def _init_parser(self, subparsers) -> None:
+    def _init_parser(self, subparser: ArgumentParser) -> None:
         """Initialize command-specific argument parser.
 
         Parameters
         ----------
-        subparsers
+        subparser : ArgumentParser
             Subparser group to add command arguments to
         """
-        parser = subparsers.add_parser(
+        parser = subparser.add_parser(
             "merge", help="Merge multiple UMI count files into a single file"
         )
         parser.add_argument("files", nargs="+", help="Input CSV files to merge")
@@ -61,10 +62,6 @@ class MergeCommand(BaseCommand):
             default="wide",
             help="Output format: wide (samples as columns) or long (sample,umi,count columns)",
         )
-        parser.add_argument(
-            "--config", help="TOML configuration file containing command settings"
-        )
-        parser.add_argument("--log-file", help="Path to log file")
         # Add collapse-related arguments
         parser.add_argument(
             "--mismatches",
@@ -79,6 +76,7 @@ class MergeCommand(BaseCommand):
             help="Clustering method to use (default: directional)",
         )
         parser.add_argument("--metrics", help="Output YAML file for metrics")
+        self._add_common_args(parser)
 
     def _write_metrics(self, metrics: Dict[str, Any], filepath: str) -> None:
         """Write metrics to YAML file.

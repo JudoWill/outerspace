@@ -32,7 +32,7 @@ def test_full_workflow(temp_workspace):
     for read1, read2, output_name in pairs:
         findseq_args = [
             "findseq",
-            os.path.join(temp_workspace, "grnaquery.toml"),
+            "-c", os.path.join(temp_workspace, "grnaquery.toml"),
             "-1",
             os.path.join(temp_workspace, read1),
             "-2",
@@ -158,7 +158,7 @@ def test_workflow_with_allowed_list(temp_workspace):
     for read1, read2, output_name in pairs:
         findseq_args = [
             "findseq",
-            os.path.join(temp_workspace, "grnaquery.toml"),
+            "-c", os.path.join(temp_workspace, "grnaquery.toml"),
             "-1",
             os.path.join(temp_workspace, read1),
             "-2",
@@ -252,7 +252,7 @@ def test_single_file_workflow(temp_workspace):
     # Step 1: Run findseq for a single sample
     findseq_args = [
         "findseq",
-        os.path.join(temp_workspace, "grnaquery.toml"),
+        "-c", os.path.join(temp_workspace, "grnaquery.toml"),
         "-1",
         os.path.join(temp_workspace, "reads/409-4_S1_L002_R1_001.fastq.gz"),
         "-2",
@@ -341,7 +341,7 @@ def test_workflow_with_config(temp_workspace):
     for read1, read2, output_name in pairs:
         findseq_args = [
             "findseq",
-            os.path.join(temp_workspace, "grnaquery.toml"),
+            "-c", os.path.join(temp_workspace, "grnaquery.toml"),
             "-1",
             os.path.join(temp_workspace, read1),
             "-2",

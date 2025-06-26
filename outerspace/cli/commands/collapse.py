@@ -11,6 +11,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from argparse import ArgumentParser
 
 from tqdm import tqdm
 
@@ -32,15 +33,15 @@ class CollapseCommand(BaseCommand):
     different clustering methods and comprehensive metrics reporting.
     """
 
-    def _init_parser(self, subparsers) -> None:
+    def _init_parser(self, subparser: ArgumentParser) -> None:
         """Initialize command-specific argument parser.
 
         Parameters
         ----------
-        subparsers
+        subparser : ArgumentParser
             Subparser group to add command arguments to
         """
-        parser = subparsers.add_parser(
+        parser = subparser.add_parser(
             "collapse", help="Correct barcodes in CSV files using UMI-tools clustering"
         )
 
@@ -85,9 +86,7 @@ class CollapseCommand(BaseCommand):
             help="Clustering method to use (default: directional)",
         )
         parser.add_argument("--metrics", help="Output YAML file for metrics")
-        parser.add_argument(
-            "--config", help="TOML configuration file containing command settings"
-        )
+        self._add_common_args(parser)
 
     def _parse_columns(self, columns_str: str) -> List[str]:
         """Parse comma-separated column string into list of column names.
