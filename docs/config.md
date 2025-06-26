@@ -15,6 +15,44 @@ boolean = true  # Boolean values
 array = ["item1", "item2"]  # Arrays in square brackets
 ```
 
+## Global Patterns
+
+OUTERSPACE now uses a global patterns system where patterns are defined once and can be reused across multiple commands:
+
+```toml
+# Global patterns that can be used across multiple commands
+[[patterns]]
+name = "UMI_5prime"
+reg_expr = "(?P<UMI_5prime>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}"
+read = "R1"
+orientation = "forward"
+multiple = "first"
+
+[[patterns]]
+name = "protospacer"
+reg_expr = "(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})"
+read = "R1"
+orientation = "forward"
+multiple = "first"
+
+[[patterns]]
+name = "UMI_3prime"
+reg_expr = "(?P<UMI_3prime>.{8})(?:TTCCACACCCTAACTGACACAC){s<=4}"
+read = "R2"
+orientation = "forward"
+multiple = "first"
+```
+
+### Pattern Configuration
+
+Each pattern requires the following fields:
+
+- `name`: Unique identifier for the pattern (required for global patterns)
+- `reg_expr`: Regular expression with named capture groups
+- `read`: Which read to search ("R1", "R2", or "both")
+- `orientation`: Search orientation ("forward", "reverse-complement", or "both")
+- `multiple`: How to handle multiple matches ("first", "last", or "all")
+
 ## Command Sections
 
 Each command has its own section in the configuration file. The available sections are:
@@ -23,15 +61,11 @@ Each command has its own section in the configuration file. The available sectio
 Configuration for sequence extraction:
 ```toml
 [findseq]
-config = "path/to/config.toml"  # Required
-read1_filename = "path/to/read1.fastq.gz"  # Optional
-read2_filename = "path/to/read2.fastq.gz"  # Optional
-output_filename = "path/to/output.csv"  # Optional
-fastqfiles = ["dir1", "dir2"]  # Optional
-outdir = "path/to/output"  # Optional
-read_regxlist = "pattern1,pattern2"  # Optional
-read1_regxlist = "pattern1,pattern2"  # Optional
-read2_regxlist = "pattern1,pattern2"  # Optional
+# Reference patterns by name
+pattern_names = ["UMI_5prime", "protospacer", "UMI_3prime"]
+
+# Or use all global patterns
+# use_all_patterns = true
 ```
 
 ### [collapse]
@@ -106,11 +140,30 @@ snakemake_args = "--dry-run --cores 4"  # Optional
 Here's a complete example configuration file:
 
 ```toml
+# Global patterns
+[[patterns]]
+name = "UMI_5prime"
+reg_expr = "(?P<UMI_5prime>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}"
+read = "R1"
+orientation = "forward"
+multiple = "first"
+
+[[patterns]]
+name = "protospacer"
+reg_expr = "(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})"
+read = "R1"
+orientation = "forward"
+multiple = "first"
+
+[[patterns]]
+name = "UMI_3prime"
+reg_expr = "(?P<UMI_3prime>.{8})(?:TTCCACACCCTAACTGACACAC){s<=4}"
+read = "R2"
+orientation = "forward"
+multiple = "first"
+
 [findseq]
-config = "search_patterns.toml"
-read1_filename = "data/reads_R1.fastq.gz"
-read2_filename = "data/reads_R2.fastq.gz"
-output_filename = "results/matches.csv"
+pattern_names = ["UMI_5prime", "protospacer", "UMI_3prime"]
 
 [collapse]
 input_file = "results/matches.csv"
@@ -122,13 +175,13 @@ method = "directional"
 [count]
 input_file = "results/corrected.csv"
 output_file = "results/counts.csv"
-barcode_column = "UMI_5prime"
+barcode_column = "UMI_5prime_UMI_3prime_corrected"
 key_column = "protospacer"
 detailed = true
 
 [gini]
 input_file = "results/counts.csv"
-column = "count"
+column = "UMI_5prime_UMI_3prime_corrected_count"
 scale = 1.0
 
 [pipeline]
@@ -139,8 +192,8 @@ snakemake_args = "--cores 4"
 
 ## Best Practices
 
-1. Use descriptive file paths
-2. Group related parameters in the same section
+1. Use descriptive pattern names
+2. Group related patterns in the global patterns section
 3. Document non-default values with comments
 4. Use relative paths when possible
 5. Keep sensitive information out of configuration files

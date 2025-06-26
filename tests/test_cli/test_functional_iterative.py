@@ -298,4 +298,4 @@ def test_workflow_with_config(temp_workspace):
         '--config', os.path.join(temp_workspace, 'grnaquery.toml')
     ]
     cli = Cli(stats_args)
-    cli.run() 
+    cli.run()

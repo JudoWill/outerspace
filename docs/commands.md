@@ -3,20 +3,18 @@
 Below are the commands available in `outerspace`:
 
 ### `outerspace findseq`
-Extracts sequences from FASTQ files based on configuration patterns. Features:
-- Support for paired-end reads
-- Configuration file for search patterns
-- Batch processing of multiple read pairs
-- Progress tracking with timing information
-- Error handling for failed read pairs
+Extracts sequences from various file formats based on configuration patterns. Features:
+- Support for FASTQ, FASTA, SAM, and BAM files
+- Single file or paired-end processing
+- Global pattern configuration system
+- Auto-detection of file formats
+- Progress tracking and error handling
 
 ```bash
 usage: outerspace findseq [-h] config [-1 READ1_FILENAME] [-2 READ2_FILENAME] [-o OUTPUT_FILENAME]
-                 [--fastqfiles FASTQFILES [FASTQFILES ...]] [--outdir OUTDIR]
-                 [--read_regxlist READ_REGXLIST] [--read1_regxlist READ1_REGXLIST]
-                 [--read2_regxlist READ2_REGXLIST]
+                 [--region REGION] [--fetch {mapped,unmapped,all}]
 
-Extract sequences from FASTQ files based on configuration patterns
+Extract sequences from files based on configuration patterns
 
 positional arguments:
   config                Configuration file with search patterns
@@ -24,20 +22,14 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   -1 READ1_FILENAME, --read1_filename READ1_FILENAME
-                        Zipped FASTQ file for read 1, or a single read
+                        Input file for read 1 (FASTQ, FASTA, SAM, BAM) or single read file
   -2 READ2_FILENAME, --read2_filename READ2_FILENAME
-                        Zipped FASTQ file for read 2, or a single read
+                        Input file for read 2 (FASTQ, FASTA, SAM, BAM) for paired reads
   -o OUTPUT_FILENAME, --output_filename OUTPUT_FILENAME
-                        Captured read file name output CSV
-  --fastqfiles FASTQFILES [FASTQFILES ...]
-                        Directory containing paired FASTQ read files
-  --outdir OUTDIR       Output directory for processed files
-  --read_regxlist READ_REGXLIST
-                        Regular expression list for either read
-  --read1_regxlist READ1_REGXLIST
-                        Regular expression list for read 1
-  --read2_regxlist READ2_REGXLIST
-                        Regular expression list for read 2
+                        Output CSV file name
+  --region REGION       SAM/BAM region specification (e.g., "chr1:1-1000")
+  --fetch {mapped,unmapped,all}
+                        SAM/BAM fetch mode
 ```
 
 ### `outerspace collapse`
@@ -135,48 +127,4 @@ Calculates Gini coefficient from counts in a CSV column. Features:
 - `--allowed-list` filtering
 - Detailed statistics output
 
-```bash
-usage: outerspace gini [-h] input_file --column COLUMN [--count-column COUNT_COLUMN]
-              [--scale SCALE] [--sep SEP] [--allowed-list ALLOWED_LIST]
-              [--config CONFIG]
-
-Calculate Gini coefficient from counts in a CSV column
-
-positional arguments:
-  input_file            Input CSV file
-
-options:
-  -h, --help            show this help message and exit
-  -c COLUMN, --column COLUMN
-                        Column to calculate Gini coefficient from
-  --count-column COUNT_COLUMN
-                        Column containing pre-counted values
-  --scale SCALE         Scale factor for normalized values (e.g., if normalized to mean=1)
-  --sep SEP             CSV separator (default: ',')
-  --allowed-list ALLOWED_LIST
-                        Text file containing allowed values (one per line)
-  --config CONFIG       TOML configuration file containing command settings
-```
-
-### `outerspace pipeline`
-Runs the complete OUTERSPACE pipeline using Snakemake. Features:
-- Automated processing of multiple FASTQ files
-- Configurable barcode correction parameters
-- Optional metrics generation
-- Progress tracking
-- Error handling
-
-```bash
-usage: outerspace pipeline [-h] config_file snakemake_config [--snakemake-args SNAKEMAKE_ARGS]
-
-Run the complete OUTERSPACE pipeline using Snakemake
-
-positional arguments:
-  config_file           TOML configuration file with search patterns
-  snakemake_config      YAML configuration file for Snakemake workflow
-
-options:
-  -h, --help            show this help message and exit
-  --snakemake-args SNAKEMAKE_ARGS
-                        Additional arguments to pass to Snakemake (e.g. --snakemake-args="--dry-run --cores 4")
 ```
