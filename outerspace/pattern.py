@@ -174,7 +174,9 @@ class Pattern:
                 f"Must be a boolean"
             )
 
-        if not isinstance(self.left_flank, int) or not isinstance(self.right_flank, int):
+        if not isinstance(self.left_flank, int) or not isinstance(
+            self.right_flank, int
+        ):
             raise ValueError(
                 f"Invalid flanks: {self.left_flank} and {self.right_flank}. "
                 f"Must be integers"
@@ -225,7 +227,11 @@ class Pattern:
 
     @staticmethod
     def _search(
-        regex: RegexPattern, sequence: str, orientation: str, left_flank: int, right_flank: int 
+        regex: RegexPattern,
+        sequence: str,
+        orientation: str,
+        left_flank: int,
+        right_flank: int,
     ) -> Generator[Hit, None, None]:
         """Search for matches in a sequence.
 
@@ -278,18 +284,33 @@ class Pattern:
 
         # Search the read name for the pattern
         if self.search_read_name:
-            yield from self._search(self._regex, read.name, "forward", self.left_flank, self.right_flank)
+            yield from self._search(
+                self._regex, read.name, "forward", self.left_flank, self.right_flank
+            )
         else:
             # Check if this read should be searched
             if (self.read == "both") or (read.pair == self.read):
-                
                 # Search forward orientation
-                if (self.orientation == "forward") | (self.orientation == 'both'):
-                    yield from self._search(self._regex, read.seq, "forward", self.left_flank, self.right_flank)
-                
+                if (self.orientation == "forward") | (self.orientation == "both"):
+                    yield from self._search(
+                        self._regex,
+                        read.seq,
+                        "forward",
+                        self.left_flank,
+                        self.right_flank,
+                    )
+
                 # Search reverse-complement orientation
-                if (self.orientation == "reverse-complement") | (self.orientation == 'both'):
-                    yield from self._search(self._regex, read.seq_rc, "reverse-complement", self.left_flank, self.right_flank)
+                if (self.orientation == "reverse-complement") | (
+                    self.orientation == "both"
+                ):
+                    yield from self._search(
+                        self._regex,
+                        read.seq_rc,
+                        "reverse-complement",
+                        self.left_flank,
+                        self.right_flank,
+                    )
 
     def search(self, read: Read) -> Optional[Union[Hit, List[Hit]]]:
         """Search for pattern matches in a read.

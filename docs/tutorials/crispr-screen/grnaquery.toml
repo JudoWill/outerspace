@@ -1,0 +1,55 @@
+# Configuration file for gRNA extraction.
+
+title = "gRNA Extraction Input"
+
+# Global patterns that can be used across multiple commands
+[[patterns]]
+name = "UMI_5prime"
+reg_expr = "(?P<UMI_5prime>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}"
+read = "R1"
+orientation = "forward"
+multiple = "first"
+
+[[patterns]]
+name = "protospacer"
+reg_expr = "(?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})(?P<downstreamof_protospacer>GTTTAAGTACTCTGTGCTGGAAACAG){s<=4}"
+read = "R1"
+orientation = "forward"
+multiple = "first"
+
+[[patterns]]
+name = "UMI_3prime"
+reg_expr = "(?P<UMI_3prime>.{8})(?:TTCCACACCCTAACTGACACAC){s<=4}"
+read = "R2"
+orientation = "forward"
+multiple = "first"
+
+[findseq]
+# Reference patterns by name or use all patterns
+pattern_names = ["UMI_5prime", "protospacer", "UMI_3prime"]
+# Alternative: use_all_patterns = true
+matches_only = true
+
+[collapse]
+columns = 'UMI_5prime,UMI_3prime'
+mismatches = 2
+method = 'directional'
+
+[count]
+barcode_column = 'UMI_5prime_UMI_3prime_corrected'
+key_column = 'protospacer'
+
+[gini]
+column = 'UMI_5prime_UMI_3prime_corrected_count'
+
+[merge]
+column = 'UMI_5prime_UMI_3prime_corrected_count'
+key_column = 'protospacer'
+
+[stats]
+key_column = 'protospacer'
+count_column = 'UMI_5prime_UMI_3prime_corrected_count'
+
+[owner]
+name = "SCB, DK, WND, RB"
+organization = "DUCOM"
