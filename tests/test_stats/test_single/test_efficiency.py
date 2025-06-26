@@ -81,4 +81,4 @@ def test_efficiency_rate_end_to_end(partial_umi):
 def test_efficiency_rate_no_allowed_list(partial_umi):
     """Test efficiency rate calculation without allowed list"""
     result = UMIEfficiencyRate.calculate(partial_umi)
-    assert result is None 
+    assert result is None

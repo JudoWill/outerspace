@@ -41,6 +41,8 @@ def test_jaccard_empty_sets():
 def test_jaccard_with_allowed_list(partial_umi):
     """Test Jaccard similarity calculation with allowed list"""
     allowed_list = ["AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG", "ATATAT"]
-    result = JaccardSimilarity.calculate(partial_umi, partial_umi, allowed_list=allowed_list)
+    result = JaccardSimilarity.calculate(
+        partial_umi, partial_umi, allowed_list=allowed_list
+    )
     assert result is not None
-    assert 0 <= result <= 1 
+    assert 0 <= result <= 1

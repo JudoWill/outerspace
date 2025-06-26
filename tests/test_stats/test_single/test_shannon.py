@@ -15,7 +15,7 @@ def test_shannon_perfect_equality():
 
 def test_shannon_perfect_inequality():
     """Test Shannon diversity calculation for perfectly unequal distribution"""
-    counts = [1E10, 1, 1, 1, 1]
+    counts = [1e10, 1, 1, 1, 1]
     shannon = ShannonDiversity.calculate_shannon(counts)
     assert abs(shannon) < 0.0001  # Should be very close to 0
 
@@ -69,4 +69,4 @@ def test_shannon_with_allowed_list(partial_umi):
     allowed_list = ["AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG", "ATATAT"]
     result = ShannonDiversity.calculate(partial_umi, allowed_list=allowed_list)
     assert result is not None
-    assert result > 0 
+    assert result > 0

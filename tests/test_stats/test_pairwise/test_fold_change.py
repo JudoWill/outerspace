@@ -21,7 +21,7 @@ def test_fold_change_calculation():
     assert abs(fold_changes[b"AAAAAA"] - 2.0) < 0.01  # 20/10
     assert abs(fold_changes[b"TTTTTT"] - 0.5) < 0.01  # 10/20
     assert abs(fold_changes[b"CCCCCC"] - 0.0) < 0.01  # 0/30
-    assert fold_changes[b"GGGGGG"] == float('inf')  # 30/0
+    assert fold_changes[b"GGGGGG"] == float("inf")  # 30/0
 
 
 def test_fold_change_identical():
@@ -67,4 +67,4 @@ def test_fold_change_with_allowed_list(partial_umi):
     allowed_list = ["AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG", "ATATAT"]
     result = FoldChange.calculate(partial_umi, partial_umi, allowed_list=allowed_list)
     assert result is not None
-    assert all(fc >= 0 for fc in result.values()) 
+    assert all(fc >= 0 for fc in result.values())

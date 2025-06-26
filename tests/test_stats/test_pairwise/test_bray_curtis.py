@@ -67,6 +67,8 @@ def test_bray_curtis_zero_counts():
 def test_bray_curtis_with_allowed_list(partial_umi):
     """Test Bray-Curtis dissimilarity calculation with allowed list"""
     allowed_list = ["AAAAAA", "TTTTTT", "CCCCCC", "GGGGGG", "ATATAT"]
-    result = BrayCurtisDissimilarity.calculate(partial_umi, partial_umi, allowed_list=allowed_list)
+    result = BrayCurtisDissimilarity.calculate(
+        partial_umi, partial_umi, allowed_list=allowed_list
+    )
     assert result is not None
-    assert 0 <= result <= 1 
+    assert 0 <= result <= 1

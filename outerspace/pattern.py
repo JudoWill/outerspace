@@ -1,87 +1,300 @@
-"""Hold search patterns """
+"""Pattern matching functionality for sequence analysis.
 
-from regex import compile as regex_compile
+This module provides classes for defining and executing search patterns on DNA/RNA
+sequences. It includes the Pattern class for pattern definition and the Hit class
+for storing match results.
+"""
+__copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
+
+import logging
+from typing import Dict, Generator, List, Optional, Union
+from regex import compile as regex_compile, Pattern as RegexPattern
 
 from outerspace.read import Read
 
-class Hit:
-    """Hold hit information"""
+# Set up logging
+logger = logging.getLogger(__name__)
 
-    def __init__(self, start: int, end: int, match: str, orientation: str, captured: dict):
+
+class Hit:
+    """Container for pattern match information.
+
+    This class stores the details of a successful pattern match, including
+    position information, the matched sequence, orientation, and any captured
+    groups from the regular expression.
+    """
+
+    def __init__(
+        self,
+        start: int,
+        end: int,
+        match: str,
+        orientation: str,
+        captured: Dict[str, str],
+    ) -> None:
+        """Initialize a Hit object with match information.
+
+        Parameters
+        ----------
+        start : int
+            Starting position of the match in the sequence
+        end : int
+            Ending position of the match in the sequence (exclusive)
+        match : str
+            The actual matched sequence
+        orientation : str
+            Orientation of the match ('forward' or 'reverse-complement')
+        captured : Dict[str, str]
+            Dictionary of named capture groups from the regex
+        """
         self.start = start
         self.end = end
         self.match = match
         self.orientation = orientation
         self.captured = captured
 
-    def __str__(self):
-        return f"Hit(start={self.start}, end={self.end}, match={self.match}, orientation={self.orientation}, captured={self.captured})"
+    def __str__(self) -> str:
+        """Return string representation of the hit.
 
-    def __repr__(self):
+        Returns
+        -------
+        str
+            Formatted string showing hit details
+        """
+        return (
+            f"Hit(start={self.start}, end={self.end}, match={self.match}, "
+            f"orientation={self.orientation}, captured={self.captured})"
+        )
+
+    def __repr__(self) -> str:
+        """Return detailed string representation for debugging.
+
+        Returns
+        -------
+        str
+            Same as __str__ for this class
+        """
         return self.__str__()
 
 
 class Pattern:
-    """Hold search patterns"""
+    """Pattern definition for sequence searching.
 
-    def __init__(self, reg_expr: str, read: str, orientation: str, multiple: str):
+    This class defines a search pattern with a regular expression and search
+    parameters including read selection, orientation, and multiple match handling.
+    """
+
+    # Valid values for pattern parameters
+    VALID_READS = {"R1", "R2", "both"}
+    VALID_ORIENTATIONS = {"forward", "reverse-complement", "both"}
+    VALID_MULTIPLE_OPTIONS = {"first", "last", "all"}
+
+    def __init__(
+        self, reg_expr: str, read: str, orientation: str, multiple: str
+    ) -> None:
+        """Initialize a Pattern object.
+
+        Parameters
+        ----------
+        reg_expr : str
+            Regular expression pattern to search for
+        read : str
+            Which read to search ('R1', 'R2', or 'both')
+        orientation : str
+            Search orientation ('forward', 'reverse-complement', or 'both')
+        multiple : str
+            How to handle multiple matches ('first', 'last', or 'all')
+
+        Raises
+        ------
+        ValueError
+            If any parameter has an invalid value
+        """
         self.reg_expr = reg_expr
         self.read = read
         self.orientation = orientation
         self.multiple = multiple
+
+        # Validate parameters
         self._check_args()
 
+        # Compile the regular expression
         self._regex = self._regex_compile()
-        
 
-    def _check_args(self):
-        if self.read not in ['R1', 'R2', 'both']:
-            raise ValueError(f"Invalid read: {self.read}")
-        if self.orientation not in ['forward', 'reverse-complement', 'both']:
-            raise ValueError(f"Invalid orientation: {self.orientation}")
-        if self.multiple not in ['first', 'last', 'all']:
-            raise ValueError(f"Invalid multiple: {self.multiple}")
+        logger.debug(
+            f"Initialized pattern: {reg_expr} on {read} read, "
+            f"{orientation} orientation, {multiple} matches"
+        )
 
-    def __str__(self):
-        return f"Pattern(reg_expr={self.reg_expr}, read={self.read}, orientation={self.orientation}, multiple={self.multiple})"
+    def _check_args(self) -> None:
+        """Validate pattern parameters.
 
-    def __repr__(self):
+        Raises
+        ------
+        ValueError
+            If any parameter has an invalid value
+        """
+        if self.read not in self.VALID_READS:
+            raise ValueError(
+                f"Invalid read: {self.read}. Must be one of {self.VALID_READS}"
+            )
+
+        if self.orientation not in self.VALID_ORIENTATIONS:
+            raise ValueError(
+                f"Invalid orientation: {self.orientation}. "
+                f"Must be one of {self.VALID_ORIENTATIONS}"
+            )
+
+        if self.multiple not in self.VALID_MULTIPLE_OPTIONS:
+            raise ValueError(
+                f"Invalid multiple: {self.multiple}. "
+                f"Must be one of {self.VALID_MULTIPLE_OPTIONS}"
+            )
+
+    def __str__(self) -> str:
+        """Return string representation of the pattern.
+
+        Returns
+        -------
+        str
+            Formatted string showing pattern parameters
+        """
+        return (
+            f"Pattern(reg_expr={self.reg_expr}, read={self.read}, "
+            f"orientation={self.orientation}, multiple={self.multiple})"
+        )
+
+    def __repr__(self) -> str:
+        """Return detailed string representation for debugging.
+
+        Returns
+        -------
+        str
+            Same as __str__ for this class
+        """
         return self.__str__()
 
-    def _regex_compile(self):
-        return regex_compile(self.reg_expr)
+    def _regex_compile(self) -> RegexPattern:
+        """Compile the regular expression pattern.
+
+        Returns
+        -------
+        RegexPattern
+            Compiled regular expression object
+
+        Notes
+        -----
+        Uses the 'regex' library instead of 're' for enhanced functionality.
+        """
+        try:
+            return regex_compile(self.reg_expr)
+        except Exception as e:
+            logger.error(f"Failed to compile regex pattern '{self.reg_expr}': {e}")
+            raise
 
     @staticmethod
-    def _search(regex, sequence: str, orientation: str):
+    def _search(
+        regex: RegexPattern, sequence: str, orientation: str
+    ) -> Generator[Hit, None, None]:
+        """Search for matches in a sequence.
+
+        Parameters
+        ----------
+        regex : RegexPattern
+            Compiled regular expression to search with
+        sequence : str
+            Sequence to search in
+        orientation : str
+            Orientation label for the matches
+
+        Yields
+        ------
+        Hit
+            Hit objects for each match found
+        """
         for match in regex.finditer(sequence):
             yield Hit(
                 start=match.start(),
                 end=match.end(),
                 match=match.group(0),
                 orientation=orientation,
-                captured=match.groupdict()
+                captured=match.groupdict(),
             )
-    
-    def _search_read(self, read: Read):
-        """Return all hits"""
-        if (self.read == 'both') or (read.pair == self.read):
+
+    def _search_read(self, read: Read) -> Generator[Hit, None, None]:
+        """Search for pattern matches in a read.
+
+        This method handles read selection and orientation searching based on
+        the pattern configuration.
+
+        Parameters
+        ----------
+        read : Read
+            Read object to search in
+
+        Yields
+        ------
+        Hit
+            Hit objects for each match found
+        """
+        # Check if this read should be searched
+        if (self.read == "both") or (read.pair == self.read):
             # Search forward orientation
-            if self.orientation in ['forward', 'both']:
-                yield from self._search(self._regex, read.seq, 'forward')
-            
+            if self.orientation in ["forward", "both"]:
+                yield from self._search(self._regex, read.seq, "forward")
+
             # Search reverse-complement orientation
-            if self.orientation in ['reverse-complement', 'both']:
-                yield from self._search(self._regex, read.seq_rc, 'reverse-complement')
-    
-    def search(self, read):
-        """Return first, last, or all hits"""
-        
+            if self.orientation in ["reverse-complement", "both"]:
+                yield from self._search(self._regex, read.seq_rc, "reverse-complement")
+
+    def search(self, read: Read) -> Optional[Union[Hit, List[Hit]]]:
+        """Search for pattern matches in a read.
+
+        This method returns matches based on the 'multiple' configuration:
+        - 'first': Returns the first match found or None
+        - 'last': Returns the last match found or None
+        - 'all': Returns a list of all matches (empty list if none found)
+
+        Parameters
+        ----------
+        read : Read
+            Read object to search in
+
+        Returns
+        -------
+        Optional[Union[Hit, List[Hit]]]
+            Match results based on the 'multiple' configuration:
+            - Single Hit object for 'first' or 'last'
+            - List of Hit objects for 'all'
+            - None if no matches found for 'first' or 'last'
+            - Empty list if no matches found for 'all'
+        """
         try:
-            if self.multiple == 'first':
-                return next(self._search_read(read))
-            elif self.multiple == 'last':
-                return list(self._search_read(read))[-1]
-            else:
-                return list(self._search_read(read))
+            if self.multiple == "first":
+                result = next(self._search_read(read))
+                logger.debug(f"Found first match: {result}")
+                return result
+            elif self.multiple == "last":
+                matches = list(self._search_read(read))
+                if matches:
+                    result = matches[-1]
+                    logger.debug(f"Found last match: {result}")
+                    return result
+                else:
+                    logger.debug("No matches found for 'last' search")
+                    return None
+            else:  # 'all'
+                matches = list(self._search_read(read))
+                logger.debug(f"Found {len(matches)} matches for 'all' search")
+                return matches
+
         except StopIteration:
+            logger.debug("No matches found for 'first' search")
             return None
+        except Exception as e:
+            logger.error(f"Error during pattern search: {e}")
+            raise
+
+
+# Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.

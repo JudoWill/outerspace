@@ -8,6 +8,10 @@ run:
 test:
 	pytest
 
+black:
+	black outerspace
+	black tests
+
 venv:
 	# Create a new conda environment in the venv directory
 	conda create -p ./venv python=3.10 pytest
