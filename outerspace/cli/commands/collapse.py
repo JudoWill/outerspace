@@ -177,7 +177,7 @@ class CollapseCommand(BaseCommand):
             # Join multiple columns if specified
             if len(columns) > 1:
                 # Check if all columns are present
-                if all(row.get(col, '') for col in columns):
+                if all(row.get(col, "") for col in columns):
                     combined_bc = "".join(str(row[col]) for col in columns)
                     umi.consume(combined_bc)
                     # TODO: maybe there is a way to do "composite" umis
