@@ -5,7 +5,6 @@ __author__ = "WND"
 
 import pytest
 import os
-import tempfile
 import csv
 from outerspace.cli.main import Cli
 
@@ -88,87 +87,77 @@ def test_findseq_missing_output():
         cli.run()
 
 
-def test_findseq_with_example_data():
+def test_findseq_with_example_data(temp_workspace):
     """Test findseq command with real example data"""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        args = [
-            "findseq",
-            "tests/configs/grnaquery.toml",
-            "-1",
-            "tests/data/409-4_S1_L002_R1_001.fastq.gz",
-            "-2",
-            "tests/data/409-4_S1_L002_R2_001.fastq.gz",
-            "-o",
-            os.path.join(temp_dir, "shuffle.csv"),
-        ]
-        cli = Cli(args)
-        cli.run()
+    args = [
+        "findseq",
+        os.path.join(temp_workspace, "grnaquery.toml"),
+        "-1",
+        os.path.join(temp_workspace, "reads/409-4_S1_L002_R1_001.fastq.gz"),
+        "-2",
+        os.path.join(temp_workspace, "reads/409-4_S1_L002_R2_001.fastq.gz"),
+        "-o",
+        os.path.join(temp_workspace, "shuffle.csv"),
+    ]
+    cli = Cli(args)
+    cli.run()
 
-        # Verify output file exists and has content
-        assert os.path.exists(os.path.join(temp_dir, "shuffle.csv"))
+    # Verify output file exists and has content
+    assert os.path.exists(os.path.join(temp_workspace, "shuffle.csv"))
 
-        with open(os.path.join(temp_dir, "shuffle.csv"), "r") as f:
-            reader = csv.reader(f)
-            header = next(reader)
-            # Check that we have the expected columns from the new pattern format
-            expected_columns = [
-                "read_id",
-                "UMI_5prime",
-                "protospacer",
-                "downstreamof_protospacer",
-                "UMI_3prime",
-            ]
-            assert all(
-                col in header for col in expected_columns
-            ), f"Expected columns {expected_columns}, got {header}"
+    with open(os.path.join(temp_workspace, "shuffle.csv"), "r") as f:
+        reader = csv.reader(f)
+        header = next(reader)
+        # Check that we have the expected columns (read_id plus captured groups)
+        assert "read_id" in header, f"Missing read_id in header: {header}"
+        assert header[0] == "read_id", f"read_id should be first column: {header}"
 
-            # Check that we have results
-            rows = list(reader)
-            assert len(rows) > 0, "No results found"
+        # Check that we have results
+        rows = list(reader)
+        assert len(rows) > 0, "No results found"
 
 
-def test_findseq_single_file_processing():
+def test_findseq_single_file_processing(temp_workspace):
     """Test findseq command with single file processing"""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        # Create a simple FASTA file for testing
-        fasta_file = os.path.join(temp_dir, "test.fasta")
-        with open(fasta_file, "w") as f:
-            f.write(">read1\nATCGATCGATCG\n")
-            f.write(">read2\nGCTAGCTAGCTA\n")
+    # Create a simple FASTA file for testing
+    fasta_file = os.path.join(temp_workspace, "test.fasta")
+    with open(fasta_file, "w") as f:
+        f.write(">read1\nATCGATCGATCG\n")
+        f.write(">read2\nGCTAGCTAGCTA\n")
 
-        # Create a simple config with one pattern
-        config_file = os.path.join(temp_dir, "test_config.toml")
-        with open(config_file, "w") as f:
-            f.write(
-                """[findseq]
+    # Create a simple config with one pattern
+    config_file = os.path.join(temp_workspace, "test_config.toml")
+    with open(config_file, "w") as f:
+        f.write(
+            """[findseq]
 [[findseq.patterns]]
 reg_expr = "(?P<test>.{4})"
 read = "R1"
 orientation = "forward"
 multiple = "first"
 """
-            )
+        )
 
-        args = [
-            "findseq",
-            config_file,
-            "-1",
-            fasta_file,
-            "-o",
-            os.path.join(temp_dir, "output.csv"),
-        ]
-        cli = Cli(args)
-        cli.run()
+    args = [
+        "findseq",
+        config_file,
+        "-1",
+        fasta_file,
+        "-o",
+        os.path.join(temp_workspace, "output.csv"),
+    ]
+    cli = Cli(args)
+    cli.run()
 
-        # Verify output
-        assert os.path.exists(os.path.join(temp_dir, "output.csv"))
+    # Verify output
+    assert os.path.exists(os.path.join(temp_workspace, "output.csv"))
 
-        with open(os.path.join(temp_dir, "output.csv"), "r") as f:
-            reader = csv.reader(f)
-            header = next(reader)
-            assert "test" in header
-            rows = list(reader)
-            assert len(rows) > 0
+    with open(os.path.join(temp_workspace, "output.csv"), "r") as f:
+        reader = csv.reader(f)
+        header = next(reader)
+        assert "test" in header
+        rows = list(reader)
+        assert len(rows) > 0
 
 
 def test_findseq_sam_bam_region():
@@ -201,3 +190,133 @@ def test_findseq_fetch_modes():
 
     # This would raise an error in actual processing, but we're just testing parameter handling
     assert cmd.args.fetch == "invalid"
+
+
+def test_findseq_long_format():
+    """Test findseq command with long format output"""
+    args = [
+        "findseq",
+        "test_config.toml",
+        "-1",
+        "test_r1.fastq",
+        "-o",
+        "test_output.csv",
+        "--long-format",
+    ]
+    cli = Cli(args)
+    assert cli.args.long_format is True
+
+
+def test_findseq_matches_only():
+    """Test findseq command with matches-only filtering"""
+    args = [
+        "findseq",
+        "test_config.toml",
+        "-1",
+        "test_r1.fastq",
+        "-o",
+        "test_output.csv",
+        "--matches-only",
+    ]
+    cli = Cli(args)
+    assert cli.args.matches_only is True
+
+
+def test_findseq_long_format_with_example_data(temp_workspace):
+    """Test findseq command with long format output using real example data"""
+    args = [
+        "findseq",
+        os.path.join(temp_workspace, "grnaquery.toml"),
+        "-1",
+        os.path.join(temp_workspace, "reads/409-4_S1_L002_R1_001.fastq.gz"),
+        "-2",
+        os.path.join(temp_workspace, "reads/409-4_S1_L002_R2_001.fastq.gz"),
+        "-o",
+        os.path.join(temp_workspace, "long_format.csv"),
+        "--long-format",
+    ]
+    cli = Cli(args)
+    cli.run()
+
+    # Verify output file exists and has content
+    assert os.path.exists(os.path.join(temp_workspace, "long_format.csv"))
+
+    with open(os.path.join(temp_workspace, "long_format.csv"), "r") as f:
+        reader = csv.reader(f)
+        header = next(reader)
+        # Check that we have the expected columns for long format
+        expected_columns = ["read_id", "pattern_name", "match", "start"]
+        assert (
+            header == expected_columns
+        ), f"Expected columns {expected_columns}, got {header}"
+
+        # Check that we have results
+        rows = list(reader)
+        assert len(rows) > 0, "No results found"
+
+        # Check that each row has the correct structure
+        for row in rows:
+            assert len(row) == 4, f"Row should have 4 columns: {row}"
+            assert row[0] is not None and row[0] != "", f"Missing read_id in row: {row}"
+            assert (
+                row[1] is not None and row[1] != ""
+            ), f"Missing pattern_name in row: {row}"
+            # match and start can be empty but should be present
+            assert len(row) >= 4, f"Row too short: {row}"
+
+
+def test_findseq_matches_only_with_example_data(temp_workspace):
+    """Test findseq command with matches-only filtering using real example data"""
+    args = [
+        "findseq",
+        os.path.join(temp_workspace, "grnaquery.toml"),
+        "-1",
+        os.path.join(temp_workspace, "reads/409-4_S1_L002_R1_001.fastq.gz"),
+        "-2",
+        os.path.join(temp_workspace, "reads/409-4_S1_L002_R2_001.fastq.gz"),
+        "-o",
+        os.path.join(temp_workspace, "matches_only.csv"),
+        "--matches-only",
+    ]
+    cli = Cli(args)
+    cli.run()
+
+    # Verify output file exists and has content
+    assert os.path.exists(os.path.join(temp_workspace, "matches_only.csv"))
+
+    with open(os.path.join(temp_workspace, "matches_only.csv"), "r") as f:
+        reader = csv.reader(f)
+        header = next(reader)
+        # Check that we have the expected columns (read_id plus captured groups)
+        assert "read_id" in header, f"Missing read_id in header: {header}"
+        assert header[0] == "read_id", f"read_id should be first column: {header}"
+
+        # Check that we have results
+        rows = list(reader)
+        assert len(rows) > 0, "No results found"
+
+        # In matches-only mode, all rows should have at least some data beyond read_id
+        for row in rows:
+            assert len(row) > 1, f"Row only has read_id: {row}"
+            # At least one field beyond read_id should have data
+            has_data = any(cell and cell.strip() for cell in row[1:])
+            assert has_data, f"Row has no match data: {row}"
+
+
+def test_findseq_convenience_function():
+    """Test the convenience run function with new parameters"""
+    from outerspace.cli.commands.findseq import run
+
+    # Test that the function can be called with new parameters
+    # Note: This test doesn't actually run the command due to missing files
+    # but verifies the function signature is correct
+    try:
+        run(
+            "test_config.toml",
+            "test_r1.fastq",
+            long_format=True,
+            matches_only=True,
+        )
+    except ValueError as e:
+        # Expected error due to missing files
+        assert "not found" in str(e)

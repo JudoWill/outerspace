@@ -13,6 +13,7 @@ Extracts sequences from various file formats based on configuration patterns. Fe
 ```bash
 usage: outerspace findseq [-h] config [-1 READ1_FILENAME] [-2 READ2_FILENAME] [-o OUTPUT_FILENAME]
                  [--region REGION] [--fetch {mapped,unmapped,all}]
+                 [--long-format] [--matches-only]
 
 Extract sequences from files based on configuration patterns
 
@@ -30,6 +31,8 @@ options:
   --region REGION       SAM/BAM region specification (e.g., "chr1:1-1000")
   --fetch {mapped,unmapped,all}
                         SAM/BAM fetch mode
+  --long-format         Output in long format (one row per pattern match instead of one row per read)
+  --matches-only        Only output reads that have at least one pattern match
 ```
 
 ### `outerspace collapse`

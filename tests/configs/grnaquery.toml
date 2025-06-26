@@ -28,6 +28,7 @@ multiple = "first"
 # Reference patterns by name or use all patterns
 pattern_names = ["UMI_5prime", "protospacer", "UMI_3prime"]
 # Alternative: use_all_patterns = true
+matches_only = true
 
 [collapse]
 columns = 'UMI_5prime,UMI_3prime'

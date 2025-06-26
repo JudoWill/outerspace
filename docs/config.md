@@ -52,6 +52,8 @@ Each pattern requires the following fields:
 - `read`: Which read to search ("R1", "R2", or "both")
 - `orientation`: Search orientation ("forward", "reverse-complement", or "both")
 - `multiple`: How to handle multiple matches ("first", "last", or "all")
+- `left_flank`: Number of letters to include left of the match. Defaults to 0.
+- `right_flank`: Number of letters to include right of the match. Defaults to 0.
 
 ## Command Sections
 
