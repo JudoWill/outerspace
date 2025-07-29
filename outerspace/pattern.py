@@ -32,6 +32,7 @@ class Hit:
         match: str,
         orientation: str,
         captured: Dict[str, str],
+        pattern : 'Pattern',
     ) -> None:
         """Initialize a Hit object with match information.
 
@@ -47,12 +48,15 @@ class Hit:
             Orientation of the match ('forward' or 'reverse-complement')
         captured : Dict[str, str]
             Dictionary of named capture groups from the regex
+        pattern : 'Pattern'
+            Pattern object that generated the match
         """
         self.start = start
         self.end = end
         self.match = match
         self.orientation = orientation
         self.captured = captured
+        self.pattern = pattern
 
     def __str__(self) -> str:
         """Return string representation of the hit.
@@ -64,7 +68,8 @@ class Hit:
         """
         return (
             f"Hit(start={self.start}, end={self.end}, match={self.match}, "
-            f"orientation={self.orientation}, captured={self.captured})"
+            f"orientation={self.orientation}, captured={self.captured}, "
+            f"pattern={self.pattern.name})"
         )
 
     def __repr__(self) -> str:
@@ -92,6 +97,7 @@ class Pattern:
 
     def __init__(
         self,
+        name : str,
         reg_expr: str,
         read: str,
         orientation: str,
@@ -104,6 +110,8 @@ class Pattern:
 
         Parameters
         ----------
+        name : str
+            Name of the pattern
         reg_expr : str
             Regular expression pattern to search for
         read : str
@@ -124,6 +132,7 @@ class Pattern:
         ValueError
             If any parameter has an invalid value
         """
+        self.name = name
         self.reg_expr = reg_expr
         self.read = read
         self.orientation = orientation
@@ -139,8 +148,8 @@ class Pattern:
         self._regex = self._regex_compile()
 
         logger.debug(
-            f"Initialized pattern: {reg_expr} on {read} read, "
-            f"{orientation} orientation, {multiple} matches"
+            f"Initialized pattern: {self.name} ({reg_expr}) on {self.read} read, "
+            f"{self.orientation} orientation, {self.multiple} matches"
         )
 
     def _check_args(self) -> None:
@@ -191,7 +200,7 @@ class Pattern:
             Formatted string showing pattern parameters
         """
         return (
-            f"Pattern(reg_expr={self.reg_expr}, read={self.read}, "
+            f"Pattern(name={self.name}, reg_expr={self.reg_expr}, read={self.read}, "
             f"orientation={self.orientation}, multiple={self.multiple}, "
             f"search_read_name={self.search_read_name}, "
             f"left_flank={self.left_flank}, right_flank={self.right_flank})"
@@ -225,20 +234,17 @@ class Pattern:
             logger.error(f"Failed to compile regex pattern '{self.reg_expr}': {e}")
             raise
 
-    @staticmethod
     def _search(
-        regex: RegexPattern,
+        self,
         sequence: str,
         orientation: str,
-        left_flank: int,
-        right_flank: int,
+        left_flank: int = 0,
+        right_flank: int = 0,
     ) -> Generator[Hit, None, None]:
         """Search for matches in a sequence.
 
         Parameters
         ----------
-        regex : RegexPattern
-            Compiled regular expression to search with
         sequence : str
             Sequence to search in
         orientation : str
@@ -253,7 +259,7 @@ class Pattern:
         Hit
             Hit objects for each match found
         """
-        for match in regex.finditer(sequence):
+        for match in self._regex.finditer(sequence):
             start = max(0, match.start() - left_flank)
             end = min(len(sequence), match.end() + right_flank)
             match_str = sequence[start:end]
@@ -263,6 +269,7 @@ class Pattern:
                 match=match_str,
                 orientation=orientation,
                 captured=match.groupdict(),
+                pattern=self,
             )
 
     def _search_read(self, read: Read) -> Generator[Hit, None, None]:
@@ -285,7 +292,7 @@ class Pattern:
         # Search the read name for the pattern
         if self.search_read_name:
             yield from self._search(
-                self._regex, read.name, "forward", self.left_flank, self.right_flank
+                read.name, "forward", self.left_flank, self.right_flank
             )
         else:
             # Check if this read should be searched
@@ -293,7 +300,6 @@ class Pattern:
                 # Search forward orientation
                 if (self.orientation == "forward") | (self.orientation == "both"):
                     yield from self._search(
-                        self._regex,
                         read.seq,
                         "forward",
                         self.left_flank,
@@ -305,7 +311,6 @@ class Pattern:
                     self.orientation == "both"
                 ):
                     yield from self._search(
-                        self._regex,
                         read.seq_rc,
                         "reverse-complement",
                         self.left_flank,

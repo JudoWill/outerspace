@@ -13,7 +13,7 @@ from typing import Any, Dict, Generator, List, Optional, Union
 
 from outerspace.cli.commands.base import BaseCommand
 from outerspace.config import Cfg
-from outerspace.pattern import Pattern
+from outerspace.pattern import Hit, Pattern
 from outerspace.read import Read
 
 # Set up logging
@@ -271,7 +271,7 @@ class FindSeqCommand(BaseCommand):
         read_count = 0
         match_count = 0
 
-        for read in reads:
+        for read in self._progbar_iterable(reads, desc="Processing reads"):
             read_count += 1
             read_has_matches = False
 
@@ -288,20 +288,20 @@ class FindSeqCommand(BaseCommand):
 
                     for hit in hits:
                         # Add pattern information to the hit
-                        hit.pattern_name = getattr(
-                            pattern, "name", f"pattern_{patterns.index(pattern)}"
-                        )
                         yield (read.name, hit)
                         match_count += 1
 
             # If not matches-only and no matches found, yield empty hit for wide format
             if not read_has_matches and not self.args.matches_only:
                 # Create an empty hit object for reads with no matches
-                empty_hit = type(
-                    "EmptyHit",
-                    (),
-                    {"captured": {}, "pattern_name": None, "match": "", "start": -1},
-                )()
+                empty_hit = Hit(
+                    start=-1,
+                    end=-1,
+                    match="",
+                    orientation="",
+                    captured={},
+                    pattern=None,
+                )
                 yield (read.name, empty_hit)
 
         logger.info(f"Processed {read_count} reads, found {match_count} matches")
@@ -378,12 +378,12 @@ class FindSeqCommand(BaseCommand):
             row_count = 0
             for readname, hit in results:
                 # Skip empty hits (reads with no matches)
-                if hit.pattern_name is None:
+                if hit.pattern is None:
                     continue
 
                 row = {
                     "read_id": readname,
-                    "pattern_name": hit.pattern_name,
+                    "pattern_name": hit.pattern.name,
                     "match": getattr(hit, "match", ""),
                     "start": getattr(hit, "start", -1),
                 }

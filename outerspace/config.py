@@ -243,6 +243,7 @@ class Cfg:
 
             # Create Pattern object
             pattern = Pattern(
+                name=pattern_config["name"],
                 reg_expr=pattern_config["reg_expr"],
                 read=pattern_config["read"],
                 orientation=pattern_config["orientation"],

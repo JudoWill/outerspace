@@ -131,6 +131,7 @@ def test_findseq_single_file_processing(temp_workspace):
         f.write(
             """[findseq]
 [[findseq.patterns]]
+name = "test"
 reg_expr = "(?P<test>.{4})"
 read = "R1"
 orientation = "forward"

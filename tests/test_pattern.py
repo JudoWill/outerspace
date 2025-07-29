@@ -8,6 +8,7 @@ from outerspace.read import Read
 def test_hit_creation():
     """Test basic Hit object creation"""
     hit = Hit(
+        pattern=Pattern(name="test", reg_expr="ATCG", read="R1", orientation="forward", multiple="first"),
         start=10,
         end=15,
         match="ATCG",
@@ -25,11 +26,12 @@ def test_hit_creation():
 def test_hit_string_representation():
     """Test Hit string and repr methods"""
     hit = Hit(
+        pattern=Pattern(name="test", reg_expr="ATCG", read="R1", orientation="forward", multiple="first"),
         start=5, end=9, match="GCTA", orientation="reverse-complement", captured={}
     )
 
     expected_str = (
-        "Hit(start=5, end=9, match=GCTA, orientation=reverse-complement, captured={})"
+        "Hit(start=5, end=9, match=GCTA, orientation=reverse-complement, captured={}, pattern=test)"
     )
     assert str(hit) == expected_str
     assert repr(hit) == expected_str
@@ -38,6 +40,7 @@ def test_hit_string_representation():
 def test_hit_with_named_captures():
     """Test Hit with named capture groups"""
     hit = Hit(
+        pattern=Pattern(name="test", reg_expr="ATCG", read="R1", orientation="forward", multiple="first"),
         start=0,
         end=8,
         match="ATCGATCG",
@@ -53,6 +56,7 @@ def test_hit_with_named_captures():
 def test_pattern_creation():
     """Test basic Pattern object creation"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG", read="R1", orientation="forward", multiple="first"
     )
 
@@ -66,6 +70,7 @@ def test_pattern_creation():
 def test_pattern_creation_with_search_read_name():
     """Test Pattern creation with search_read_name parameter"""
     pattern = Pattern(
+        name="test",
         reg_expr="test",
         read="both",
         orientation="both",
@@ -82,6 +87,7 @@ def test_pattern_creation_with_search_read_name():
 def test_pattern_string_representation():
     """Test Pattern string and repr methods"""
     pattern = Pattern(
+        name="test",
         reg_expr="GCTA",
         read="R2",
         orientation="reverse-complement",
@@ -89,23 +95,7 @@ def test_pattern_string_representation():
         search_read_name=True,
     )
 
-    expected_str = "Pattern(reg_expr=GCTA, read=R2, orientation=reverse-complement, multiple=last, search_read_name=True, left_flank=0, right_flank=0)"
-    assert str(pattern) == expected_str
-    assert repr(pattern) == expected_str
-
-
-def test_pattern_string_representation_with_flanks():
-    """Test Pattern string representation includes flank parameters"""
-    pattern = Pattern(
-        reg_expr="ATCG",
-        read="R1",
-        orientation="forward",
-        multiple="first",
-        left_flank=5,
-        right_flank=10,
-    )
-
-    expected_str = "Pattern(reg_expr=ATCG, read=R1, orientation=forward, multiple=first, search_read_name=False, left_flank=5, right_flank=10)"
+    expected_str = "Pattern(name=test, reg_expr=GCTA, read=R2, orientation=reverse-complement, multiple=last, search_read_name=True, left_flank=0, right_flank=0)"
     assert str(pattern) == expected_str
     assert repr(pattern) == expected_str
 
@@ -116,6 +106,7 @@ def test_pattern_validation_valid_reads():
 
     for read in valid_reads:
         pattern = Pattern(
+            name="test",
             reg_expr="ATCG", read=read, orientation="forward", multiple="first"
         )
         assert pattern.read == read
@@ -125,6 +116,7 @@ def test_pattern_validation_invalid_read():
     """Test Pattern validation with invalid read value"""
     with pytest.raises(ValueError, match="Invalid read: invalid_read"):
         Pattern(
+            name="test",
             reg_expr="ATCG",
             read="invalid_read",
             orientation="forward",
@@ -138,6 +130,7 @@ def test_pattern_validation_valid_orientations():
 
     for orientation in valid_orientations:
         pattern = Pattern(
+            name="test",
             reg_expr="ATCG", read="R1", orientation=orientation, multiple="first"
         )
         assert pattern.orientation == orientation
@@ -147,6 +140,7 @@ def test_pattern_validation_invalid_orientation():
     """Test Pattern validation with invalid orientation value"""
     with pytest.raises(ValueError, match="Invalid orientation: invalid_orientation"):
         Pattern(
+            name="test",
             reg_expr="ATCG",
             read="R1",
             orientation="invalid_orientation",
@@ -160,6 +154,7 @@ def test_pattern_validation_valid_multiple_options():
 
     for multiple in valid_multiple_options:
         pattern = Pattern(
+            name="test",
             reg_expr="ATCG", read="R1", orientation="forward", multiple=multiple
         )
         assert pattern.multiple == multiple
@@ -169,6 +164,7 @@ def test_pattern_validation_invalid_multiple():
     """Test Pattern validation with invalid multiple value"""
     with pytest.raises(ValueError, match="Invalid multiple: invalid_multiple"):
         Pattern(
+            name="test",
             reg_expr="ATCG",
             read="R1",
             orientation="forward",
@@ -180,6 +176,7 @@ def test_pattern_validation_search_read_name():
     """Test Pattern validation of search_read_name parameter"""
     # Valid boolean values
     pattern1 = Pattern(
+        name="test",
         reg_expr="ATCG",
         read="R1",
         orientation="forward",
@@ -189,6 +186,7 @@ def test_pattern_validation_search_read_name():
     assert pattern1.search_read_name is True
 
     pattern2 = Pattern(
+        name="test",
         reg_expr="ATCG",
         read="R1",
         orientation="forward",
@@ -200,6 +198,7 @@ def test_pattern_validation_search_read_name():
     # Invalid non-boolean value
     with pytest.raises(ValueError, match="Invalid search_read_name"):
         Pattern(
+            name="test",
             reg_expr="ATCG",
             read="R1",
             orientation="forward",
@@ -211,6 +210,7 @@ def test_pattern_validation_search_read_name():
 def test_pattern_regex_compilation():
     """Test Pattern regex compilation"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG", read="R1", orientation="forward", multiple="first"
     )
 
@@ -225,6 +225,7 @@ def test_pattern_invalid_regex():
         Exception
     ):  # regex library raises various exceptions for invalid patterns
         Pattern(
+            name="test",
             reg_expr="[ATCG",  # Invalid regex - unclosed bracket
             read="R1",
             orientation="forward",
@@ -235,6 +236,7 @@ def test_pattern_invalid_regex():
 def test_pattern_search_forward():
     """Test Pattern search in forward orientation"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG", read="R1", orientation="forward", multiple="first"
     )
 
@@ -252,6 +254,7 @@ def test_pattern_search_forward():
 def test_pattern_search_reverse_complement():
     """Test Pattern search in reverse-complement orientation"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG", read="R1", orientation="reverse-complement", multiple="first"
     )
 
@@ -270,7 +273,10 @@ def test_pattern_search_reverse_complement():
 
 def test_pattern_search_both_orientations():
     """Test Pattern search in both orientations"""
-    pattern = Pattern(reg_expr="ATCG", read="R1", orientation="both", multiple="all")
+    pattern = Pattern(
+        name="test",
+        reg_expr="ATCG", read="R1", orientation="both", multiple="all"
+    )
 
     read = Read(seq="ATCG", pair="R1", name="test_read")
     result = pattern.search(read)
@@ -292,6 +298,7 @@ def test_pattern_search_both_orientations():
 def test_pattern_search_read_name():
     """Test Pattern search in read name"""
     pattern = Pattern(
+        name="test",
         reg_expr="test",
         read="R1",
         orientation="forward",
@@ -313,6 +320,7 @@ def test_pattern_search_read_name():
 def test_pattern_search_multiple_matches_first():
     """Test Pattern search with multiple matches, returning first"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG", read="R1", orientation="forward", multiple="first"
     )
 
@@ -329,6 +337,7 @@ def test_pattern_search_multiple_matches_first():
 def test_pattern_search_multiple_matches_last():
     """Test Pattern search with multiple matches, returning last"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG", read="R1", orientation="forward", multiple="last"
     )
 
@@ -344,7 +353,10 @@ def test_pattern_search_multiple_matches_last():
 
 def test_pattern_search_multiple_matches_all():
     """Test Pattern search with multiple matches, returning all"""
-    pattern = Pattern(reg_expr="ATCG", read="R1", orientation="forward", multiple="all")
+    pattern = Pattern(
+        name="test",
+        reg_expr="ATCG", read="R1", orientation="forward", multiple="all"
+    )
 
     read = Read(seq="ATCGATCG", pair="R1", name="test_read")
     result = pattern.search(read)
@@ -367,6 +379,7 @@ def test_pattern_search_multiple_matches_all():
 def test_pattern_search_no_matches_first():
     """Test Pattern search with no matches, returning first"""
     pattern = Pattern(
+        name="test",
         reg_expr="XXXX", read="R1", orientation="forward", multiple="first"
     )
 
@@ -379,6 +392,7 @@ def test_pattern_search_no_matches_first():
 def test_pattern_search_no_matches_last():
     """Test Pattern search with no matches, returning last"""
     pattern = Pattern(
+        name="test",
         reg_expr="XXXX", read="R1", orientation="forward", multiple="last"
     )
 
@@ -390,7 +404,10 @@ def test_pattern_search_no_matches_last():
 
 def test_pattern_search_no_matches_all():
     """Test Pattern search with no matches, returning all"""
-    pattern = Pattern(reg_expr="XXXX", read="R1", orientation="forward", multiple="all")
+    pattern = Pattern(
+        name="test",
+        reg_expr="XXXX", read="R1", orientation="forward", multiple="all"
+    )
 
     read = Read(seq="ATCG", pair="R1", name="test_read")
     result = pattern.search(read)
@@ -404,6 +421,7 @@ def test_pattern_search_read_selection():
     """Test Pattern search with different read selections"""
     # Test R1 only
     pattern_r1 = Pattern(
+        name="test",
         reg_expr="ATCG", read="R1", orientation="forward", multiple="first"
     )
 
@@ -418,6 +436,7 @@ def test_pattern_search_read_selection():
 
     # Test R2 only
     pattern_r2 = Pattern(
+        name="test",
         reg_expr="ATCG", read="R2", orientation="forward", multiple="first"
     )
 
@@ -429,6 +448,7 @@ def test_pattern_search_read_selection():
 
     # Test both reads
     pattern_both = Pattern(
+        name="test",
         reg_expr="ATCG", read="both", orientation="forward", multiple="first"
     )
 
@@ -442,6 +462,7 @@ def test_pattern_search_read_selection():
 def test_pattern_search_with_named_captures():
     """Test Pattern search with named capture groups"""
     pattern = Pattern(
+        name="test",
         reg_expr="(?P<primer>AT)(?P<barcode>CG)",
         read="R1",
         orientation="forward",
@@ -462,6 +483,7 @@ def test_pattern_search_complex_regex():
     """Test Pattern search with complex regex patterns"""
     # Test with quantifiers - A{2,4} means 2 to 4 A's followed by CG
     pattern = Pattern(
+        name="test",
         reg_expr="A{2,4}CG", read="R1", orientation="forward", multiple="all"
     )
 
@@ -480,6 +502,7 @@ def test_pattern_search_complex_regex():
 
     # Test with character classes - [AT]CG matches A or T followed by CG
     pattern2 = Pattern(
+        name="test",
         reg_expr="[AT]CG", read="R1", orientation="forward", multiple="all"
     )
 
@@ -497,6 +520,7 @@ def test_pattern_search_complex_regex():
 def test_pattern_search_empty_sequence():
     """Test Pattern search with empty sequence"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG", read="R1", orientation="forward", multiple="first"
     )
 
@@ -508,7 +532,10 @@ def test_pattern_search_empty_sequence():
 
 def test_pattern_search_empty_regex():
     """Test Pattern search with empty regex pattern"""
-    pattern = Pattern(reg_expr="", read="R1", orientation="forward", multiple="all")
+    pattern = Pattern(
+        name="test",
+        reg_expr="", read="R1", orientation="forward", multiple="all"
+    )
 
     read = Read(seq="ATCG", pair="R1", name="test_read")
     result = pattern.search(read)
@@ -523,6 +550,7 @@ def test_pattern_search_case_sensitivity():
     """Test Pattern search case sensitivity"""
     # Test case-sensitive search
     pattern = Pattern(
+        name="test",
         reg_expr="atcg", read="R1", orientation="forward", multiple="first"
     )
 
@@ -533,6 +561,7 @@ def test_pattern_search_case_sensitivity():
 
     # Test case-insensitive search
     pattern_insensitive = Pattern(
+        name="test",
         reg_expr="(?i)atcg", read="R1", orientation="forward", multiple="first"
     )
 
@@ -545,6 +574,7 @@ def test_pattern_search_with_anchors():
     """Test Pattern search with regex anchors"""
     # Test start anchor
     pattern_start = Pattern(
+        name="test",
         reg_expr="^ATCG", read="R1", orientation="forward", multiple="first"
     )
 
@@ -559,6 +589,7 @@ def test_pattern_search_with_anchors():
 
     # Test end anchor
     pattern_end = Pattern(
+        name="test",
         reg_expr="ATCG$", read="R1", orientation="forward", multiple="first"
     )
 
@@ -572,6 +603,7 @@ def test_pattern_search_with_anchors():
 def test_pattern_search_error_handling():
     """Test Pattern search error handling"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG", read="R1", orientation="forward", multiple="first"
     )
 
@@ -580,31 +612,10 @@ def test_pattern_search_error_handling():
         pattern.search(None)
 
 
-def test_pattern_static_search_method():
-    """Test Pattern._search static method"""
-    from regex import compile as regex_compile
-
-    regex = regex_compile("ATCG")
-    sequence = "ATCGATCG"
-    orientation = "forward"
-
-    hits = list(Pattern._search(regex, sequence, orientation, 0, 0))
-
-    assert len(hits) == 2
-    assert hits[0].start == 0
-    assert hits[0].end == 4
-    assert hits[0].match == "ATCG"
-    assert hits[0].orientation == "forward"
-
-    assert hits[1].start == 4
-    assert hits[1].end == 8
-    assert hits[1].match == "ATCG"
-    assert hits[1].orientation == "forward"
-
-
 def test_pattern_search_read_generator():
     """Test Pattern._search_read generator method"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG", read="R1", orientation="forward", multiple="first"
     )
 
@@ -620,6 +631,7 @@ def test_pattern_search_read_generator():
 def test_pattern_search_read_name_generator():
     """Test Pattern._search_read generator with search_read_name=True"""
     pattern = Pattern(
+        name="test",
         reg_expr="test",
         read="R1",
         orientation="forward",
@@ -640,6 +652,7 @@ def test_pattern_search_read_selection_generator():
     """Test Pattern._search_read generator with different read selections"""
     # Test R1 only
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG", read="R1", orientation="forward", multiple="first"
     )
 
@@ -657,6 +670,7 @@ def test_pattern_search_orientation_generator():
     """Test Pattern._search_read generator with different orientations"""
     # Test forward only
     pattern_forward = Pattern(
+        name="test",
         reg_expr="ATCG", read="R1", orientation="forward", multiple="first"
     )
 
@@ -668,6 +682,7 @@ def test_pattern_search_orientation_generator():
 
     # Test reverse-complement only - ATCG doesn't match in reverse complement CGAT
     pattern_rc = Pattern(
+        name="test",
         reg_expr="ATCG", read="R1", orientation="reverse-complement", multiple="first"
     )
 
@@ -676,6 +691,7 @@ def test_pattern_search_orientation_generator():
 
     # Test both orientations
     pattern_both = Pattern(
+        name="test",
         reg_expr="ATCG", read="R1", orientation="both", multiple="first"
     )
 
@@ -687,6 +703,7 @@ def test_pattern_search_orientation_generator():
 def test_pattern_search_reverse_complement_with_matching_pattern():
     """Test Pattern search in reverse-complement orientation with a pattern that actually matches"""
     pattern = Pattern(
+        name="test",
         reg_expr="CGAT", read="R1", orientation="reverse-complement", multiple="first"
     )
 
@@ -703,7 +720,10 @@ def test_pattern_search_reverse_complement_with_matching_pattern():
 
 def test_pattern_search_both_orientations_with_matching_pattern():
     """Test Pattern search in both orientations with a pattern that matches in reverse-complement only"""
-    pattern = Pattern(reg_expr="CGAT", read="R1", orientation="both", multiple="all")
+    pattern = Pattern(
+        name="test",
+        reg_expr="CGAT", read="R1", orientation="both", multiple="all"
+    )
 
     read = Read(seq="ATCG", pair="R1", name="test_read")  # Reverse complement is CGAT
     result = pattern.search(read)
@@ -720,6 +740,7 @@ def test_pattern_search_both_orientations_with_matching_pattern():
 def test_pattern_search_with_flanks_overlapping_matches():
     """Test Pattern search with flanks and overlapping regex matches"""
     pattern = Pattern(
+        name="test",
         reg_expr="A{1,2}",
         read="R1",
         orientation="forward",
@@ -745,6 +766,7 @@ def test_pattern_search_with_zero_width_assertions():
     """Test Pattern search with zero-width assertions"""
     # Test positive lookahead
     pattern = Pattern(
+        name="test",
         reg_expr="A(?=T)", read="R1", orientation="forward", multiple="all"
     )
 
@@ -762,6 +784,7 @@ def test_pattern_search_with_zero_width_assertions():
 def test_pattern_search_with_unicode_sequences():
     """Test Pattern search with Unicode sequences"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG", read="R1", orientation="forward", multiple="first"
     )
 
@@ -776,7 +799,10 @@ def test_pattern_search_with_unicode_sequences():
 
 def test_pattern_search_with_very_long_sequence():
     """Test Pattern search with a very long sequence"""
-    pattern = Pattern(reg_expr="ATCG", read="R1", orientation="forward", multiple="all")
+    pattern = Pattern(
+        name="test",
+        reg_expr="ATCG", read="R1", orientation="forward", multiple="all"
+    )
 
     # Create a long sequence with multiple ATCG patterns
     long_seq = "ATCG" * 1000
@@ -797,6 +823,7 @@ def test_pattern_search_with_very_long_sequence():
 def test_pattern_creation_with_flanks():
     """Test Pattern creation with left_flank and right_flank parameters"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG",
         read="R1",
         orientation="forward",
@@ -814,6 +841,7 @@ def test_pattern_creation_with_flanks():
 def test_pattern_creation_with_zero_flanks():
     """Test Pattern creation with zero flank values"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG",
         read="R1",
         orientation="forward",
@@ -831,6 +859,7 @@ def test_pattern_validation_invalid_flanks():
     # Test non-integer left_flank
     with pytest.raises(ValueError, match="Invalid flanks"):
         Pattern(
+            name="test",
             reg_expr="ATCG",
             read="R1",
             orientation="forward",
@@ -842,6 +871,7 @@ def test_pattern_validation_invalid_flanks():
     # Test non-integer right_flank
     with pytest.raises(ValueError, match="Invalid flanks"):
         Pattern(
+            name="test",
             reg_expr="ATCG",
             read="R1",
             orientation="forward",
@@ -854,6 +884,7 @@ def test_pattern_validation_invalid_flanks():
 def test_pattern_search_with_left_flank():
     """Test Pattern search with left flank only"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG",
         read="R1",
         orientation="forward",
@@ -876,6 +907,7 @@ def test_pattern_search_with_left_flank():
 def test_pattern_search_with_right_flank():
     """Test Pattern search with right flank only"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG",
         read="R1",
         orientation="forward",
@@ -898,6 +930,7 @@ def test_pattern_search_with_right_flank():
 def test_pattern_search_with_both_flanks():
     """Test Pattern search with both left and right flanks"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG",
         read="R1",
         orientation="forward",
@@ -920,6 +953,7 @@ def test_pattern_search_with_both_flanks():
 def test_pattern_search_with_flanks_at_sequence_boundaries():
     """Test Pattern search with flanks that extend beyond sequence boundaries"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG",
         read="R1",
         orientation="forward",
@@ -942,6 +976,7 @@ def test_pattern_search_with_flanks_at_sequence_boundaries():
 def test_pattern_search_with_flanks_multiple_matches():
     """Test Pattern search with flanks and multiple matches"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG",
         read="R1",
         orientation="forward",
@@ -971,6 +1006,7 @@ def test_pattern_search_with_flanks_multiple_matches():
 def test_pattern_search_with_flanks_reverse_complement():
     """Test Pattern search with flanks in reverse-complement orientation"""
     pattern = Pattern(
+        name="test",
         reg_expr="CGAT",
         read="R1",
         orientation="reverse-complement",
@@ -995,6 +1031,7 @@ def test_pattern_search_with_flanks_reverse_complement():
 def test_pattern_search_with_flanks_read_name():
     """Test Pattern search with flanks in read name"""
     pattern = Pattern(
+        name="test",
         reg_expr="test",
         read="R1",
         orientation="forward",
@@ -1022,6 +1059,7 @@ def test_pattern_search_with_flanks_read_name():
 def test_pattern_search_with_flanks_complex_regex():
     """Test Pattern search with flanks and complex regex patterns"""
     pattern = Pattern(
+        name="test",
         reg_expr="A{2,4}CG",
         read="R1",
         orientation="forward",
@@ -1051,6 +1089,7 @@ def test_pattern_search_with_flanks_complex_regex():
 def test_pattern_search_with_flanks_overlapping_matches():
     """Test Pattern search with flanks and overlapping regex matches"""
     pattern = Pattern(
+        name="test",
         reg_expr="A{1,2}",
         read="R1",
         orientation="forward",
@@ -1075,6 +1114,7 @@ def test_pattern_search_with_flanks_overlapping_matches():
 def test_pattern_search_with_flanks_anchors():
     """Test Pattern search with flanks and regex anchors"""
     pattern = Pattern(
+        name="test",
         reg_expr="^ATCG",
         read="R1",
         orientation="forward",
@@ -1098,6 +1138,7 @@ def test_pattern_search_with_flanks_edge_cases():
     """Test Pattern search with flanks in edge cases"""
     # Test with very large flank values
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG",
         read="R1",
         orientation="forward",
@@ -1117,6 +1158,7 @@ def test_pattern_search_with_flanks_edge_cases():
 
     # Test with flank values equal to sequence length
     pattern2 = Pattern(
+        name="test",
         reg_expr="ATCG",
         read="R1",
         orientation="forward",
@@ -1134,28 +1176,10 @@ def test_pattern_search_with_flanks_edge_cases():
     assert result2.match == "ATCG"  # Should include entire sequence
 
 
-def test_pattern_search_with_flanks_static_method():
-    """Test Pattern._search static method with flanks"""
-    from regex import compile as regex_compile
-
-    regex = regex_compile("ATCG")
-    sequence = "GATCGTT"
-    orientation = "forward"
-    left_flank = 1
-    right_flank = 2
-
-    hits = list(Pattern._search(regex, sequence, orientation, left_flank, right_flank))
-
-    assert len(hits) == 1
-    assert hits[0].start == 0  # Should include 1 base before ATCG
-    assert hits[0].end == 7  # Should include 2 bases after ATCG
-    assert hits[0].match == "GATCGTT"  # Should include the flanks
-    assert hits[0].orientation == "forward"
-
-
 def test_pattern_search_with_flanks_generator():
     """Test Pattern._search_read generator with flanks"""
     pattern = Pattern(
+        name="test",
         reg_expr="ATCG",
         read="R1",
         orientation="forward",

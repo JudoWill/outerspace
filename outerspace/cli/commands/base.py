@@ -10,8 +10,9 @@ import os
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from sys import exit as sys_exit
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, Iterable, List, Optional, Set, Union
 
+from tqdm import tqdm
 from tomlkit import parse as toml_parse
 
 from outerspace.config import Cfg
@@ -254,6 +255,26 @@ class BaseCommand:
                 if key not in self._explicit_args:
                     setattr(self.args, key, value)
                     logger.debug(f"Applied config value for '{key}': {value}")
+
+    def _progbar_iterable(self, iterable: Iterable, **kwargs) -> Iterable:
+        """Wrap an iterable with a progress bar if requested.
+
+        Parameters
+        ----------  
+        iterable : Iterable
+            Iterable to wrap with a progress bar
+        kwargs : dict
+            Keyword arguments to pass to tqdm
+
+        Returns
+        -------
+        Iterable
+            Iterable wrapped with a progress bar if requested
+        """
+        if self.args.progress_bar:
+            return tqdm(iterable, **kwargs)
+        else:
+            return iterable
 
     def _chk_exists(self, filenames: Union[str, List[str]]) -> None:
         """Check that files exist and are valid.
