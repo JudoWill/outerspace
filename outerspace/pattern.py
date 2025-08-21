@@ -9,7 +9,7 @@ __author__ = "WND"
 
 import logging
 from typing import Dict, Generator, List, Optional, Union
-from regex import compile as regex_compile, Pattern as RegexPattern
+from regex import compile as regex_compile, Pattern as RegexPattern, IGNORECASE, ENHANCEMATCH
 
 from outerspace.read import Read
 
@@ -229,7 +229,7 @@ class Pattern:
         Uses the 'regex' library instead of 're' for enhanced functionality.
         """
         try:
-            return regex_compile(self.reg_expr)
+            return regex_compile(self.reg_expr, flags=IGNORECASE+ENHANCEMATCH)
         except Exception as e:
             logger.error(f"Failed to compile regex pattern '{self.reg_expr}': {e}")
             raise
