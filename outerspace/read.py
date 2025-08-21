@@ -8,6 +8,7 @@ It supports both single-end and paired-end sequencing data.
 import logging
 from typing import Generator, Optional
 from itertools import zip_longest
+from functools import lru_cache
 
 import pyfastx
 import pysam
@@ -17,6 +18,28 @@ logger = logging.getLogger(__name__)
 
 __copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
 __author__ = "WND"
+
+
+@lru_cache(maxsize=64)
+def _reverse_complement(seq: str) -> str:
+    """Compute reverse complement of a DNA/RNA sequence.
+    
+    Parameters
+    ----------
+    seq : str
+        The DNA/RNA sequence string
+        
+    Returns
+    -------
+    str
+        Reverse complement sequence
+        
+    Notes
+    -----
+    This function is cached using LRU cache to improve performance for
+    frequently accessed sequences. The cache size is limited to 64 entries.
+    """
+    return seq[::-1].translate(str.maketrans("ACGTacgt", "TGCAtgca"))
 
 
 class Read:
@@ -68,9 +91,10 @@ class Read:
         Notes
         -----
         This property computes the reverse complement by reversing the sequence
-        and translating A↔T and C↔G (case-insensitive).
+        and translating A↔T and C↔G (case-insensitive). The computation is
+        cached for performance using an LRU cache.
         """
-        return self.seq[::-1].translate(str.maketrans("ACGTacgt", "TGCAtgca"))
+        return _reverse_complement(self.seq)
 
     def __str__(self) -> str:
         """Return string representation of the read.
