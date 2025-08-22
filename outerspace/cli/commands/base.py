@@ -11,6 +11,7 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from sys import exit as sys_exit
 from typing import Any, Dict, Iterable, List, Optional, Set, Union
+from itertools import islice
 
 from tqdm import tqdm
 from tomlkit import parse as toml_parse
@@ -271,6 +272,10 @@ class BaseCommand:
         Iterable
             Iterable wrapped with a progress bar if requested
         """
+        if self.args.max_reads is not None:
+            iterable = islice(iterable, self.args.max_reads)
+
+        # If progress bar is requested, wrap the iterable with a progress bar
         if self.args.progress_bar:
             return tqdm(iterable, **kwargs)
         else:

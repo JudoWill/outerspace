@@ -149,6 +149,12 @@ class FindSeqCommand(BaseCommand):
             action="store_true",
             help="Skip unmapped reads in SAM/BAM files (based on SAM flag 0x4)",
         )
+        parser.add_argument(
+            "--max-reads",
+            type=int,
+            default=None,
+            help="Maximum number of reads to process (default: all)",
+        )
         self._add_common_args(parser)
 
     def _detect_file_format(self, filename: str) -> str:
@@ -525,15 +531,27 @@ class FindSeqCommand(BaseCommand):
                 # Skip empty hits (reads with no matches)
                 if hit.pattern is None:
                     continue
-
-                row = {
-                    "read_id": readname,
-                    "pattern_name": hit.pattern.name,
-                    "match": getattr(hit, "match", ""),
-                    "start": getattr(hit, "start", -1),
-                }
-                writer.writerow(row)
-                row_count += 1
+                if hit.captured:
+                    # If there are captured groups, write one row per group
+                    for key, value in hit.captured.items():
+                        row = {
+                            "read_id": readname,
+                            "pattern_name": key,
+                            "match": value,
+                            "start": getattr(hit, "start", -1),
+                        }
+                        writer.writerow(row)
+                        row_count += 1
+                else:
+                    # If no captured groups, write one row per pattern match
+                    row = {
+                        "read_id": readname,
+                        "pattern_name": hit.pattern.name,
+                        "match": "",
+                        "start": -1,
+                    }
+                    writer.writerow(row)
+                    row_count += 1
 
         logger.info(f"Results written to {output_filename} ({row_count} rows)")
 
