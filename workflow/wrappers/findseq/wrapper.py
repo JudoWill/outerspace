@@ -15,7 +15,11 @@ if "snakemake" not in locals():
 # Get input and output files
 config_file = snakemake.input.toml
 read1_file = snakemake.input.reads[0] if isinstance(snakemake.input.reads, list) else snakemake.input.reads
-read2_file = snakemake.input.reads[1] if isinstance(snakemake.input.reads, list) else None
+if isinstance(snakemake.input.reads, list) and len(snakemake.input.reads) > 1:
+    read2_file = snakemake.input.reads[1]
+else:
+    read2_file = None
+
 output_file = snakemake.output[0]
 
 # Construct command line arguments
