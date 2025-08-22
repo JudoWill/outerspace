@@ -1,6 +1,6 @@
 """Visualization command"""
 
-__copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
 __author__ = "WND"
 
 from argparse import ArgumentParser
@@ -49,3 +49,5 @@ class VisualizeCommand(BaseCommand):
         """Run the visualize command"""
         # TODO: Implement visualization
         raise NotImplementedError("Visualization not yet implemented")
+
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

@@ -22,7 +22,7 @@ from outerspace.cli.commands.base import BaseCommand
 # Set up logging
 logger = logging.getLogger(__name__)
 
-__copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
 __author__ = "WND"
 
 # Monkey patch pulp.list_solvers if it doesn't exist
@@ -195,4 +195,4 @@ class PipelineCommand(BaseCommand):
             raise
 
 
-# Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

@@ -4,7 +4,7 @@ This module provides the Cfg class for handling configuration files in TOML form
 including parsing patterns, generating default configurations from argparse parsers,
 and managing global pattern definitions.
 """
-__copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
 __author__ = "SCB"
 
 import logging
@@ -299,4 +299,4 @@ class Cfg:
         return f"Cfg({self.filename})"
 
 
-# Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

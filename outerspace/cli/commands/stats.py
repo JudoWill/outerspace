@@ -28,7 +28,7 @@ from outerspace.stats import (
 # Set up logging
 logger = logging.getLogger(__name__)
 
-__copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
 __author__ = "WND"
 
 
@@ -282,4 +282,4 @@ class StatsCommand(BaseCommand):
             raise ValueError(f"Error calculating statistics: {e}")
 
 
-# Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

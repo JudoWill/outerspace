@@ -4,7 +4,7 @@ This module provides classes for defining and executing search patterns on DNA/R
 sequences. It includes the Pattern class for pattern definition and the Hit class
 for storing match results.
 """
-__copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
 __author__ = "WND"
 
 import logging
@@ -366,4 +366,4 @@ class Pattern:
             raise
 
 
-# Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

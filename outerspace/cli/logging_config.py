@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-__copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
 __author__ = "WND"
 
 
@@ -148,4 +148,4 @@ def set_log_level(level: int) -> None:
     logger.debug(f"Log level changed to {logging.getLevelName(level)}")
 
 
-# Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

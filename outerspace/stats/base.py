@@ -13,7 +13,7 @@ from ..umi import UMI, UmiCollection
 # Set up logging
 logger = logging.getLogger(__name__)
 
-__copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
 __author__ = "WND"
 
 T = TypeVar("T")
@@ -373,4 +373,4 @@ class BaseDifferentialStatistic(ABC):
         return cls.calculate(umis, group_labels, **kwargs)
 
 
-# Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

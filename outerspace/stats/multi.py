@@ -18,7 +18,7 @@ from .utils import split_counts_by_allowed_list
 # Set up logging
 logger = logging.getLogger(__name__)
 
-__copyright__ = "Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved."
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
 __author__ = "WND"
 
 
@@ -452,4 +452,4 @@ class SpearmanCorrelation(BasePairwiseStatistic):
         return result
 
 
-# Copyright (C) 2025, SC Barrera, Drs DVK & WND. All Rights Reserved.
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.
