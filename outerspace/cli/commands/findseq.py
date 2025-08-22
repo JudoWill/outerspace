@@ -7,7 +7,11 @@ formats with both single-end and paired-end processing.
 
 import csv
 import logging
+import os
 from argparse import ArgumentParser
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
+from itertools import islice
 from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional, Union
 
@@ -30,6 +34,7 @@ def run(
     filename_csv: Optional[str] = None,
     long_format: bool = False,
     matches_only: bool = False,
+    skip_unmapped: bool = False,
 ) -> None:
     """Parse reads, find user-given patterns, save sequence matches to CSV.
 
@@ -49,6 +54,8 @@ def run(
         Output in long format (one row per pattern match)
     matches_only : bool, default=False
         Only output reads that have at least one pattern match
+    skip_unmapped : bool, default=False
+        Skip unmapped reads in SAM/BAM files (based on SAM flag 0x4)
 
     Raises
     ------
@@ -76,6 +83,7 @@ def run(
             "output_filename": filename_csv,
             "long_format": long_format,
             "matches_only": matches_only,
+            "skip_unmapped": skip_unmapped,
         },
     )()
 
@@ -129,6 +137,17 @@ class FindSeqCommand(BaseCommand):
             "--matches-only",
             action="store_true",
             help="Only output reads that have at least one pattern match",
+        )
+        parser.add_argument(
+            "--threads",
+            type=int,
+            default=None,
+            help="Number of threads for parallel processing (default: auto-detect)",
+        )
+        parser.add_argument(
+            "--skip-unmapped",
+            action="store_true",
+            help="Skip unmapped reads in SAM/BAM files (based on SAM flag 0x4)",
         )
         self._add_common_args(parser)
 
@@ -203,7 +222,7 @@ class FindSeqCommand(BaseCommand):
                     raise ValueError(f"Invalid fetch mode: {self.args.fetch}")
                 logger.debug(f"Using fetch mode: {self.args.fetch}")
 
-            yield from Read.from_bam(filename, fetch=fetch_param)
+            yield from Read.from_bam(filename, fetch=fetch_param, skip_unmapped=self.args.skip_unmapped)
         elif format_type == "fasta":
             yield from Read.from_fasta(filename)
         elif format_type == "fastq":
@@ -244,10 +263,88 @@ class FindSeqCommand(BaseCommand):
         logger.info(f"Processing paired files: {file1}, {file2} (format: {format1})")
         yield from Read.from_paired_fastx(file1, file2, format=format1)
 
+    def _chunk_reads(
+        self, reads: Generator[Read, None, None], chunk_size: int = 100
+    ) -> Generator[List[Read], None, None]:
+        """Convert read generator into chunks for parallel processing.
+
+        Parameters
+        ----------
+        reads : Generator[Read, None, None]
+            Generator of Read objects
+        chunk_size : int, default=1000
+            Number of reads per chunk
+
+        Yields
+        ------
+        List[Read]
+            Lists of Read objects (chunks)
+        """
+        iterator = iter(reads)
+        while True:
+            chunk = list(islice(iterator, chunk_size))
+            if not chunk:
+                break
+            yield chunk
+
+    def _process_read_chunk(
+        self, read_chunk: List[Read], patterns: List[Pattern]
+    ) -> List[tuple[str, Any]]:
+        """Process a chunk of reads with all patterns.
+
+        Parameters
+        ----------
+        read_chunk : List[Read]
+            List of Read objects to process
+        patterns : List[Pattern]
+            List of Pattern objects to apply
+
+        Returns
+        -------
+        List[tuple[str, Any]]
+            List of (readname, hit) tuples for all matches in the chunk
+        """
+        results = []
+        
+        for read in read_chunk:
+            read_has_matches = False
+
+            for pattern in patterns:
+                hits = pattern.search(read)
+                if hits:
+                    read_has_matches = True
+                    # Handle multiple, first, last logic
+                    if pattern.multiple == "first":
+                        hits = [hits] if not isinstance(hits, list) else [hits[0]]
+                    elif pattern.multiple == "last":
+                        hits = [hits] if not isinstance(hits, list) else [hits[-1]]
+                    # hits is already a list for 'all'
+
+                    for hit in hits:
+                        results.append((read.name, hit))
+
+            # If not matches-only and no matches found, yield empty hit for wide format
+            if not read_has_matches and not self.args.matches_only:
+                # Create an empty hit object for reads with no matches
+                empty_hit = Hit(
+                    start=-1,
+                    end=-1,
+                    match="",
+                    orientation="",
+                    captured={},
+                    pattern=None,
+                )
+                results.append((read.name, empty_hit))
+        
+        return results
+
     def _process_reads_with_patterns(
         self, reads: Generator[Read, None, None]
     ) -> Generator[tuple[str, Any], None, None]:
         """Process reads using Pattern objects and yield (readname, hit) tuples.
+
+        This method uses multi-threading to process reads in parallel for improved performance.
+        Progress tracking is handled by wrapping the input reads generator.
 
         Parameters
         ----------
@@ -268,10 +365,59 @@ class FindSeqCommand(BaseCommand):
         patterns = self._parse_patterns_from_config()
         logger.info(f"Processing reads with {len(patterns)} patterns")
 
+        # Determine number of threads
+        max_workers = self.args.threads
+        if max_workers is None:
+            max_workers = min(os.cpu_count() or 1, 8)  # Default: auto-detect, max 8
+        
+        logger.info(f"Using {max_workers} threads for processing")
+
+        # If only 1 thread, use single-threaded approach for simplicity
+        if max_workers == 1:
+            yield from self._process_reads_single_threaded(reads, patterns)
+            return
+
+        # Multi-threaded processing
+        read_count = 0
+        chunk_size = 1000  # Configurable if needed later
+
+        # Convert reads to chunks
+        read_chunks = self._chunk_reads(reads, chunk_size)
+
+        # Process chunks in parallel using executor.map to maintain order
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Create a partial function with patterns bound
+            process_chunk_with_patterns = partial(self._process_read_chunk, patterns=patterns)
+            
+            # Process chunks and yield results in order
+            for chunk_results in executor.map(process_chunk_with_patterns, read_chunks):
+                read_count += len([r for r in chunk_results if r[1].pattern is not None or not self.args.matches_only])
+                for result in chunk_results:
+                    yield result
+
+        logger.info(f"Processed approximately {read_count} reads")
+
+    def _process_reads_single_threaded(
+        self, reads: Generator[Read, None, None], patterns: List[Pattern]
+    ) -> Generator[tuple[str, Any], None, None]:
+        """Process reads in single-threaded mode (original implementation).
+
+        Parameters
+        ----------
+        reads : Generator[Read, None, None]
+            Generator of Read objects to process
+        patterns : List[Pattern]
+            List of Pattern objects to apply
+
+        Yields
+        ------
+        tuple[str, Any]
+            Tuples of (readname, hit) where hit contains pattern match information
+        """
         read_count = 0
         match_count = 0
 
-        for read in self._progbar_iterable(reads, desc="Processing reads"):
+        for read in reads:
             read_count += 1
             read_has_matches = False
 
@@ -287,7 +433,6 @@ class FindSeqCommand(BaseCommand):
                     # hits is already a list for 'all'
 
                     for hit in hits:
-                        # Add pattern information to the hit
                         yield (read.name, hit)
                         match_count += 1
 
@@ -436,6 +581,8 @@ class FindSeqCommand(BaseCommand):
             "fetch": None,
             "long_format": False,
             "matches_only": False,
+            "threads": None,
+            "skip_unmapped": False,
         }
         self._merge_config_and_args(defaults)
 
@@ -462,8 +609,11 @@ class FindSeqCommand(BaseCommand):
                 "Please provide either -1 for single file or -1/-2 for paired files"
             )
 
-        # Process reads with patterns
-        results = self._process_reads_with_patterns(reads)
+        # Wrap reads with progress bar for cleaner progress tracking
+        reads_with_progress = self._progbar_iterable(reads, desc="Processing reads")
+
+        # Process reads with patterns (multi-threaded)
+        results = self._process_reads_with_patterns(reads_with_progress)
 
         # Write results
         self._write_results_to_csv(results, self.args.output_filename)

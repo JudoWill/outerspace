@@ -68,10 +68,13 @@ class Read:
         Raises
         ------
         ValueError
-            If pair is not a valid read pair designation
+            If pair is not a valid read pair designation or seq is None/empty
         """
         if pair not in self.VALID_PAIRS:
             raise ValueError(f"Invalid pair: {pair}. Must be one of {self.VALID_PAIRS}")
+        
+        if seq is None:
+            raise ValueError("Sequence cannot be None")
 
         self.name = name
         self.seq = seq
@@ -232,7 +235,7 @@ class Read:
 
     @classmethod
     def from_bam(
-        cls, bam_file: str, fetch: Optional[str] = None
+        cls, bam_file: str, fetch: Optional[str] = None, skip_unmapped: bool = False
     ) -> Generator["Read", None, None]:
         """Iterate Read objects from a SAM/BAM file.
 
@@ -243,6 +246,8 @@ class Read:
         fetch : Optional[str], default=None
             Optional region specification for targeted reading.
             Format: "chr1:1-1000" or "chr1"
+        skip_unmapped : bool, default=False
+            If True, skip reads that are unmapped (SAM flag 0x4)
 
         Yields
         ------
@@ -256,6 +261,7 @@ class Read:
         - Bit 6 (64): First in pair (R1)
         - Bit 7 (128): Second in pair (R2)
         - Neither: Single-end read (assigned as R1)
+        If skip_unmapped is True, reads with SAM flag 0x4 (unmapped) are skipped.
         """
         try:
             # Determine file format and open accordingly
@@ -273,11 +279,21 @@ class Read:
                     reads = bam
 
                 for read in reads:
+                    # Skip reads without sequence information
+                    if read.query_sequence is None or read.query_sequence == "":
+                        logger.debug(f"Skipping read {read.query_name} - no sequence information")
+                        continue
+                    
+                    # Skip unmapped reads if requested (SAM flag 0x4)
+                    if skip_unmapped and read.is_unmapped:
+                        logger.debug(f"Skipping unmapped read {read.query_name}")
+                        continue
+                    
                     # Infer read pair from SAM flag
                     read_pair = cls._infer_read_pair(read)
 
                     yield cls(
-                        seq=read.query_sequence, name=read.query_name, pair=read_pair
+                        seq=str(read.query_sequence), name=read.query_name, pair=read_pair
                     )
 
         except Exception as e:
