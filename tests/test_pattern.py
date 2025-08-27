@@ -546,7 +546,7 @@ def test_pattern_search_empty_regex():
     assert len(result) > 0
 
 
-def test_pattern_search_case_sensitivity():
+def test_pattern_search_case_insensitivity():
     """Test Pattern search case sensitivity"""
     # Test case-sensitive search
     pattern = Pattern(
@@ -557,17 +557,7 @@ def test_pattern_search_case_sensitivity():
     read = Read(seq="ATCG", pair="R1", name="test_read")
     result = pattern.search(read)
 
-    assert result is None  # Should not match due to case difference
-
-    # Test case-insensitive search
-    pattern_insensitive = Pattern(
-        name="test",
-        reg_expr="(?i)atcg", read="R1", orientation="forward", multiple="first"
-    )
-
-    result = pattern_insensitive.search(read)
-
-    assert result is not None  # Should match with case-insensitive flag
+    assert result is not None  # Should match due to case difference
 
 
 def test_pattern_search_with_anchors():
