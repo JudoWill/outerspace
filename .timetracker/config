@@ -1,6 +1,0 @@
-# TimeTracker project configuration file
-
-project = "outerspace"
-
-[csv]
-filename = "doc/timetracking/timetracker_outerspace_$USER$.csv"
