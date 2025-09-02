@@ -5,6 +5,9 @@ import numpy as np
 import pandas as pd
 from outerspace.stats.differential import MannWhitneyDifferentialAbundance
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
+
 
 def test_mann_whitney_differential_abundance():
     """Test Mann-Whitney differential abundance calculation with known counts"""
@@ -104,3 +107,6 @@ def test_mann_whitney_differential_abundance_with_allowed_list(partial_umi):
     assert all(
         col in result.columns for col in ["log2_fold_change", "effect_size", "p_value"]
     )
+
+    
+    # Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

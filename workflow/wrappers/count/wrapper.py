@@ -54,3 +54,6 @@ if metrics_file:
 # Run the count command
 cli = Cli(args)
 cli.run() 
+
+
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

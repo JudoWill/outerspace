@@ -15,3 +15,6 @@ def test_cli_help(capsys):
     captured = capsys.readouterr()
     print(captured.out)
     assert "{findseq,collapse,count,merge,stats,visualize,pipeline}" in captured.out
+
+
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

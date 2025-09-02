@@ -4,6 +4,8 @@ import pytest
 import numpy as np
 from outerspace.stats import SpearmanCorrelation
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
 
 def test_spearman_calculation():
     """Test Spearman correlation calculation with known counts"""
@@ -69,3 +71,6 @@ def test_spearman_with_allowed_list(partial_umi):
     )
     assert result is not None
     assert -1 <= result <= 1
+
+    
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

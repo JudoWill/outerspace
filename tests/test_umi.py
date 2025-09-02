@@ -1,5 +1,8 @@
 """Tests for UMI clustering and correction"""
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
+
 import pytest
 from outerspace.umi import UMI, UmiCollection
 from pathlib import Path
@@ -370,3 +373,6 @@ def test_umi_collection_invalid_format():
         # Test invalid format in write
         with pytest.raises(ValueError, match="Format must be either 'wide' or 'long'"):
             collection.write(os.path.join(temp_dir, "output.csv"), format="invalid")
+
+
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

@@ -48,3 +48,6 @@ rule count:
 - If an allowed list is provided, only keys in the list will be counted
 - If metrics file is specified, it will contain statistics about the counting process
 - Downsampling can be used to randomly sample reads with a specified probability 
+
+
+### Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

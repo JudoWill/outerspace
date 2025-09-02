@@ -303,3 +303,5 @@ def test_findseq_matches_only_with_example_data(temp_workspace):
             has_data = any(cell and cell.strip() for cell in row[1:])
             assert has_data, f"Row has no match data: {row}"
 
+    
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

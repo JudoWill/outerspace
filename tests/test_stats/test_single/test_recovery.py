@@ -4,6 +4,9 @@ import pytest
 import numpy as np
 from outerspace.stats import UMIRecoveryRate
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
+
 
 def test_recovery_rate_limited():
     """Test recovery rate calculation with allowed list"""
@@ -49,3 +52,6 @@ def test_recovery_rate_with_allowed_list(partial_umi):
     result = UMIRecoveryRate.calculate(partial_umi, allowed_list=allowed_list)
     assert result is not None
     assert result == 1
+
+    
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

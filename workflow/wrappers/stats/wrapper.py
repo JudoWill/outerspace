@@ -59,3 +59,6 @@ with open(output_file, 'w') as f:
     finally:
         # Restore stdout
         sys.stdout = original_stdout 
+        
+        
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

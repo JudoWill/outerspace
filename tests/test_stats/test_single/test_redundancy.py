@@ -3,6 +3,8 @@
 import pytest
 from outerspace.stats import UMIRedundancy
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
 
 def test_redundancy_calculation():
     """Test redundancy calculation with known counts"""
@@ -72,3 +74,6 @@ def test_redundancy_with_allowed_list(partial_umi):
     result = UMIRedundancy.calculate(partial_umi, allowed_list=allowed_list)
     assert result is not None
     assert result >= 1.0
+
+    
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

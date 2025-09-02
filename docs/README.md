@@ -66,4 +66,4 @@ For more detailed instructions, including how to run individual commands and per
 
 For running your tasks in parallel or on a cluster consider using our Snakemake [wrappers](wrappers.md).
 
-Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.
+### Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.

@@ -1,5 +1,9 @@
 """Tests for pattern matching functionality"""
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
+
+
 import pytest
 from outerspace.pattern import Pattern, Hit
 from outerspace.read import Read
@@ -1197,3 +1201,6 @@ def test_pattern_search_with_flanks_generator():
     assert hits[0].end == 5  # Should include 1 base after ATCG
     assert hits[0].match == "GATCG"  # Should include the flanks
     assert hits[0].orientation == "forward"
+
+    
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

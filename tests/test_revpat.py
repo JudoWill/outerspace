@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Test uppercase and reverse complement a nuceotide pattern"""
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
 
 def reverse_complement(seq):
     """Reverse complement a DNA sequence"""
@@ -30,3 +32,6 @@ def test_revpat():
 
 if __name__ == "__main__":
     test_revpat()
+
+    
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

@@ -1,5 +1,8 @@
 """Tests for pairwise UMI library statistics"""
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
+
 import pytest
 from outerspace.umi import UMI, UmiCollection
 from outerspace.stats.multi import (
@@ -104,3 +107,6 @@ def test_pairwise_stat_with_allowed_list(empty_umi, equal_umi):
         ) in results, (
             f"{stat_class.__name__}.calculate_collection() should include all pairs"
         )
+
+        
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

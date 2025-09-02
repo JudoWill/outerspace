@@ -127,4 +127,4 @@ outerspace count --input-file corrected_barcodes.csv --output-file barcode_count
 outerspace gini barcode_counts.csv --column UMI_5prime_UMI_3prime_corrected_count
 ```
 
-Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.
+### Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.

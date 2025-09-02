@@ -1,5 +1,8 @@
 """Tests for single UMI library statistics"""
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
+
 import pytest
 from outerspace.umi import UMI, UmiCollection
 from outerspace.stats.single import (
@@ -95,3 +98,6 @@ def test_single_stat_with_allowed_list(empty_umi):
 
 
 # Add tests for other single-library statistics here
+
+
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

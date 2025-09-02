@@ -3,6 +3,8 @@
 import pytest
 from outerspace.umi import UMI
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
 
 @pytest.fixture
 def empty_umi():
@@ -106,3 +108,6 @@ def partial_umi():
             umi.consume(seq)
     umi.create_mapping()
     return umi
+
+
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

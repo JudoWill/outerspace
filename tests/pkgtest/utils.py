@@ -6,6 +6,8 @@ from os.path import join
 from os.path import dirname
 from os.path import normpath
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "DVK"
 
 def get_filename(fname):
     """making absolute path regardless of what machine you are on"""
@@ -20,3 +22,6 @@ def mk_outdir(outdir):
     makedirs(abs_outdir, exist_ok=True)
     print(f"makedirs({abs_outdir})")
     return abs_outdir
+
+
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

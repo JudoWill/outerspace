@@ -4,6 +4,9 @@ import pytest
 import numpy as np
 from outerspace.stats import ShannonDiversity
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
+
 
 def test_shannon_perfect_equality():
     """Test Shannon diversity calculation for perfectly equal distribution"""
@@ -70,3 +73,6 @@ def test_shannon_with_allowed_list(partial_umi):
     result = ShannonDiversity.calculate(partial_umi, allowed_list=allowed_list)
     assert result is not None
     assert result > 0
+
+    
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

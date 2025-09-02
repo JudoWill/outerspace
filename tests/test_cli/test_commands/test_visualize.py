@@ -81,3 +81,6 @@ def test_visualize_not_implemented():
     cli = Cli(args)
     with pytest.raises(NotImplementedError):
         cli.run()
+
+        
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

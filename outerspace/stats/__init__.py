@@ -1,5 +1,8 @@
 """Statistics module for UMI analysis"""
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
+
 from .base import BaseStatistic, BasePairwiseStatistic, BaseDifferentialStatistic
 
 # Import statistics as they are implemented
@@ -47,3 +50,6 @@ __all__ = [
     "PairedTTestDifferentialAbundance"
     # Add other classes as they are implemented
 ]
+
+
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

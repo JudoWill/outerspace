@@ -4,6 +4,8 @@ import pytest
 import numpy as np
 from outerspace.stats import FoldChange
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
 
 def test_fold_change_calculation():
     """Test fold change calculation with known counts"""
@@ -68,3 +70,6 @@ def test_fold_change_with_allowed_list(partial_umi):
     result = FoldChange.calculate(partial_umi, partial_umi, allowed_list=allowed_list)
     assert result is not None
     assert all(fc >= 0 for fc in result.values())
+
+
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

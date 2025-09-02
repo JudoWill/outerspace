@@ -1,5 +1,8 @@
 """Tests for Read class"""
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
+
 import pytest
 import tempfile
 import os
@@ -552,3 +555,6 @@ def test_from_bam_with_fetch_region():
         index_file = temp_bam + ".bai"
         if os.path.exists(index_file):
             os.unlink(index_file)
+
+
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

@@ -215,3 +215,6 @@ def test_merge_long_format():
         assert sample2_actg == 8
         assert sample1_gcta == 5
         assert sample2_gcta == 12
+
+        
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.
