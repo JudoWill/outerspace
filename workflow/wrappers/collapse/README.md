@@ -40,3 +40,6 @@ rule collapse:
 - The output CSV will contain all original columns plus a new column with the corrected barcodes
 - The corrected column name will be the concatenation of the input columns with "_corrected" suffix
 - If metrics file is specified, it will contain statistics about the correction process 
+
+
+### Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

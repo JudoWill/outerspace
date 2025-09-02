@@ -425,3 +425,6 @@ def test_workflow_with_config(temp_workspace):
     ]
     cli = Cli(stats_args)
     cli.run()
+
+    
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

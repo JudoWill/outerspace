@@ -29,3 +29,5 @@ args = [
 # Run the collapse command
 cli = Cli(args)
 cli.run() 
+
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

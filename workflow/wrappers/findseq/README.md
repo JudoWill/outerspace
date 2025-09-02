@@ -29,3 +29,6 @@ rule findseq:
 - For paired-end sequencing, provide both read files as a list in the `reads` input
 - The configuration file should be in TOML format and contain the search patterns
 - The output CSV will contain columns: read_id, UMI_5prime, protospacer, downstreamof_protospacer, UMI_3prime 
+
+
+### Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

@@ -450,3 +450,6 @@ method = "cluster"
         cli = Cli(args)
         # Should still work, just using defaults for collapse-specific settings
         assert cli.args.method == "directional"  # Default value
+
+
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

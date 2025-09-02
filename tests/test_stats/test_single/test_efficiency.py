@@ -3,6 +3,8 @@
 import pytest
 from outerspace.stats import UMIEfficiencyRate
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
 
 def test_efficiency_rate():
     """Test efficiency rate calculation with mixed allowed and banned UMIs"""
@@ -82,3 +84,6 @@ def test_efficiency_rate_no_allowed_list(partial_umi):
     """Test efficiency rate calculation without allowed list"""
     result = UMIEfficiencyRate.calculate(partial_umi)
     assert result is None
+
+
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

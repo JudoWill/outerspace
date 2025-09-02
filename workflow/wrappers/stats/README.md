@@ -56,3 +56,6 @@ rule stats_multiple:
 - Output includes all calculated statistics: Gini coefficient, Shannon diversity, Simpson diversity, UMI recovery rate, UMI efficiency rate, UMI error rate, and UMI redundancy
 - When multiple files are provided, statistics for each file are included as separate rows in the output CSV
 - The output CSV includes a 'filename' column to identify which file each row of statistics corresponds to 
+
+
+### Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

@@ -191,3 +191,6 @@ After processing, you can:
 3. Analyze the metrics files for quality control
 4. Generate publication-quality visualizations
 5. Perform statistical analysis on the results 
+
+
+### Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

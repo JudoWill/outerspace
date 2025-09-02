@@ -241,3 +241,6 @@ When implementing new commands:
 8. Leverage base class functionality for common operations
 9. Document any command-specific configuration options
 10. Use the built-in error handling where possible 
+
+
+### Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

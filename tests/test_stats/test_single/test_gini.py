@@ -3,6 +3,9 @@
 import pytest
 from outerspace.stats import GiniCoefficient
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
+
 
 def test_gini_perfect_equality(equal_umi):
     """Test Gini coefficient calculation for perfectly equal distribution"""
@@ -82,3 +85,6 @@ def test_gini_zero_counts():
 
     result = GiniCoefficient.calculate(umi)
     assert result is None
+
+    
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

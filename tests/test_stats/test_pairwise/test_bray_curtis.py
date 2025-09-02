@@ -4,6 +4,8 @@ import pytest
 import numpy as np
 from outerspace.stats import BrayCurtisDissimilarity
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
 
 def test_bray_curtis_calculation():
     """Test Bray-Curtis dissimilarity calculation with known counts"""
@@ -72,3 +74,6 @@ def test_bray_curtis_with_allowed_list(partial_umi):
     )
     assert result is not None
     assert 0 <= result <= 1
+
+
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

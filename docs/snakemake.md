@@ -93,3 +93,6 @@ This approach allows for:
 - Consistent execution across environments
 - Simple integration with cluster schedulers
 - Reproducible analysis workflows
+
+
+### Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

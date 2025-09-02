@@ -4,6 +4,9 @@ import pytest
 import numpy as np
 from outerspace.stats import SimpsonDiversity
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
+
 
 def test_simpson_perfect_equality():
     """Test Simpson diversity calculation for perfectly equal distribution"""
@@ -61,3 +64,6 @@ def test_simpson_with_allowed_list(partial_umi):
     result = SimpsonDiversity.calculate(partial_umi, allowed_list=allowed_list)
     assert result is not None
     assert 0 < result < 1
+
+    
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

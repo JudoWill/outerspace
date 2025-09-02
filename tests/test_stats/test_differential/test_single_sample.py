@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 from outerspace.stats.differential import SingleSampleDifferentialAbundance
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
 
 def test_single_sample_differential_abundance():
     """Test single sample differential abundance calculation with known counts"""
@@ -104,3 +106,6 @@ def test_single_sample_differential_abundance_with_allowed_list(partial_umi):
     assert isinstance(result, pd.DataFrame)
     assert all(col in result.columns for col in ["log2_fold_change", "effect_size"])
     assert "p_value" not in result.columns  # No p-values in single sample comparison
+
+    
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

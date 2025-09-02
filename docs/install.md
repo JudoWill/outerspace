@@ -8,4 +8,4 @@ pip install outerspace
 
 
 
-Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.
+### Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.

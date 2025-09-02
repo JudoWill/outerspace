@@ -4,6 +4,8 @@ import pytest
 import numpy as np
 from outerspace.stats import JaccardSimilarity
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
 
 def test_jaccard_calculation():
     """Test Jaccard similarity calculation with known sets"""
@@ -46,3 +48,6 @@ def test_jaccard_with_allowed_list(partial_umi):
     )
     assert result is not None
     assert 0 <= result <= 1
+
+    
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

@@ -1,38 +1,71 @@
-# gRNA EXTRACTION PROJECT  
-* [Documentation](docs/README.md)
-* [TOML website](https://tomlkit.readthedocs.io/en/latest/api/#tomlkit.toml_document.TOMLDocument)
+# OuterSpace
 
-  
+Outerspace is a collection of tools for analyzing pooled CRISPR screens, viral barcode population studies, and any other application that requires the extraction and couting of variable regions in pooled amplicons.
+It contains tools to extract regions of interest, correct sequencing error, assess diversity, and compare between samples.
 
-## Description:
-This pipeline is intended to to extract the gRNA protospacer from reads. In future will adjust to also extract tracrRNA from reads for a CRISPR Screen.  
-Original Location: Mistake-Not - /share/nonn-lab/Rachel-test-cripr 
+## Contents
+- [Documentation](docs/README.md)
+- [Installation](install.md)
+- [Quick Start](#quick-start)
+- [Biologic Applications](usage.md)
+- [Basic Commands](commands.md)
+- [Configuration](config.md)
+- [Detailed Walkthrough](walkthrough.md)
+- [Command Line Interface Documentation](cli_api.md)
+- [Snakemake Documentation](snakemake.md)
 
-## Tools utilized
-### Regex  
-To find the protospacer because it contains a surrounding pattern.  
-- [Regex Link:](https://pypi.org/project/regex/) 
-- Regex has approximate fuzzy matching
-- Regex usually attempts an exact match, but sometimes an approximate, or “fuzzy”, match is needed, for those cases where the text being searched may contain errors in the form of inserted, deleted or substituted characters.
+## Quick Start
 
-- A fuzzy regex specifies which types of errors are permitted, and, optionally, either the minimum and maximum or only the maximum permitted number of each type. (You cannot specify only a minimum.)
+### Install
 
-- The 3 types of error are:
-    - Insertion, indicated by “i”
-    - Deletion, indicated by “d”
-    - Substitution, indicated by “s”
-- In addition, “e” indicates any type of error.
-- The fuzziness of a regex item is specified between “{” and “}” after the item.
-- Examples:
-    - foo match “foo” exactly
-    - (?:foo){i} match “foo”, permitting insertions
-    - (?:foo){d} match “foo”, permitting deletions
-    - (?:foo){s} match “foo”, permitting substitutions
-    - (?:foo){i,s} match “foo”, permitting insertions and substitutions
-    - (?:foo){e} match “foo”, permitting errors
-- Additional parameters can be added - check on website
-    
-###     
+```bash
+pip install outerspace
+```
 
+### Design your extraction strategy
 
+`outerspace` uses the `regex` library to extract relevant features from a DNA sequence.
+This allows an simple, expressive, and modular strategy for extracting of regions of interest while tolerating mismatches.
+It supports both short, paired end reads and long reads.
+See the [walkthrough](regex_explainer.md) for a detailed discussion on how to design your extraction strategy.  
+[Regex Link](https://pypi.org/project/regex/)
 
+### Create your config file
+
+If you are going to repeating similar experiments often, `outerspace` allows you to encapsulate that information in a `toml` file accepted by all commands.
+This ensures repeatability between analyses and can drastically simplify command line execution.
+It also facilitates reproducible science as the config can be stored, shared, and tracked.
+
+See the [walkthrough](config.md) for a more detailed discussion on creating your config file.
+
+### Process Your Data
+
+For most analyses, you can use the `pipeline` command to process all your data in one step:
+
+```bash
+# Create output directory
+mkdir -p results
+
+# Run the pipeline
+outerspace pipeline config.toml \
+    --input-dir fastq_files \
+    --output-dir results \
+    --barcode-columns UMI_5prime,UMI_3prime \
+    --key-column protospacer \
+    --mismatches 2 \
+    --method directional \
+    --metrics
+```
+
+This will:
+1. Process all FASTQ files in your input directory
+2. Extract sequences using your config patterns
+3. Correct barcodes using UMI-tools clustering
+4. Count unique barcodes per protospacer
+5. Generate metrics files for quality control
+
+For more detailed instructions, including how to run individual commands and perform additional analyses, see the [detailed walkthrough](walkthrough.md).
+
+For running your tasks in parallel or on a cluster consider using our Snakemake [wrappers](wrappers.md).
+
+### Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.

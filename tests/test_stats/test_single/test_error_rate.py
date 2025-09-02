@@ -3,6 +3,9 @@
 import pytest
 from outerspace.stats import UMIErrorRate
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+__author__ = "WND"
+
 
 def test_hamming_distance():
     """Test Hamming distance calculation between sequences"""
@@ -96,3 +99,6 @@ def test_error_rate_no_mapping(empty_umi):
     """Test error rate calculation with no mapping"""
     result = UMIErrorRate.calculate(empty_umi)
     assert result is None
+
+    
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

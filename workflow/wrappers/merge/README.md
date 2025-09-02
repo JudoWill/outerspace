@@ -48,3 +48,6 @@ rule merge:
 - Wide format creates columns for each sample, long format creates sample,umi,count columns
 - If mismatches > 0, UMIs will be clustered before merging
 - Metrics file will contain statistics about the merging and clustering process 
+
+
+### Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

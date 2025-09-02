@@ -202,4 +202,4 @@ snakemake_args = "--cores 4"
 6. Version control your configuration files
 7. Use separate configuration files for different projects or experiments
 
-Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.
+### Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.

@@ -210,3 +210,6 @@ count_column = "UMI_5prime_UMI_3prime_corrected_count"
         args = ["stats", "--config", config_file] + input_files
         cli = Cli(args)
         cli.run()
+
+        
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

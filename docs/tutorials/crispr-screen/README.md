@@ -404,3 +404,6 @@ After completing this tutorial, you can:
 **Missing protospacers**: Verify allowed list contains expected sequences
 **Memory issues**: Process samples individually or use row limits for testing
 **Parameter conflicts**: Command-line arguments always override config file settings
+
+
+### Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

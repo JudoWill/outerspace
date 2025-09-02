@@ -154,3 +154,6 @@ echo "  • Command-line parameters can override config settings when needed"
 echo "  • Version control your config files for better analysis tracking"
 echo ""
 echo "You can now explore the results and run additional analyses." 
+
+
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

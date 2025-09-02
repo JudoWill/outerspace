@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """testing config"""
 
+__copyright__ = "Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved."
+
+
 import pytest
 from outerspace.config import Cfg
 from tests.pkgtest.utils import get_filename
@@ -382,3 +385,6 @@ multiple = "first"
 
     with pytest.raises(ValueError, match="Global patterns must have a 'name' field"):
         Cfg.parse_global_patterns(toml_doc)
+
+        
+# Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.
