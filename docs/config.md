@@ -105,18 +105,6 @@ random_seed = 42  # Optional
 metrics = "path/to/metrics.yaml"  # Optional
 ```
 
-### [gini]
-Configuration for Gini coefficient calculation:
-```toml
-[gini]
-input_file = "path/to/input.csv"  # Required
-column = "counts"  # Required
-count_column = "precounts"  # Optional
-scale = 1.0  # Optional
-sep = ","  # Optional, default: ","
-allowed_list = "path/to/allowed.txt"  # Optional
-```
-
 ### [pipeline]
 Configuration for the complete pipeline:
 ```toml
