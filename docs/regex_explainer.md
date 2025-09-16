@@ -1,95 +1,73 @@
 # Regex Explanation
   
-A regex or regular expression is a sequence of characters that defines a pattern that can be utilized in this tool to find and capture exact match when looking for a precise pattern(s), or "fuzzy" match which allows for error(s). 
+A `regex` or regular expression is a sequence of characters that defines a *pattern* that can be searched across input sequences.
+Regular expressions can be complex, but only a small fraction of the language is needed for our purposes.
 
-### start with regular stuff
+ - Constants : Any letter (A, C, G, T) is matched as is.
+ - `[AGC]` : Square brackets indicate that any contained characters will match. Useful for ambiguity.
+ - `.` : A dot character matches any letter.
+ - `(AGTA)` : Group characters so subsequent modifiers apply to multiple characters
+ - `{n}`, `{a,b}` : Matches the previous character/group exactly `n` times or at least `a` times but not more than `b` times.
+ - `?P<name>` : Names a group for later extraction.
+ - `{s<=a}` : Defines fuzzy matching of the previous group. `s` - substitutions, `i` - insertions, `d` - deletions, `e` - errors.
 
-### Example  
-```
-Regex: (?P<planet>.{8})(?:CTTGGCTAA){s<=3}  
-Read Sequence: N N N N N N N N N N N N N N N N N N C T C G G C G T A N N N N N  
-                                  |---------------|-----------------|  
-                                   (?P<planet>.{8}) (?:CTTGGC){s<=3}
-  
-If match is successful: planet = NNNNNNNN  
-```
-### Capture name
-```
-(?P<name>...)
-```
-Description: Anything identified within the parenthesis is matched and captured with the name you provide.
-  
-### Capture exact # of characters and name them
-```
-(?P<name>.{8})
-```
-Description: Capture any 8 characters and name group.
-  
-### Non-capturing group
-```
-(?:...)
-```
-Description: If don't need to capture and just want to match.
-```
-(?:CTTGGC)
-```
-Example: Match exact CTTGGC sequence with no capture.
+These will account for the majority of pieces needed to create your pattern.
 
-### Match with errors allowed
-```
-(?:CTTGGC){s<=3}
-```
-Description: Match CTTGGCT sequence allowing up to 3 substitutions.
-  
-### Match sequence with errors allowed and capture exact # of characters to a named group
-```
-(?P<name>.{8})(?:CTTGGC){s<=3}
-```
-Description: Capture first 8 characters and name group. Then match TTGGC and allow up to 3 substitutions. 
-  
-If match is successful name = NNNNNNNN
+## Problem Definition
 
+Imagine you are performing an NGS experiment in which you used PCR primers tagged with unique molecular indices (UMIs).
+This will tag each first-round PCR product with a unique index on each end of the molecule.
 
-  
-### Walkthrough Example
-Example described from [walkthrough](http://outerspace/docs/walkthrough.md)     
+Considering only the forward primer:
+
+### Capture
+
+Forward:
 ```
-Regex: (?P<UMI_5prime>.{8})(?:CTTGGCTTTATATATCTTGTGG){s<=4}    
-Description: Capture first 8 characters and name UMI_5prime. Then match CTTGGCTTTATATATCTTGTGG and allow up to 4 substitutions.
-``` 
-  
-```                                                             
-Regex: (?:TATCTTGTGGAAAGGACGAAACACC){s<=4}(?P<protospacer>.{19,21})  
-Description: Match TATCTTGTGGAAAGGACGAAACACC allowing up to 4 substitutions. Then capture following characters with a length of 19-21 and name that group protospacer.     
-```
-  
-```    
-Regex:(?P<UMI_3prime>.{8})(?:TTCCACACCCTAACTGACACAC){s<=4}  
-Description: Capture first 8 characters and name group UMI_3prime. Then match TTCCACACCCTAACTGACACAC allowing up to 4 substitutions.
+agtacgtacgtagctagNNSNNSNNSagtacgtacgtacgatttagctagtacg
 ```
 
-### Regex
-- [Regex Link](https://pypi.org/project/regex/) 
-- Regex has approximate fuzzy matching
-- Regex usually attempts an exact match, but sometimes an approximate, or “fuzzy”, match is needed, for those cases where the text being searched may contain errors in the form of inserted, deleted or substituted characters.
+There are many ways one could design a regex which extracts the UMI from this technical sequence.
+The simplest is to use the constant regions surrounding the tag.
 
-- A fuzzy regex specifies which types of errors are permitted, and, optionally, either the minimum and maximum or only the maximum permitted number of each type. (You cannot specify only a minimum.)
+Like so:
+```
+gtagctag.{9}agtacgta
+```
 
-- The 3 types of error are:
-    - Insertion, indicated by “i”
-    - Deletion, indicated by “d”
-    - Substitution, indicated by “s”
-- In addition, “e” indicates any type of error.
-- The fuzziness of a regex item is specified between “{” and “}” after the item.
-- Examples:
-    - foo match “foo” exactly
-    - (?:AAA){i} match “AAA”, permitting insertions
-    - (?:AAA){d} match “AAA”, permitting deletions
-    - (?:AAA){s} match “AAA”, permitting substitutions
-    - (?:AAA){i,s} match “AAA”, permitting insertions and substitutions
-    - (?:AAA){e} match “AAA”, permitting errors
-- Additional parameters can be added - check on website
+or 
+```
+gtagctag(..[ACG]){3}agtacgta
+```
+
+### Named groups
+
+The pattern pattern above will match the the constant sequence on either side as well as the UMI.
+You can define which part of your pattern is relevant using named groups.
+
+To do this, we encase our target as a 'group' and then add `?P<name>` to the front.
+
+```
+gtagctag(?P<UMI_F>(..[ACG]){3})agtacgta
+```
+By default, `outerspace` will extract all named groups as individual entities.
+This is useful if you have multiple patterns to match in a single read.
+
+### Fuzzy Matching
+
+There are certain adapter designs and sequencing modalities where it is useful to allow for an approximate match.
+With fuzzy matching, you can create patterns which tolerate sequencing or biological variability. 
+These can be defined at the group-level allowing you to set different tolerances at different parts of the pattern.
+
+Imagine the experiment was performed on a nanopore sequencer with with the possibility of mismatches and indels introduced during sequencing.
+This could be accounted for with fuzzy matching:
+
+```
+(gtagctag){e<=2}(?P<UMI_F>(..[ACG]){3})(agtacgta){e<=2}
+```
+
+This will allow for up-to two errors (mismatch, insertion, or deletion) during the search.
+Beware, searching with mismatches drastically increases the complexity and slows down the search.
 
 
-
-### Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.
+Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

@@ -56,6 +56,10 @@ rule findseq_all:
     input:
         expand('findseq/{sample}.csv', sample=SAMPLES.index)
 
+rule collapse_all:
+    input:
+        expand('collapse/{sample}.csv', sample=SAMPLES.index)
+
 
 def get_input_files(wildcards):
     sample = wildcards.sample

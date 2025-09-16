@@ -19,21 +19,21 @@ echo "=== Step 1: Extract Sequences (findseq) ==="
 
 # Process control sample (shuffle)
 echo "Processing control sample (shuffle)..."
-outerspace findseq grnaquery.toml \
+outerspace findseq -c grnaquery.toml \
     -1 data/409-4_S1_L002_R1_001.fastq.gz \
     -2 data/409-4_S1_L002_R2_001.fastq.gz \
     -o results/findseq/shuffle.csv
 
 # Process M1 library sample
 echo "Processing M1 library sample..."
-outerspace findseq grnaquery.toml \
+outerspace findseq -c grnaquery.toml \
     -1 data/2-G1L9-M1_S9_L001_R1_001.fastq.gz \
     -2 data/2-G1L9-M1_S9_L001_R2_001.fastq.gz \
     -o results/findseq/M1-lib.csv
 
 # Process M2 library sample
 echo "Processing M2 library sample..."
-outerspace findseq grnaquery.toml \
+outerspace findseq -c grnaquery.toml \
     -1 data/2-G1L9-M2_S12_L001_R1_001.fastq.gz \
     -2 data/2-G1L9-M2_S12_L001_R2_001.fastq.gz \
     -o results/findseq/M2-lib.csv
@@ -43,30 +43,27 @@ echo "=== Step 2: Correct Barcodes (collapse) ==="
 
 # Correct barcodes for all samples using config
 echo "Correcting barcodes for all samples using configuration file..."
-outerspace collapse \
+outerspace collapse -c grnaquery.toml \
     --input-dir results/findseq \
-    --output-dir results/collapse \
-    --config grnaquery.toml
+    --output-dir results/collapse
 
 echo ""
 echo "=== Step 3: Count Unique Barcodes (count) ==="
 
 # Count barcodes for all samples using config
 echo "Counting barcodes for all samples using configuration file..."
-outerspace count \
+outerspace count -c grnaquery.toml \
     --input-dir results/collapse \
-    --output-dir results/count \
-    --config grnaquery.toml
+    --output-dir results/count
 
 echo ""
 echo "=== Step 3b: Count with Allowed List ==="
 
 # Count barcodes using only library protospacers (with config + override)
 echo "Counting barcodes with allowed list filter (config + command-line override)..."
-outerspace count \
+outerspace count -c grnaquery.toml \
     --input-dir results/collapse \
     --output-dir results/count_filtered \
-    --config grnaquery.toml \
     --allowed-list data/library_protospacers.txt
 
 echo ""
@@ -74,34 +71,31 @@ echo "=== Step 4: Merge Results ==="
 
 # Merge in wide format using config
 echo "Merging results in wide format using configuration file..."
-outerspace merge \
+outerspace merge -c grnaquery.toml \
     results/count/shuffle.csv \
     results/count/M1-lib.csv \
     results/count/M2-lib.csv \
     --output-file results/merged_counts_wide.csv \
-    --config grnaquery.toml \
     --sample-names shuffle M1-lib M2-lib \
     --format wide
 
 # Merge in long format using config
 echo "Merging results in long format using configuration file..."
-outerspace merge \
+outerspace merge -c grnaquery.toml \
     results/count/shuffle.csv \
     results/count/M1-lib.csv \
     results/count/M2-lib.csv \
     --output-file results/merged_counts_long.csv \
-    --config grnaquery.toml \
     --sample-names shuffle M1-lib M2-lib \
     --format long
 
 # Merge filtered results using config
 echo "Merging filtered results using configuration file..."
-outerspace merge \
+outerspace merge -c grnaquery.toml \
     results/count_filtered/shuffle.csv \
     results/count_filtered/M1-lib.csv \
     results/count_filtered/M2-lib.csv \
     --output-file results/merged_filtered_counts.csv \
-    --config grnaquery.toml \
     --sample-names shuffle M1-lib M2-lib \
     --format wide
 
@@ -110,11 +104,10 @@ echo "=== Step 5: Generate Statistics ==="
 
 # Generate comprehensive statistics using config
 echo "Generating statistics for all samples using configuration file..."
-outerspace stats \
+outerspace stats -c grnaquery.toml \
     results/count/shuffle.csv \
     results/count/M1-lib.csv \
-    results/count/M2-lib.csv \
-    --config grnaquery.toml
+    results/count/M2-lib.csv
 
 echo ""
 echo "=== Demonstrating Command-Line Overrides ==="
@@ -123,10 +116,9 @@ echo "=== Demonstrating Command-Line Overrides ==="
 echo "Demonstrating parameter override: using stricter mismatch tolerance..."
 mkdir -p results/collapse_strict
 
-outerspace collapse \
+outerspace collapse -c grnaquery.toml \
     --input-dir results/findseq \
     --output-dir results/collapse_strict \
-    --config grnaquery.toml \
     --mismatches 1 \
     --method cluster
 

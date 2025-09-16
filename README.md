@@ -4,22 +4,22 @@ Outerspace is a collection of tools for analyzing pooled CRISPR screens, viral b
 It contains tools to extract regions of interest, correct sequencing error, assess diversity, and compare between samples.
 
 ## Contents
-- [Documentation](docs/README.md)
-- [Installation](install.md)
 - [Quick Start](#quick-start)
-- [Biologic Applications](usage.md)
-- [Basic Commands](commands.md)
-- [Configuration](config.md)
-- [Detailed Walkthrough](walkthrough.md)
-- [Command Line Interface Documentation](cli_api.md)
-- [Snakemake Documentation](snakemake.md)
+- [Installation](#install)
+- [Biologic Applications](docs/usage.md)
+- [Basic Commands](docs/commands.md)
+- [Configuration](docs/config.md)
+- [Detailed Walkthrough](docs/walkthrough.md)
+- [Command Line Interface Documentation](docs/cli_api.md)
+- [Snakemake Documentation](docs/snakemake.md)
 
 ## Quick Start
 
 ### Install
 
 ```bash
-pip install outerspace
+#pip install outerspace
+pip install git+https://github.com/DamLabResources/outerspace.git
 ```
 
 ### Design your extraction strategy
@@ -27,7 +27,7 @@ pip install outerspace
 `outerspace` uses the `regex` library to extract relevant features from a DNA sequence.
 This allows an simple, expressive, and modular strategy for extracting of regions of interest while tolerating mismatches.
 It supports both short, paired end reads and long reads.
-See the [walkthrough](regex_explainer.md) for a detailed discussion on how to design your extraction strategy.  
+See the [docs/regex_explainer.md](docs/regex_explainer.md) for a detailed discussion on how to design your extraction strategy.  
 [Regex Link](https://pypi.org/project/regex/)
 
 ### Create your config file
@@ -36,7 +36,7 @@ If you are going to repeating similar experiments often, `outerspace` allows you
 This ensures repeatability between analyses and can drastically simplify command line execution.
 It also facilitates reproducible science as the config can be stored, shared, and tracked.
 
-See the [walkthrough](config.md) for a more detailed discussion on creating your config file.
+See the [walkthrough](docs/config.md) for a more detailed discussion on creating your config file.
 
 ### Process Your Data
 
@@ -68,4 +68,4 @@ For more detailed instructions, including how to run individual commands and per
 
 For running your tasks in parallel or on a cluster consider using our Snakemake [wrappers](wrappers.md).
 
-### Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.
+Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.

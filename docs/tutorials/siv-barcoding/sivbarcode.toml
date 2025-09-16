@@ -1,0 +1,49 @@
+# Configuration file for gRNA extraction.
+
+title = "SIV barcode and gRNA extraction"
+
+# Global patterns that can be used across multiple commands
+[[patterns]]
+name = "viral_barcode"
+reg_expr = "(cccctccaggactagcataa){i<=1,d<=1,s<=2}(?P<viral_barcode>.{34})(atggaagaaagacctccaga){i<=1,d<=1,s<=2}"
+read = "R1"
+orientation = "both"
+multiple = "first"
+
+[[patterns]]
+name = "left_umi"
+reg_expr = "(CAAGCAGAAGACGGCATACGAGAT){i<=1,d<=1,s<=2}(?<left_umi>.{18})(atatacttagaaaaggaagaaggcatcataccaga){i<=1,d<=1,s<=2}"
+read = "R1"
+orientation = "both"
+multiple = "first"
+
+[[patterns]]
+name = "right_umi"
+reg_expr = "(gaagaactccgaaaaaggctaaggc){i<=1,d<=1,s<=2}(?<right_umi>.{18})(GATCTCGGTGGTCGCCGTATCATT){i<=1,d<=1,s<=2}"
+read = "R1"
+orientation = "both"
+multiple = "first"
+
+
+[[patterns]]
+name = "LuttegePolP"
+reg_expr = "(?<LuttegePolP>tggggtaccatacaatccac){i<=1,d<=1,s<=2}"
+read = "R1"
+orientation = "both"
+multiple = "first"
+
+
+[findseq]
+# Reference patterns by name or use all patterns
+use_all_patterns = true
+matches_only = true
+threads = 8
+skip_unmapped = true
+
+[collapse]
+columns = 'viral_barcode'
+mismatches = 2
+
+[owner]
+name = "WND"
+organization = "DUCOM"

@@ -1,5 +1,15 @@
 # Usage
 
+OUTERSPACE provides powerful tools for analyzing barcoded sequence data from CRISPR screens and viral studies. This page provides an overview of common use cases, while detailed tutorials demonstrate specific workflows.
+
+## Tutorials
+
+For hands-on learning with real data, see our comprehensive tutorials:
+
+- **[CRISPR Screen Tutorial](tutorials/crispr-screen/README.md)**: Complete workflow for analyzing CRISPR screen data with paired-end sequencing
+- **[SIV Barcoding Tutorial](tutorials/siv-barcoding/README.md)**: Viral barcode analysis for studying SIV latency and reservoir dynamics  
+- **[Pipeline Tutorial](tutorials/pipeline/README.md)**: Automated workflow execution using Snakemake with various execution options
+
 ## CRISPR Screens
 
 OUTERSPACE (Optimized Utilities for Tracking Enrichment in Screens through Precise Analysis of CRISPR Experiments) is designed to analyze data from CRISPR screens. These screens typically involve:
@@ -20,44 +30,34 @@ The proposed OUTERSPACE workflow helps process and analyze this data through sev
 
 3. **Counting** (`count`): Quantifies the frequency of each gRNA-barcode combination.
 
-4. **Distribution Analysis** (`gini`): Calculates Gini coefficients to measure the inequality of barcode distributions. This is useful for diagnostic purposes.
+4. **Statistical Analysis** (`stats`): Calculates comprehensive statistics including Gini coefficients, Shannon diversity, and other metrics to analyze barcode distributions. This is useful for diagnostic purposes and diversity assessment.
 
 5. **Visualization** (`visualize`): Creates plots to help interpret the results.
 
 This integrated toolset helps researchers accurately measure changes in gRNA abundance between conditions, identify hits from their screens, and ensure data quality through multiple analysis steps.
 
+For a complete walkthrough with real CRISPR screen data, see the [CRISPR Screen Tutorial](tutorials/crispr-screen/README.md).
+
 ### Usage Story
 
 ```bash
 # Extract sequences
-outerspace findseq config.toml -1 ctrl_r1.fastq.gz -2 ctrl_r2.fastq.gz -o ctrl_output.csv
-outerspace findseq config.toml -1 exp_r1.fastq.gz -2 exp_r2.fastq.gz -o exp_output.csv
+outerspace findseq -c config.toml -1 ctrl_r1.fastq.gz -2 ctrl_r2.fastq.gz -o ctrl_output.csv
+outerspace findseq -c config.toml -1 exp_r1.fastq.gz -2 exp_r2.fastq.gz -o exp_output.csv
 
-# Single file processing
-outerspace findseq config.toml -1 single_reads.fasta -o single_output.csv
+# Correct barcodes (uses config settings)
+outerspace collapse -c config.toml --input-file ctrl_output.csv --output-file ctrl_output_collapsed.csv
+outerspace collapse -c config.toml --input-file exp_output.csv --output-file exp_output_collapsed.csv
 
-# SAM/BAM with region specification
-outerspace findseq config.toml -1 aligned_reads.bam --region "chr1:1-1000" -o region_output.csv
+# Count barcodes (uses config settings)
+outerspace count -c config.toml --input-file ctrl_output_collapsed.csv --output-file ctrl_counts.csv
+outerspace count -c config.toml --input-file exp_output_collapsed.csv --output-file exp_counts.csv
 
-# Correct barcodes
-outerspace collapse --input-file ctrl_output.csv --output-file ctrl_output_collapsed.csv \
-    --columns umi3,umi5 --mismatches 2 --method directional
-outerspace collapse --input-file exp_output.csv --output-file exp_output_collapsed.csv \
-    --columns umi3,umi5 --mismatches 2 --method directional
-
-# Count barcodes
-outerspace count --input-file ctrl_output_collapsed.csv --output-file ctrl_counts.csv \
-    --barcode-column umi3_umi5_corrected --key-column protospacer
-outerspace count --input-file exp_output_collapsed.csv --output-file exp_counts.csv \
-    --barcode-column umi3_umi5_corrected --key-column protospacer
-
-# Calculate Gini coefficient
-outerspace gini ctrl_counts.csv --column counts  # Expecting a low gini
-outerspace gini exp_counts.csv --column counts  # Expecting a high gini
+# Calculate statistics (uses config settings)
+outerspace stats -c config.toml ctrl_counts.csv exp_counts.csv
 
 # Visualize results
-outerspace visualize ctrl_counts.csv exp_counts.csv output_plots/ \
-    --title-prefix "CRISPR Screen" --log-scale
+outerspace visualize -c config.toml output_plots ctrl_counts exp_counts
 ```
 
 ## Barcoded Viruses for Latency Studies
@@ -86,12 +86,14 @@ OUTERSPACE is well-suited for analyzing barcode sequencing data from these exper
 
 3. **Quantification**: The `count` command determines the frequency of each viral barcode in different samples, revealing the relative abundance of viral variants.
 
-4. **Distribution Analysis**: The `gini` command calculates Gini coefficients to measure the inequality of barcode distributions, helping identify:
+4. **Statistical Analysis**: The `stats` command calculates comprehensive statistics including Gini coefficients, Shannon diversity, and other metrics to analyze barcode distributions, helping identify:
    - Bottleneck effects during transmission
    - Clonal expansion of infected cells
    - Changes in reservoir diversity over time
 
 5. **Visualization**: The `visualize` command creates plots to help interpret the distribution of viral barcodes across different samples.
+
+For a detailed tutorial using real SIV barcoding data, see the [SIV Barcoding Tutorial](tutorials/siv-barcoding/README.md).
 
 ### Example Pipeline
 
@@ -109,22 +111,22 @@ This will:
 4. Generate metrics and visualizations
 5. Save all results in the output directory
 
+For comprehensive pipeline setup and advanced Snakemake options (including cluster execution), see the [Pipeline Tutorial](tutorials/pipeline/README.md).
+
 Alternatively, you can run individual commands:
 
 ```bash
 # Extract viral barcodes
-outerspace findseq config.toml -1 viral_reads.fastq.gz -o viral_barcodes.csv
+outerspace findseq -c config.toml -1 viral_reads.fastq.gz -o viral_barcodes.csv
 
-# Correct barcode errors
-outerspace collapse --input-file viral_barcodes.csv --output-file corrected_barcodes.csv \
-    --columns UMI_5prime,UMI_3prime --mismatches 2 --method directional
+# Correct barcode errors (uses config settings)
+outerspace collapse -c config.toml --input-file viral_barcodes.csv --output-file corrected_barcodes.csv
 
-# Count barcodes per sample
-outerspace count --input-file corrected_barcodes.csv --output-file barcode_counts.csv \
-    --barcode-column UMI_5prime_UMI_3prime_corrected --key-column viral_barcode
+# Count barcodes per sample (uses config settings)
+outerspace count -c config.toml --input-file corrected_barcodes.csv --output-file barcode_counts.csv
 
-# Analyze distribution
-outerspace gini barcode_counts.csv --column UMI_5prime_UMI_3prime_corrected_count
+# Analyze distribution (uses config settings)
+outerspace stats -c config.toml barcode_counts.csv
 ```
 
-### Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.
+Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.

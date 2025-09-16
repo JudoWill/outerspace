@@ -105,18 +105,6 @@ random_seed = 42  # Optional
 metrics = "path/to/metrics.yaml"  # Optional
 ```
 
-### [gini]
-Configuration for Gini coefficient calculation:
-```toml
-[gini]
-input_file = "path/to/input.csv"  # Required
-column = "counts"  # Required
-count_column = "precounts"  # Optional
-scale = 1.0  # Optional
-sep = ","  # Optional, default: ","
-allowed_list = "path/to/allowed.txt"  # Optional
-```
-
 ### [pipeline]
 Configuration for the complete pipeline:
 ```toml
@@ -202,4 +190,4 @@ snakemake_args = "--cores 4"
 6. Version control your configuration files
 7. Use separate configuration files for different projects or experiments
 
-### Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.
+Copyright (C) 2025, SCB, DVK PhD, RB, WND PhD. All rights reserved.

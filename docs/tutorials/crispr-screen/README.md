@@ -17,7 +17,7 @@ Each sample has paired-end FASTQ files containing:
 
 1. Clone the OUTERSPACE repository:
 ```bash
-git clone https://github.com/your-org/outerspace.git
+git clone https://github.com/DamLabResources/outerspace.git
 cd outerspace
 ```
 
@@ -144,19 +144,19 @@ Extract sequences from FASTQ files using the configured patterns:
 mkdir -p results/findseq results/collapse results/count
 
 # Process control sample (shuffle)
-outerspace findseq grnaquery.toml \
+outerspace findseq -c grnaquery.toml \
     -1 data/409-4_S1_L002_R1_001.fastq.gz \
     -2 data/409-4_S1_L002_R2_001.fastq.gz \
     -o results/findseq/shuffle.csv
 
 # Process M1 library sample
-outerspace findseq grnaquery.toml \
+outerspace findseq -c grnaquery.toml \
     -1 data/2-G1L9-M1_S9_L001_R1_001.fastq.gz \
     -2 data/2-G1L9-M1_S9_L001_R2_001.fastq.gz \
     -o results/findseq/M1-lib.csv
 
 # Process M2 library sample
-outerspace findseq grnaquery.toml \
+outerspace findseq -c grnaquery.toml \
     -1 data/2-G1L9-M2_S12_L001_R1_001.fastq.gz \
     -2 data/2-G1L9-M2_S12_L001_R2_001.fastq.gz \
     -o results/findseq/M2-lib.csv
@@ -170,10 +170,9 @@ Correct sequencing errors using the configuration file settings:
 
 ```bash
 # Correct barcodes for all samples using config
-outerspace collapse \
+outerspace collapse -c grnaquery.toml \
     --input-dir results/findseq \
-    --output-dir results/collapse \
-    --config grnaquery.toml
+    --output-dir results/collapse
 ```
 
 **What this does**:
@@ -187,10 +186,9 @@ Count unique barcodes per protospacer using config settings:
 
 ```bash
 # Count barcodes for all samples using config
-outerspace count \
+outerspace count -c grnaquery.toml \
     --input-dir results/collapse \
-    --output-dir results/count \
-    --config grnaquery.toml
+    --output-dir results/count
 ```
 
 **Expected output**: CSV files with barcode counts per protospacer for each sample.
@@ -201,22 +199,20 @@ Combine all sample results using configuration defaults:
 
 ```bash
 # Merge in wide format using config
-outerspace merge \
+outerspace merge -c grnaquery.toml \
     results/count/shuffle.csv \
     results/count/M1-lib.csv \
     results/count/M2-lib.csv \
     --output-file results/merged_counts_wide.csv \
-    --config grnaquery.toml \
     --sample-names shuffle M1-lib M2-lib \
     --format wide
 
 # Merge in long format (alternative)
-outerspace merge \
+outerspace merge -c grnaquery.toml \
     results/count/shuffle.csv \
     results/count/M1-lib.csv \
     results/count/M2-lib.csv \
     --output-file results/merged_counts_long.csv \
-    --config grnaquery.toml \
     --sample-names shuffle M1-lib M2-lib \
     --format long
 ```
@@ -227,11 +223,10 @@ Calculate summary statistics using config settings:
 
 ```bash
 # Generate comprehensive statistics using config
-outerspace stats \
+outerspace stats -c grnaquery.toml \
     results/count/shuffle.csv \
     results/count/M1-lib.csv \
-    results/count/M2-lib.csv \
-    --config grnaquery.toml
+    results/count/M2-lib.csv
 ```
 
 ## Advanced Workflow: Using Allowed Lists
@@ -242,10 +237,9 @@ For more stringent analysis, you can filter results to only include expected pro
 
 ```bash
 # Count barcodes using only library protospacers
-outerspace count \
+outerspace count -c grnaquery.toml \
     --input-dir results/collapse \
     --output-dir results/count_filtered \
-    --config grnaquery.toml \
     --allowed-list data/library_protospacers.txt
 ```
 
@@ -257,78 +251,18 @@ outerspace count \
 mkdir -p results/count_filtered
 
 # Merge filtered results
-outerspace merge \
+outerspace merge -c grnaquery.toml \
     results/count_filtered/shuffle.csv \
     results/count_filtered/M1-lib.csv \
     results/count_filtered/M2-lib.csv \
     --output-file results/merged_filtered_counts.csv \
-    --config grnaquery.toml \
     --sample-names shuffle M1-lib M2-lib \
     --format wide
 ```
 
 ## Command-Line Overrides
 
-While using configuration files is recommended, you can override any config setting via command-line parameters. This is useful for:
-- Testing different parameters
-- One-off analyses
-- Overriding specific settings without modifying the config file
-
-### Example: Override Collapse Parameters
-
-```bash
-# Override mismatch tolerance and method
-outerspace collapse \
-    --input-dir results/findseq \
-    --output-dir results/collapse_custom \
-    --config grnaquery.toml \
-    --mismatches 1 \
-    --method cluster
-```
-
-### Example: Override Count Parameters
-
-```bash
-# Use a different barcode column
-outerspace count \
-    --input-dir results/collapse \
-    --output-dir results/count_custom \
-    --config grnaquery.toml \
-    --barcode-column UMI_5prime \
-    --detailed
-```
-
-### Example: Complete Command-Line Workflow
-
-If you prefer not to use configuration files, you can specify all parameters:
-
-```bash
-# Correct barcodes with explicit parameters
-outerspace collapse \
-    --input-dir results/findseq \
-    --output-dir results/collapse_manual \
-    --columns UMI_5prime,UMI_3prime \
-    --mismatches 2 \
-    --method directional
-
-# Count barcodes with explicit parameters
-outerspace count \
-    --input-dir results/collapse_manual \
-    --output-dir results/count_manual \
-    --barcode-column UMI_5prime_UMI_3prime_corrected \
-    --key-column protospacer
-
-# Merge with explicit parameters
-outerspace merge \
-    results/count_manual/shuffle.csv \
-    results/count_manual/M1-lib.csv \
-    results/count_manual/M2-lib.csv \
-    --output-file results/merged_manual.csv \
-    --key-column protospacer \
-    --count-column UMI_5prime_UMI_3prime_corrected_count \
-    --sample-names shuffle M1-lib M2-lib \
-    --format wide
-```
+While configuration files are recommended for reproducible analyses, you can override specific settings via command-line parameters when needed for testing or one-off analyses.
 
 ## Single File Processing
 
@@ -336,20 +270,18 @@ You can also process files individually instead of using directories:
 
 ```bash
 # Process a single sample through the entire workflow
-outerspace findseq grnaquery.toml \
+outerspace findseq -c grnaquery.toml \
     -1 data/409-4_S1_L002_R1_001.fastq.gz \
     -2 data/409-4_S1_L002_R2_001.fastq.gz \
     -o results/single_shuffle.csv
 
-outerspace collapse \
+outerspace collapse -c grnaquery.toml \
     --input-file results/single_shuffle.csv \
-    --output-file results/single_shuffle_collapsed.csv \
-    --config grnaquery.toml
+    --output-file results/single_shuffle_collapsed.csv
 
-outerspace count \
+outerspace count -c grnaquery.toml \
     --input-file results/single_shuffle_collapsed.csv \
-    --output-file results/single_shuffle_counts.csv \
-    --config grnaquery.toml
+    --output-file results/single_shuffle_counts.csv
 ```
 
 ## Understanding the Results
