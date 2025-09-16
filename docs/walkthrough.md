@@ -64,12 +64,14 @@ This will:
 4. Count unique barcodes per protospacer
 5. Generate metrics files for quality control
 
-The results will be organized in the output directory:
+The results will be organized in the output directory structure defined in your Snakemake configuration:
 - `findseq/`: Raw sequence extractions
 - `collapse/`: Barcode-corrected files
-- `count/`: Final barcode counts
+- `count/`: Final barcode counts per sample
 - `merge/`: Merged results across samples
-- `stats/`: Statistical summaries
+- `stats/`: Statistical summaries and metrics
+
+See the [Snakemake](docs/snakemake.md) documentation for more details about how to configure the pipeline.
 
 ## Approach 2: Using Individual Commands
 
@@ -84,19 +86,19 @@ First, extract sequences from each sample's FASTQ files:
 mkdir -p tmp/results/findseq
 
 # Process control sample
-outerspace findseq config.toml \
+outerspace findseq -c config.toml \
     -1 tests/data/409-4_S1_L002_R1_001.fastq.gz \
     -2 tests/data/409-4_S1_L002_R2_001.fastq.gz \
     -o tmp/results/findseq/409-4_S1_L002.csv
 
 # Process M1 sample
-outerspace findseq config.toml \
+outerspace findseq -c config.toml \
     -1 tests/data/2-G1L9-M1_S9_L001_R1_001.fastq.gz \
     -2 tests/data/2-G1L9-M1_S9_L001_R2_001.fastq.gz \
     -o tmp/results/findseq/2-G1L9-M1_S9_L001.csv
 
 # Process M2 sample
-outerspace findseq config.toml \
+outerspace findseq -c config.toml \
     -1 tests/data/2-G1L9-M2_S12_L001_R1_001.fastq.gz \
     -2 tests/data/2-G1L9-M2_S12_L001_R2_001.fastq.gz \
     -o tmp/results/findseq/2-G1L9-M2_S12_L001.csv
@@ -110,13 +112,10 @@ Next, correct sequencing errors in the barcodes:
 # Create output directory
 mkdir -p tmp/results/collapse
 
-# Run collapse command on all extracted files
-outerspace collapse \
+# Run collapse command on all extracted files (uses config settings)
+outerspace collapse -c config.toml \
     --input-dir tmp/results/findseq \
     --output-dir tmp/results/collapse \
-    --columns UMI_5prime,UMI_3prime \
-    --mismatches 2 \
-    --method directional \
     --metrics tmp/results/collapse/collapse_metrics.yaml
 ```
 
@@ -128,31 +127,36 @@ Finally, count unique barcodes per protospacer:
 # Create output directory
 mkdir -p tmp/results/count
 
-# Run count command on all collapsed files
-outerspace count \
+# Run count command on all collapsed files (uses config settings)
+outerspace count -c config.toml \
     --input-dir tmp/results/collapse \
-    --output-dir tmp/results/count \
-    --barcode-column UMI_5prime_UMI_3prime_corrected \
-    --key-column protospacer \
-    --metrics tmp/results/count/count_metrics.yaml
+    --output-dir tmp/results/count
 ```
 
-### Optional: Calculate Gini Coefficients
+### Step 4: Merge Results (Optional)
 
-You can calculate Gini coefficients to assess the distribution of barcodes:
+You can merge all count files into a single file for downstream analysis:
 
 ```bash
-# Calculate Gini for control sample
-outerspace gini tmp/results/count/409-4_S1_L002.csv \
-    --column UMI_5prime_UMI_3prime_corrected_count
+# Create output directory
+mkdir -p tmp/results/merge
 
-# Calculate Gini for M1 sample
-outerspace gini tmp/results/count/2-G1L9-M1_S9_L001.csv \
-    --column UMI_5prime_UMI_3prime_corrected_count
+# Merge all count files (uses config settings)
+outerspace merge -c config.toml \
+    tmp/results/count/*.csv \
+    --output-file tmp/results/merge/merged_counts.csv \
+    --sample-names 409-4 M1 M2 \
+    --format wide
+```
 
-# Calculate Gini for M2 sample
-outerspace gini tmp/results/count/2-G1L9-M2_S12_L001.csv \
-    --column UMI_5prime_UMI_3prime_corrected_count
+### Optional: Calculate Statistics
+
+You can calculate comprehensive statistics including Gini coefficients, Shannon diversity, and other metrics:
+
+```bash
+# Calculate statistics for all samples (uses config settings)
+outerspace stats -c config.toml \
+    tmp/results/count/*.csv > tmp/results/count/statistics.csv
 ```
 
 ### Optional: Visualize Results
@@ -163,25 +167,13 @@ Create visualizations of the barcode distributions:
 # Create output directory
 mkdir -p tmp/results/plots
 
-# Generate plots
-outerspace visualize \
+# Generate plots (uses config settings for styling)
+outerspace visualize -c config.toml \
     tmp/results/count \
     tmp/results/plots \
     --title-prefix "CRISPR Screen" \
     --log-scale
 ```
-
-## Comparing the Approaches
-
-The pipeline command is simpler and ensures consistent processing across all files. However, using individual commands gives you more control and allows you to:
-
-1. Inspect intermediate results between steps
-2. Modify parameters for specific samples
-3. Rerun individual steps if needed
-4. Process files in parallel
-5. Add custom processing steps
-
-Choose the approach that best fits your needs. For routine processing, the pipeline command is recommended. For more complex analyses or troubleshooting, individual commands provide more flexibility.
 
 ## Next Steps
 
@@ -193,4 +185,4 @@ After processing, you can:
 5. Perform statistical analysis on the results 
 
 
-### Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.
+Copyright (C) 2025, SC Barrera, R Berman, Drs DVK & WND. All Rights Reserved.

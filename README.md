@@ -5,7 +5,7 @@ It contains tools to extract regions of interest, correct sequencing error, asse
 
 ## Contents
 - [Quick Start](#quick-start)
-- [Installation](docs/install.md)
+- [Installation](#install)
 - [Biologic Applications](docs/usage.md)
 - [Basic Commands](docs/commands.md)
 - [Configuration](docs/config.md)
@@ -27,7 +27,7 @@ pip install git+https://github.com/DamLabResources/outerspace.git
 `outerspace` uses the `regex` library to extract relevant features from a DNA sequence.
 This allows an simple, expressive, and modular strategy for extracting of regions of interest while tolerating mismatches.
 It supports both short, paired end reads and long reads.
-See the [walkthrough](docs/regex_explainer.md) for a detailed discussion on how to design your extraction strategy.  
+See the [docs/regex_explainer.md](docs/regex_explainer.md) for a detailed discussion on how to design your extraction strategy.  
 [Regex Link](https://pypi.org/project/regex/)
 
 ### Create your config file

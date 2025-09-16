@@ -1,0 +1,4 @@
+# Snakemake config for directory-based workflow
+direc: 'raw'
+toml: 'sivbarcode.toml'
+config_file: 'sivbarcode.yaml'

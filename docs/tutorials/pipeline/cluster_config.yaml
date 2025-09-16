@@ -1,0 +1,50 @@
+# Cluster Configuration for SLURM
+# This file defines resource requirements for each rule when running on HPC clusters
+
+# Default settings applied to all rules
+__default__:
+  time: "04:00:00"        # Maximum wall time
+  mem: "4G"               # Memory per job
+  partition: "compute"    # SLURM partition
+  account: "myproject"    # Billing account
+  ntasks: 1              # Number of tasks
+  nodes: 1               # Number of nodes
+
+# Rule-specific resource requirements
+findseq:
+  time: "08:00:00"        # Longer time for sequence extraction
+  mem: "8G"               # More memory for large BAM files
+  threads: 8              # Parallel processing
+  partition: "compute"
+  
+collapse:
+  time: "02:00:00"        # Moderate time for barcode correction
+  mem: "4G"               # Standard memory
+  threads: 2              # Some parallelization
+  partition: "compute"
+  
+count:
+  time: "01:00:00"        # Quick counting step
+  mem: "2G"               # Low memory requirement
+  threads: 1              # Single threaded
+  partition: "compute"
+  
+merge:
+  time: "00:30:00"        # Very quick merge step
+  mem: "2G"               # Low memory requirement
+  threads: 1              # Single threaded
+  partition: "compute"
+  
+stats:
+  time: "00:30:00"        # Quick statistics calculation
+  mem: "2G"               # Low memory requirement
+  threads: 1              # Single threaded
+  partition: "compute"
+
+# Advanced SLURM options (uncomment as needed)
+# findseq:
+#   constraint: "haswell"     # Specific CPU architecture
+#   exclusive: true           # Exclusive node access
+#   gres: "gpu:1"            # GPU resources
+#   mail-type: "END,FAIL"    # Email notifications
+#   mail-user: "user@domain.com"
