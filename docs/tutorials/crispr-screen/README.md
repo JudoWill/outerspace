@@ -17,7 +17,7 @@ Each sample has paired-end FASTQ files containing:
 
 1. Clone the OUTERSPACE repository:
 ```bash
-git clone https://github.com/your-org/outerspace.git
+git clone https://github.com/DamLabResources/outerspace.git
 cd outerspace
 ```
 
