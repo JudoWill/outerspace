@@ -1,0 +1,18 @@
+*.bac
+409*.csv
+reads_sample/
+build/
+/outdir/
+*.ipynb
+git remove-v
+.timetracker/start_*.txt
+.ipynb_checkpoints
+409-4.csv
+__pycache__
+?.txt
+tmp*
+/*.cfg
+*egg-info
+venv
+.coverage
+.snakemake

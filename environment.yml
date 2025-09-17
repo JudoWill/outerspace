@@ -1,0 +1,31 @@
+name: outerspace-paper
+channels:
+  - conda-forge
+dependencies:
+  # Document processing (LaTeX via system package manager recommended)
+  - pandoc
+  
+  # Python dependencies for potential analysis scripts
+  - python=3.11
+  - pip
+  
+  # Python packages via pip
+  - pip:
+    - pandoc-xnos  # for cross-references in pandoc
+    - pandoc-fignos
+    - pandoc-tablenos
+    - pandoc-eqnos
+    
+# IMPORTANT: Install LaTeX via your system package manager for best results
+# 
+# Ubuntu/Debian: 
+#   sudo apt-get update && sudo apt-get install texlive-full
+# 
+# macOS: 
+#   brew install --cask mactex
+# 
+# Windows: 
+#   Install MiKTeX or TeX Live from their official websites
+#
+# The conda texlive packages are often incomplete and cause build issues.
+# System-level LaTeX installations are more reliable and comprehensive.
