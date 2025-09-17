@@ -1,18 +1,41 @@
-*.bac
-409*.csv
-reads_sample/
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+*.idx
+*.ind
+*.ilg
+*.nav
+*.snm
+*.vrb
+*.dvi
+*.ps
+
+# Build directory
 build/
-/outdir/
-*.ipynb
-git remove-v
-.timetracker/start_*.txt
-.ipynb_checkpoints
-409-4.csv
-__pycache__
-?.txt
-tmp*
-/*.cfg
-*egg-info
-venv
-.coverage
-.snakemake
+venv/
+
+# Temporary files
+*~
+*.backup
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+
+# Conda environment
+.conda/

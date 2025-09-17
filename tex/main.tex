@@ -1,0 +1,135 @@
+\documentclass[9pt,twocolumn,twoside]{extarticle}
+
+% Packages for bioRxiv format
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{geometry}
+\usepackage{lineno}
+\usepackage{setspace}
+\usepackage{authblk}
+\usepackage{xcolor}
+\usepackage{url}
+
+% bioRxiv page setup
+\geometry{
+    letterpaper,
+    top=0.75in,
+    bottom=0.75in,
+    left=0.5in,
+    right=0.5in,
+    columnsep=0.25in
+}
+\singlespacing
+\linenumbers
+\modulolinenumbers[5]
+
+% bioRxiv header
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small bioRxiv preprint}
+\fancyhead[R]{\small \today}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Title and authors for bioRxiv
+\title{\textbf{OuterSpace: A tool for extracting and quantifying unique molecular indices}}
+% Open to debate
+
+% Authors using authblk package for bioRxiv format
+\author[1,2]{Shirley Barrera}
+\author[1,2]{DV Klopfenstein}  
+\author[1,2]{Rachel Berman}
+\author[1,2]{Will Dampier}
+% Order open to debate
+
+\affil[1]{Department of Microbiology and Immunology, Drexel University College of Medicine, Philadelphia, PA, United States}
+\affil[2]{Center for Molecular Virology and Gene Therapy, Institute for Molecular Medicine and Infectious Disease, Drexel University College of Medicine, Philadelphia, PA, United States}
+\affil[*]{Corresponding author}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+During modern next generation sequencing it is often important to distinguish between PCR duplicates of the same original molecule.
+Many modern sequencing techniques accomplish this by combining pools of oligonucleotides in which an intended region is a unique identifier in each molecule.
+When sequenced, these unique molecular indices disambiguate between PCR duplicates and unique copies of the same molecule.
+Despite the explosion in usage of these technqiues, there is a lack of a robust toolkit for extracting, analyzing, and visualizing these identifiers.
+Outerspace seeks to fill this void.
+Using fuzzy-regular expressions the user can easily extract arbitrarily complicated indexing strategies.
+Robust error correction techniques are employed to ensure accurate counts in the presence of sequencing noise.
+Analysis of large collections can be spread across multiple processes or computers through a Snakemake interface.
+Outerspace employs configuration files in order to improve consistency across experiments and the sharing of protocols.
+Together, these features make outerspace a useful addition to a bioinformaticians toolbox when handling unique molecular identifiers.
+
+
+\textbf{Keywords:} bioinformatics, unique molecular identifiers
+\end{abstract}
+
+\section{Introduction}
+
+
+
+\section{Methods}
+
+\subsection{Algorithm Design}
+
+Describe the core algorithms and methodologies used in OuterSpace.
+
+\subsection{Implementation}
+
+Detail the software implementation, including programming languages, dependencies, and architecture.
+
+\subsection{Performance Evaluation}
+
+Explain the benchmarking methodology and performance metrics used.
+
+\section{Results}
+
+\subsection{Performance Benchmarks}
+
+Present performance comparisons with existing tools.
+
+\subsection{Case Studies}
+
+Provide real-world examples demonstrating OuterSpace's capabilities.
+
+\section{Discussion}
+
+Discuss the implications of the results, limitations, and future directions.
+
+\section{Conclusion}
+
+Summarize the key contributions and impact of OuterSpace.
+
+\section*{Acknowledgments}
+
+We thank the contributors and the open-source community for their valuable feedback and contributions.
+
+\section*{Data Availability}
+
+OuterSpace is freely available at \url{https://github.com/username/outerspace}.
+All data and code used in this study are available upon request.
+
+\section*{Author Contributions}
+
+All authors contributed to the design and implementation of OuterSpace. Author One and Author Four conceived the project. Author Two and Author Three contributed to algorithm development. All authors contributed to writing and reviewing the manuscript.
+
+\section*{Competing Interests}
+
+The authors declare no competing interests.
+
+% bioRxiv bibliography style
+\bibliographystyle{unsrt}
+\bibliography{../bib/bibliography}
+
+\end{document}
