@@ -77,7 +77,39 @@ Together, these features make outerspace a useful addition to a bioinformatician
 
 \section{Introduction}
 
+Distinguishing between individual molecules in a population is an important aspect of many modern sequence based technologies.
+Early computational strategies for marking duplicate molecules relied on the random shearing nature of tagmenetation enzymes and marked fragments with identical mapping locations as duplications \cite{li2011statistical}. 
+However, this technique cannot be employed amplicon based sequencing or modern protocols which intentionally produce fragments with identical ends.
+Molecular techniques to mark duplicates utilize pools of nearly identical, but in fact unique, molecules during PCR or ligation steps to affix each original molecule with one instance of the pool.
 
+This is accomplished by incorperating regions of degeneracy nested between constant regions in synthetic oligonucelotides ie. ATGCNNNAGCTA.
+When produced, this pattern will be a pool of 64 different oligonucelotides each starting with ATGC and ending with AGCTA.
+The middle three nucleotides will be one of A, C, G, or T.
+When used during PCR or ligation, each molecule will be 'appended' with one instance of the pool allowing for an ideallized indexing of 64 different molecules.
+During sequencing, this unique sequence is read and used for downstream processing.
+
+This strategy has been employed by dozens of techniques.
+% A brief list
+
+Due to proprietary considerations and experimental necessicities, there is no standard construction strategy for UMIs.
+This requires an indivudalized approach to extraction, correction, and analysis of UMIs.
+Previous computational tools like:
+Je, an early java tool focused on Illumina data allowed for the extraction and deduplication of reads \cite{girardot2016je} but is no longer in active development.
+AmpUMI can extract single UMIs from unaligned sequences and only export a single instance of each detected UMI \cite{clement2018ampumi}.
+UMI-tools, a python toolkit for extracting, correcting, and de-duplicating reads based on UMIs has become a popular pipeline component \cite{smith2017umitools}.
+However, these tools were designed for Illumina based technology and constant sized UMIs.
+
+Long read sequencing, primarly nanopore based, introduce additional complications not addressed by previous tools.
+Nanopore sequencing is more error-prone and typically introduce insertion or deletion mutations [REF].
+This frustrates the matching systems of previous tools which expect an error-profile dominated by rare mismatch errors.
+When performing selection-based CRISPR screens or lineage tracing, it is important to have tools for ranking UMIs based on over-representation or tracking them across samples.
+
+To this end we have developed outerspace, a command-line python toolset for extracting, correcting, ranking, and tracking UMIs in long and short-read data.
+It employs fuzzy-regular expressions to define patterns allowing for mismatches, insertions, and deletions.
+It incorperates the error-correction model from UMI-tools as well size-invariant strategies such as CD-HIT \cite{li2006cdhit}. % CD-HIT engine still needs implementing
+Furthermore, it allows the user to develop a reusable and sharable configuration file that define the patterns and all relevant command-line arguments.
+It also employs Snakemake to process large experiments in parrallel across cluster systems.
+Together, these features make outerspace a useful tool when analyzing UMIs.
 
 \section{Methods}
 
