@@ -71,7 +71,6 @@ Analysis of large collections can be spread across multiple processes or compute
 Outerspace employs configuration files in order to improve consistency across experiments and the sharing of protocols.
 Together, these features make outerspace a useful addition to a bioinformaticians toolbox when handling unique molecular identifiers.
 
-
 \textbf{Keywords:} bioinformatics, unique molecular identifiers
 \end{abstract}
 
@@ -88,8 +87,18 @@ The middle three nucleotides will be one of A, C, G, or T.
 When used during PCR or ligation, each molecule will be 'appended' with one instance of the pool allowing for an ideallized indexing of 64 different molecules.
 During sequencing, this unique sequence is read and used for downstream processing.
 
-This strategy has been employed by dozens of techniques.
-% A brief list
+This strategy has been incorperated into techniques ranging from HIV quantification, CRISPR sreens, lineage tracking, and single-cell transcriptomics.
+To quantify HIV genetic variability, PrimerID, utilizes a degenerate cDNA primer to during RT-PCR of viral RNA to uniquely tag each viral genome \cite{jabara2011primerid, zhou2015primerid}.
+The single-cell transcriptomics technology employed by 10X Genomics involves performing cDNA synthesis in single-cell emulsions in which each bubble contains a different cell-specific UMI \cite{zheng2017massively}.
+The popular CRISPR off-target detection technique GUIDE-seq employs UMIs embeded into y-adapters that are ligated to genomic fragments after shearing \cite{liang2022guidetag}.
+% Any other examples?
+
+Transduction of lentiviral libraries with degenerate regions has enabled in vivo lineage tracking and high-scale screening.
+So called, barcoded viruses, can be introduced and sampled at different timepoints or from different anatomical regions.
+This has been leveraged to quantify viral rebound in SIV and HIV mouse models \cite{fennessey2017genetically, keele2024early, marsden2020tracking}.
+When the degenerate region is a functional element such as a CRISPR protospacer or siRNA region each lentivirus causes a unique perturbation. 
+In a CRISPR knock out screen (CRISPR-KO) each protospacer targets the coding region of a gene.
+Park et al leveraged this strategy to find human genes which impacted HIV replication \cite{park2017genome}. 
 
 Due to proprietary considerations and experimental necessicities, there is no standard construction strategy for UMIs.
 This requires an indivudalized approach to extraction, correction, and analysis of UMIs.
@@ -97,9 +106,10 @@ Previous computational tools like:
 Je, an early java tool focused on Illumina data allowed for the extraction and deduplication of reads \cite{girardot2016je} but is no longer in active development.
 AmpUMI can extract single UMIs from unaligned sequences and only export a single instance of each detected UMI \cite{clement2018ampumi}.
 UMI-tools, a python toolkit for extracting, correcting, and de-duplicating reads based on UMIs has become a popular pipeline component \cite{smith2017umitools}.
-However, these tools were designed for Illumina based technology and constant sized UMIs.
+Other tools like CellRanger, handle UMIs for the specific chemistry used by 10X Genomics.
+However, all of these tools were designed for Illumina based technology and assume constant sized UMIs.
 
-Long read sequencing, primarly nanopore based, introduce additional complications not addressed by previous tools.
+Long read sequencing introduces additional complications not addressed by previous tools.
 Nanopore sequencing is more error-prone and typically introduce insertion or deletion mutations [REF].
 This frustrates the matching systems of previous tools which expect an error-profile dominated by rare mismatch errors.
 When performing selection-based CRISPR screens or lineage tracing, it is important to have tools for ranking UMIs based on over-representation or tracking them across samples.
@@ -145,16 +155,19 @@ Summarize the key contributions and impact of OuterSpace.
 
 \section*{Acknowledgments}
 
-We thank the contributors and the open-source community for their valuable feedback and contributions.
+CNHC Grant.
+Wigdahl RO1 Grant.
 
 \section*{Data Availability}
 
-OuterSpace is freely available at \url{https://github.com/username/outerspace}.
+OuterSpace is freely available at \url{https://github.com/DamLabResources/outerspace}.
 All data and code used in this study are available upon request.
 
 \section*{Author Contributions}
 
-All authors contributed to the design and implementation of OuterSpace. Author One and Author Four conceived the project. Author Two and Author Three contributed to algorithm development. All authors contributed to writing and reviewing the manuscript.
+WND conceived the project.
+All authors contributed to the design and implementation of OuterSpace.
+All authors contributed to writing and reviewing the manuscript.
 
 \section*{Competing Interests}
 
