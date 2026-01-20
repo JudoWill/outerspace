@@ -11,3 +11,4 @@ from .visualize import VisualizeCommand
 from .merge import MergeCommand
 from .pipeline import PipelineCommand
 from .subsample import SubsampleCommand
+from .align import AlignCommand

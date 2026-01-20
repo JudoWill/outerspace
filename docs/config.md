@@ -105,6 +105,28 @@ random_seed = 42  # Optional
 metrics = "path/to/metrics.yaml"  # Optional
 ```
 
+### [align]
+Configuration for sequence alignment:
+```toml
+[align]
+input_file = "path/to/input.csv"  # Optional
+input_dir = "path/to/input"  # Optional
+output_file = "path/to/output.csv"  # Optional
+output_dir = "path/to/output"  # Optional
+key_column = "sequence"  # Required
+barcode_column = "barcode"  # Required
+sep = ","  # Optional, default: ","
+row_limit = 1000  # Optional
+min_count = 0  # Optional, default: 0
+top_n = 10  # Optional, default: None (all)
+min_frequency = 0.0  # Optional, default: 0.0
+align_by_barcode = false  # Optional, default: false
+match = 5  # Optional, default: 5
+mismatch = -4  # Optional, default: -4
+gap = -8  # Optional, default: -8
+algorithm = 1  # Optional, default: 1 (0=local, 1=global, 2=semi-global)
+```
+
 ### [pipeline]
 Configuration for the complete pipeline:
 ```toml
@@ -168,6 +190,15 @@ output_file = "results/counts.csv"
 barcode_column = "UMI_5prime_UMI_3prime_corrected"
 key_column = "protospacer"
 detailed = true
+
+[align]
+input_file = "results/counts.csv"
+output_file = "results/aligned.csv"
+key_column = "protospacer"
+barcode_column = "UMI_5prime_UMI_3prime_corrected"
+min_count = 5
+top_n = 100
+algorithm = 1
 
 [gini]
 input_file = "results/counts.csv"

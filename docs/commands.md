@@ -182,6 +182,102 @@ Common Arguments:
                         Log level (default: WARNING)
 ```
 
+### `outerspace align`
+Aligns sequences from CSV files using spoa (Partial Order Alignment). Features:
+- Counts unique barcodes per key (sequence)
+- Filters keys based on unique barcode count
+- Multiple alignment algorithms (local, global, semi-global)
+- Configurable alignment scoring parameters
+- Option to align all keys together or group by barcode
+- CSV output with aligned sequences and counts
+
+```bash
+usage: outerspace align [-h] (--input-file INPUT_FILE | --input-dir INPUT_DIR)
+                        [--output-file OUTPUT_FILE] [--output-dir OUTPUT_DIR]
+                        [--key-column KEY_COLUMN] [--barcode-column BARCODE_COLUMN]
+                        [--sep SEP] [--row-limit ROW_LIMIT] [--min-count MIN_COUNT]
+                        [--top-n TOP_N] [--min-frequency MIN_FREQUENCY]
+                        [--align-by-barcode] [--match MATCH] [--mismatch MISMATCH]
+                        [--gap GAP] [--algorithm {0,1,2}] [--config CONFIG]
+                        [--progress-bar] [--log-file LOG_FILE] [--log-level LOG_LEVEL]
+
+Align sequences from CSV files using spoa
+
+options:
+  -h, --help            show this help message and exit
+  --input-file INPUT_FILE
+                        Input CSV file to process
+  --input-dir INPUT_DIR
+                        Input directory containing CSV files to process
+  --output-file OUTPUT_FILE
+                        Output file for aligned sequences (default: stdout)
+  --output-dir OUTPUT_DIR
+                        Output directory for aligned sequences (for batch processing)
+  --key-column KEY_COLUMN
+                        Column containing sequences to align (required)
+  --barcode-column BARCODE_COLUMN
+                        Column containing unique markers for counting (required)
+  --sep SEP             CSV separator (default: ,)
+  --row-limit ROW_LIMIT
+                        Process only the first N rows (for testing)
+  --min-count MIN_COUNT
+                        Minimum unique barcode count threshold for a key to be included (default: 0)
+  --top-n TOP_N         Keep only top N keys by unique barcode count (default: all)
+  --min-frequency MIN_FREQUENCY
+                        Minimum frequency percentage threshold based on unique barcode count (default: 0.0)
+  --align-by-barcode    If set, align keys separately grouped by identical barcodes (default: align all together)
+  --match MATCH         Score for matching bases (default: 5)
+  --mismatch MISMATCH   Penalty for mismatching bases (default: -4)
+  --gap GAP             Penalty for gaps/indels (default: -8)
+  --algorithm {0,1,2}   Alignment algorithm: 0=local (Smith-Waterman), 1=global (Needleman-Wunsch), 2=semi-global (default: 1)
+
+Common Arguments:
+  --config CONFIG, -c CONFIG
+                        Configuration file
+  --progress-bar, -p    Enable progress bar
+  --log-file LOG_FILE   Log file
+  --log-level LOG_LEVEL
+                        Log level (default: WARNING)
+```
+
+**Key Concepts**:
+- **Key**: Column containing sequences to align
+- **Barcode**: Column containing unique markers used for counting
+- **Count**: Number of unique barcodes associated with each key (used for filtering)
+
+**Filtering**: Keys are filtered based on their unique barcode count. Multiple filters can be applied simultaneously:
+- `--min-count`: Keep only keys with at least N unique barcodes
+- `--top-n`: Keep only the top N keys by unique barcode count
+- `--min-frequency`: Keep only keys representing at least X% of total unique barcodes
+
+**Alignment Modes**:
+- **Default**: All filtered keys are aligned together in a single alignment
+- **`--align-by-barcode`**: Keys are grouped by barcode and aligned separately. Keys that share multiple barcodes will appear in multiple alignment groups (once per barcode)
+
+**Output Format**: CSV with columns:
+- Default mode: `key_column`, `aligned_sequence`, `unique_barcode_count`
+- Barcode-grouped mode: `key_column`, `barcode_column`, `aligned_sequence`, `unique_barcode_count`
+
+**Example**:
+```bash
+# Align all sequences with at least 5 unique barcodes
+outerspace align \
+  --input-file sequences.csv \
+  --key-column sequence \
+  --barcode-column barcode \
+  --min-count 5 \
+  --output-file aligned.csv
+
+# Align top 10 sequences by barcode count, grouped by barcode
+outerspace align \
+  --input-file sequences.csv \
+  --key-column sequence \
+  --barcode-column barcode \
+  --top-n 10 \
+  --align-by-barcode \
+  --output-file aligned_by_barcode.csv
+```
+
 ### `outerspace merge`
 Merges multiple UMI count files into a single file. Features:
 - Wide and long output formats
