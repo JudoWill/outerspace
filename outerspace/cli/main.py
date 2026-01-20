@@ -18,6 +18,7 @@ from outerspace.cli.commands.stats import StatsCommand
 from outerspace.cli.commands.subsample import SubsampleCommand
 from outerspace.cli.commands.visualize import VisualizeCommand
 from outerspace.cli.commands.pipeline import PipelineCommand
+from outerspace.cli.commands.align import AlignCommand
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -84,6 +85,7 @@ class Cli:
             CollapseCommand,
             CountCommand,
             MergeCommand,
+            AlignCommand,
             StatsCommand,
             SubsampleCommand,
             VisualizeCommand,
@@ -123,6 +125,7 @@ class Cli:
             "pipeline": PipelineCommand,
             "stats": StatsCommand,
             "subsample": SubsampleCommand,
+            "align": AlignCommand,
         }
 
         if self.args.command not in command_map:
