@@ -11,6 +11,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from collections import defaultdict
 from typing import Any, Dict, List, Optional
 from argparse import ArgumentParser
 
@@ -30,11 +31,11 @@ __author__ = "WND"
 
 
 class AlignCommand(BaseCommand):
-    """Command for aligning UMI sequences from CSV files using spoa.
+    """Command for aligning sequences from CSV files using spoa.
 
-    This command reads UMI sequences from a CSV column, aligns them using spoa,
-    and outputs the aligned sequences. It supports processing single files or
-    entire directories with configurable alignment parameters.
+    This command counts unique barcodes per key, filters keys based on barcode count,
+    and aligns sequences using spoa. It supports processing single files or entire
+    directories with configurable alignment parameters and filtering options.
     """
 
     def _init_parser(self, subparser: ArgumentParser) -> None:
@@ -70,9 +71,14 @@ class AlignCommand(BaseCommand):
 
         # Processing options
         parser.add_argument(
-            "--column",
-            help="Column name containing UMI sequences to align",
-            required=True,
+            "--key-column",
+            help="Column containing sequences to align",
+            default=None,
+        )
+        parser.add_argument(
+            "--barcode-column",
+            help="Column containing unique markers for counting",
+            default=None,
         )
         parser.add_argument("--sep", default=",", help="CSV separator (default: ,)")
         parser.add_argument(
@@ -82,9 +88,27 @@ class AlignCommand(BaseCommand):
             default=None,
         )
         parser.add_argument(
-            "--unique",
+            "--min-count",
+            type=int,
+            default=0,
+            help="Minimum unique barcode count threshold for a key to be included (default: 0)",
+        )
+        parser.add_argument(
+            "--top-n",
+            type=int,
+            default=None,
+            help="Keep only top N keys by unique barcode count (default: all)",
+        )
+        parser.add_argument(
+            "--min-frequency",
+            type=float,
+            default=0.0,
+            help="Minimum frequency percentage threshold based on unique barcode count (default: 0.0)",
+        )
+        parser.add_argument(
+            "--align-by-barcode",
             action="store_true",
-            help="Remove duplicate sequences",
+            help="If set, align keys separately grouped by identical barcodes (default: align all together)",
         )
 
 
@@ -124,20 +148,23 @@ class AlignCommand(BaseCommand):
         self,
         input_file: str,
         output_file: Optional[str],
-        column: str,
+        key_col: str,
+        barcode_col: str,
         sep: str,
         row_limit: Optional[int],
         match: int,
         mismatch: int,
         gap: int,
         algorithm: int,
-        unique: bool,
+        min_count: int,
+        top_n: Optional[int],
+        min_frequency: float,
+        align_by_barcode: bool,
     ) -> Dict[str, Any]:
         """Process a single CSV file and align UMIs.
 
-        This method reads a CSV file, extracts UMI sequences from the specified
-        column, aligns them using spoa, and writes the aligned sequences to
-        the output file or stdout.
+        This method reads a CSV file, counts unique barcodes per key, filters keys
+        based on barcode count, and aligns the sequences using spoa.
 
         Parameters
         ----------
@@ -145,8 +172,10 @@ class AlignCommand(BaseCommand):
             Path to input CSV file
         output_file : Optional[str]
             Path to output file (None for stdout)
-        column : str
-            Column name containing UMIs
+        key_col : str
+            Column name containing sequences to align
+        barcode_col : str
+            Column name containing unique markers for counting
         sep : str
             CSV separator character
         row_limit : Optional[int]
@@ -159,8 +188,14 @@ class AlignCommand(BaseCommand):
             Gap penalty for alignment
         algorithm : int
             Alignment algorithm (0=local, 1=global, 2=semi-global)
-        unique : bool
-            Remove duplicate sequences
+        min_count : int
+            Minimum unique barcode count threshold
+        top_n : Optional[int]
+            Keep only top N keys by unique barcode count
+        min_frequency : float
+            Minimum frequency percentage threshold
+        align_by_barcode : bool
+            If True, align keys separately grouped by barcode
         Returns
         -------
         Dict[str, Any]
@@ -169,23 +204,24 @@ class AlignCommand(BaseCommand):
         Raises
         ------
         ValueError
-            If required column is not found in the input file
+            If required columns are not found in the input file
         """
         logger.info(f"Processing file: {input_file}")
 
-        # Read UMI sequences from CSV
-        sequences = []
-        unique_sequences = set()
+        # Count unique barcodes per key
+        keys_to_barcodes = defaultdict(set)  # key -> set of unique barcodes
+        keys_to_sequences = defaultdict(list)  # key -> list of sequences (for alignment)
         total_rows = 0
 
         with open(input_file, "r") as f:
             reader = csv.DictReader(f, delimiter=sep)
             headers = reader.fieldnames
 
-            # Verify column exists
-            if column not in headers:
+            # Verify columns exist
+            missing_cols = [col for col in [key_col, barcode_col] if col not in headers]
+            if missing_cols:
                 raise ValueError(
-                    f"Column '{column}' not found in input file. "
+                    f"Columns not found in input file: {', '.join(missing_cols)}. "
                     f"Available columns: {', '.join(headers)}"
                 )
             
@@ -194,28 +230,42 @@ class AlignCommand(BaseCommand):
                     break
 
                 total_rows += 1
-                umi_seq = str(row.get(column, "")).strip()
-                if umi_seq:  # Only add non-empty sequences
-                    if unique:
-                        if umi_seq not in unique_sequences:
-                            sequences.append(umi_seq)
-                            unique_sequences.add(umi_seq)
-                    else:
-                        sequences.append(umi_seq)
+                key = str(row.get(key_col, "")).strip()
+                barcode = str(row.get(barcode_col, "")).strip()
+                
+                if not key or not barcode:
+                    continue
+                
+                # The key itself is the sequence to align
+                keys_to_barcodes[key].add(barcode)
+                keys_to_sequences[key].append(key)
 
-        logger.info(f"Read {len(sequences)} UMI sequences from {total_rows} rows")
+        logger.info(f"Read {total_rows} rows, found {len(keys_to_barcodes)} unique keys")
 
-        if not sequences:
-            logger.warning("No UMI sequences found in column")
-            aligned_sequences = []
+        # Calculate unique barcode count per key
+        key_counts = {key: len(barcodes) for key, barcodes in keys_to_barcodes.items()}
+        
+        # Apply filtering
+        filtered_keys = self._filter_keys(
+            key_counts, min_count, top_n, min_frequency
+        )
+        
+        logger.info(
+            f"Filtered {len(filtered_keys)} keys from {len(key_counts)} total keys "
+            f"(min_count={min_count}, top_n={top_n}, min_frequency={min_frequency}%)"
+        )
+
+        if not filtered_keys:
+            logger.warning("No keys passed the filter criteria")
+            results = []
         else:
-            # Perform alignment
-            logger.info(
-                f"Aligning {len(sequences)} sequences with "
-                f"match={match}, mismatch={mismatch}, gap={gap}, algorithm={algorithm}"
-            )
-            aligned_sequences = align_umi_sequences(
-                sequences=sequences,
+            # Perform alignment(s)
+            results = self._align_filtered_keys(
+                filtered_keys=filtered_keys,
+                keys_to_barcodes=keys_to_barcodes,
+                keys_to_sequences=keys_to_sequences,
+                key_counts=key_counts,
+                align_by_barcode=align_by_barcode,
                 match=match,
                 mismatch=mismatch,
                 gap=gap,
@@ -223,46 +273,294 @@ class AlignCommand(BaseCommand):
             )
 
         # Write output
-        self._write_aligned_sequences(aligned_sequences, output_file)
+        self._write_aligned_output(
+            results=results,
+            output_file=output_file,
+            key_col=key_col,
+            barcode_col=barcode_col,
+            align_by_barcode=align_by_barcode,
+            sep=sep,
+        )
 
         metrics = {
             "total_rows": total_rows,
-            "sequences_read": len(sequences),
-            "aligned_sequences": len(aligned_sequences),
+            "total_keys": len(keys_to_barcodes),
+            "filtered_keys": len(filtered_keys),
+            "output_rows": len(results),
         }
 
-        if aligned_sequences:
-            metrics["aligned_length"] = len(aligned_sequences[0])
-
-        logger.info(f"Processed {len(sequences)} sequences, output {len(aligned_sequences)} aligned sequences")
+        logger.info(
+            f"Processed {len(keys_to_barcodes)} keys, "
+            f"filtered to {len(filtered_keys)}, output {len(results)} rows"
+        )
         return metrics
 
-    def _write_aligned_sequences(
-        self, aligned_sequences: List[str], output_file: Optional[str]
-    ) -> None:
-        """Write aligned sequences to file or stdout.
+    def _filter_keys(
+        self,
+        key_counts: Dict[str, int],
+        min_count: int,
+        top_n: Optional[int],
+        min_frequency: float,
+    ) -> set:
+        """Filter keys based on unique barcode count.
 
         Parameters
         ----------
-        aligned_sequences : List[str]
-            List of aligned sequences to write
+        key_counts : Dict[str, int]
+            Dictionary mapping keys to their unique barcode counts
+        min_count : int
+            Minimum unique barcode count threshold
+        top_n : Optional[int]
+            Keep only top N keys by unique barcode count
+        min_frequency : float
+            Minimum frequency percentage threshold
+
+        Returns
+        -------
+        set
+            Set of filtered keys
+        """
+        filtered_keys = set()
+        
+        # Calculate total unique barcode count across all keys
+        total_unique_barcodes = sum(key_counts.values())
+        
+        # Apply filters
+        for key, count in key_counts.items():
+            if count < min_count:
+                continue
+            if min_frequency > 0 and total_unique_barcodes > 0:
+                frequency = (count / total_unique_barcodes) * 100
+                if frequency < min_frequency:
+                    continue
+            filtered_keys.add(key)
+        
+        # Apply top-n filter
+        if top_n is not None and top_n > 0:
+            sorted_keys = sorted(key_counts.items(), key=lambda x: x[1], reverse=True)
+            top_keys = {key for key, _ in sorted_keys[:top_n]}
+            filtered_keys &= top_keys
+        
+        return filtered_keys
+
+    def _align_filtered_keys(
+        self,
+        filtered_keys: set,
+        keys_to_barcodes: Dict[str, set],
+        keys_to_sequences: Dict[str, List[str]],
+        key_counts: Dict[str, int],
+        align_by_barcode: bool,
+        match: int,
+        mismatch: int,
+        gap: int,
+        algorithm: int,
+    ) -> List[Dict[str, Any]]:
+        """Align filtered keys and return results.
+
+        Parameters
+        ----------
+        filtered_keys : set
+            Set of keys that passed filtering
+        keys_to_barcodes : Dict[str, set]
+            Dictionary mapping keys to sets of barcodes
+        keys_to_sequences : Dict[str, List[str]]
+            Dictionary mapping keys to lists of sequences
+        key_counts : Dict[str, int]
+            Dictionary mapping keys to their unique barcode counts
+        align_by_barcode : bool
+            If True, align keys separately grouped by barcode
+        match : int
+            Match score for alignment
+        mismatch : int
+            Mismatch penalty for alignment
+        gap : int
+            Gap penalty for alignment
+        algorithm : int
+            Alignment algorithm
+
+        Returns
+        -------
+        List[Dict[str, Any]]
+            List of result dictionaries with key, aligned_sequence, unique_barcode_count, and optionally barcode
+        """
+        results = []
+        
+        if align_by_barcode:
+            # Group filtered keys by barcode
+            # Keys with multiple barcodes will appear in multiple groups
+            barcode_to_keys = defaultdict(list)
+            for key in filtered_keys:
+                for barcode in keys_to_barcodes[key]:
+                    barcode_to_keys[barcode].append(key)
+            
+            # Align each barcode group separately
+            for barcode, keys in tqdm(barcode_to_keys.items(), desc="Aligning by barcode"):
+                # Collect sequences for this barcode group
+                group_sequences = []
+                key_to_sequence_indices = {}  # Track which sequences belong to which key
+                
+                for key in keys:
+                    start_idx = len(group_sequences)
+                    group_sequences.extend(keys_to_sequences[key])
+                    end_idx = len(group_sequences)
+                    key_to_sequence_indices[key] = (start_idx, end_idx)
+                
+                if not group_sequences:
+                    continue
+                
+                # Align this group
+                logger.debug(
+                    f"Aligning {len(group_sequences)} sequences for barcode {barcode} "
+                    f"({len(keys)} keys)"
+                )
+                aligned_sequences = align_umi_sequences(
+                    sequences=group_sequences,
+                    match=match,
+                    mismatch=mismatch,
+                    gap=gap,
+                    algorithm=algorithm,
+                )
+                
+                # Map aligned sequences back to keys
+                # For simplicity, use the first aligned sequence for each key
+                # (in practice, all sequences from the same key should align similarly)
+                for key in keys:
+                    start_idx, end_idx = key_to_sequence_indices[key]
+                    # Use the first aligned sequence from this key's sequences
+                    aligned_seq = aligned_sequences[start_idx] if aligned_sequences else ""
+                    
+                    results.append({
+                        'key': key,
+                        'barcode': barcode,
+                        'aligned_sequence': aligned_seq,
+                        'unique_barcode_count': key_counts[key]
+                    })
+        else:
+            # Default mode: align all filtered keys together
+            all_sequences = []
+            key_to_sequence_indices = {}  # Track which sequences belong to which key
+            
+            for key in filtered_keys:
+                start_idx = len(all_sequences)
+                all_sequences.extend(keys_to_sequences[key])
+                end_idx = len(all_sequences)
+                key_to_sequence_indices[key] = (start_idx, end_idx)
+            
+            if not all_sequences:
+                return results
+            
+            # Align all together
+            logger.info(
+                f"Aligning {len(all_sequences)} sequences from {len(filtered_keys)} keys "
+                f"with match={match}, mismatch={mismatch}, gap={gap}, algorithm={algorithm}"
+            )
+            aligned_sequences = align_umi_sequences(
+                sequences=all_sequences,
+                match=match,
+                mismatch=mismatch,
+                gap=gap,
+                algorithm=algorithm,
+            )
+            
+            # Map aligned sequences back to keys
+            for key in filtered_keys:
+                start_idx, end_idx = key_to_sequence_indices[key]
+                # Use the first aligned sequence from this key's sequences
+                aligned_seq = aligned_sequences[start_idx] if aligned_sequences else ""
+                
+                results.append({
+                    'key': key,
+                    'aligned_sequence': aligned_seq,
+                    'unique_barcode_count': key_counts[key]
+                })
+        
+        return results
+
+    def _write_aligned_output(
+        self,
+        results: List[Dict[str, Any]],
+        output_file: Optional[str],
+        key_col: str,
+        barcode_col: str,
+        align_by_barcode: bool,
+        sep: str,
+    ) -> None:
+        """Write aligned sequences to CSV file or stdout.
+
+        Parameters
+        ----------
+        results : List[Dict[str, Any]]
+            List of result dictionaries with key, aligned_sequence, unique_barcode_count, and optionally barcode
         output_file : Optional[str]
             Path to output file (None for stdout)
+        key_col : str
+            Name of the key column
+        barcode_col : str
+            Name of the barcode column
+        align_by_barcode : bool
+            Whether barcode-grouped mode was used
+        sep : str
+            CSV separator character
         """
+        if not results:
+            logger.warning("No results to write")
+            return
+        
         if output_file:
             logger.info(f"Writing aligned sequences to {output_file}")
             # Create output directory if needed
             output_path = Path(output_file)
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(output_file, "w") as f:
-                for seq in aligned_sequences:
-                    f.write(seq + "\n")
+            with open(output_file, "w", newline="") as f:
+                writer = csv.writer(f, delimiter=sep)
+                
+                # Write header
+                if align_by_barcode:
+                    writer.writerow([key_col, barcode_col, "aligned_sequence", "unique_barcode_count"])
+                else:
+                    writer.writerow([key_col, "aligned_sequence", "unique_barcode_count"])
+                
+                # Write rows
+                for result in results:
+                    if align_by_barcode:
+                        writer.writerow([
+                            result['key'],
+                            result['barcode'],
+                            result['aligned_sequence'],
+                            result['unique_barcode_count']
+                        ])
+                    else:
+                        writer.writerow([
+                            result['key'],
+                            result['aligned_sequence'],
+                            result['unique_barcode_count']
+                        ])
         else:
             # Write to stdout
             logger.debug("Writing aligned sequences to stdout")
-            for seq in aligned_sequences:
-                print(seq)
+            
+            # Write header
+            if align_by_barcode:
+                print(sep.join([key_col, barcode_col, "aligned_sequence", "unique_barcode_count"]))
+            else:
+                print(sep.join([key_col, "aligned_sequence", "unique_barcode_count"]))
+            
+            # Write rows
+            for result in results:
+                if align_by_barcode:
+                    print(sep.join([
+                        str(result['key']),
+                        str(result['barcode']),
+                        str(result['aligned_sequence']),
+                        str(result['unique_barcode_count'])
+                    ]))
+                else:
+                    print(sep.join([
+                        str(result['key']),
+                        str(result['aligned_sequence']),
+                        str(result['unique_barcode_count'])
+                    ]))
 
     def run(self) -> None:
         """Run the align command.
@@ -289,12 +587,18 @@ class AlignCommand(BaseCommand):
             "mismatch": -4,
             "gap": -8,
             "algorithm": 1,
+            "min_count": 0,
+            "top_n": None,
+            "min_frequency": 0.0,
+            "align_by_barcode": False,
         }
         self._merge_config_and_args(defaults)
 
         # Validate required arguments
-        if not self.args.column:
-            raise ValueError("Please provide --column")
+        if not self.args.key_column:
+            raise ValueError("Please provide --key-column")
+        if not self.args.barcode_column:
+            raise ValueError("Please provide --barcode-column")
 
         # Validate input/output arguments
         if not self.args.input_file and not self.args.input_dir:
@@ -317,17 +621,25 @@ class AlignCommand(BaseCommand):
                 metrics = self._process_single_file(
                     input_file=self.args.input_file,
                     output_file=self.args.output_file,
-                    column=self.args.column,
+                    key_col=self.args.key_column,
+                    barcode_col=self.args.barcode_column,
                     sep=self.args.sep,
                     row_limit=self.args.row_limit,
                     match=self.args.match,
                     mismatch=self.args.mismatch,
                     gap=self.args.gap,
                     algorithm=self.args.algorithm,
-                    unique=self.args.unique,
+                    min_count=self.args.min_count,
+                    top_n=self.args.top_n,
+                    min_frequency=self.args.min_frequency,
+                    align_by_barcode=self.args.align_by_barcode,
                 )
 
-                logger.info(f"Alignment complete. Processed {metrics['sequences_read']} sequences")
+                logger.info(
+                    f"Alignment complete. Processed {metrics.get('total_keys', 0)} keys, "
+                    f"filtered to {metrics.get('filtered_keys', 0)}, "
+                    f"output {metrics.get('output_rows', 0)} rows"
+                )
 
             except Exception as e:
                 logger.error(f"Error processing {self.args.input_file}: {e}")
@@ -365,18 +677,25 @@ class AlignCommand(BaseCommand):
                 metrics = self._process_single_file(
                     input_file=input_file,
                     output_file=output_file,
-                    column=self.args.column,
+                    key_col=self.args.key_column,
+                    barcode_col=self.args.barcode_column,
                     sep=self.args.sep,
                     row_limit=self.args.row_limit,
                     match=self.args.match,
                     mismatch=self.args.mismatch,
                     gap=self.args.gap,
                     algorithm=self.args.algorithm,
+                    min_count=self.args.min_count,
+                    top_n=self.args.top_n,
+                    min_frequency=self.args.min_frequency,
+                    align_by_barcode=self.args.align_by_barcode,
                 )
 
                 logger.info(
                     f"Processed {os.path.basename(input_file)}: "
-                    f"{metrics['sequences_read']} sequences aligned"
+                    f"{metrics.get('total_keys', 0)} keys processed, "
+                    f"{metrics.get('filtered_keys', 0)} filtered, "
+                    f"{metrics.get('output_rows', 0)} rows output"
                 )
 
             except Exception as e:
