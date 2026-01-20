@@ -502,12 +502,12 @@ class AlignCommand(BaseCommand):
         sep : str
             CSV separator character
         """
-        if not results:
-            logger.warning("No results to write")
-            return
-        
         if output_file:
-            logger.info(f"Writing aligned sequences to {output_file}")
+            if not results:
+                logger.warning("No results to write, creating empty file with headers")
+            else:
+                logger.info(f"Writing aligned sequences to {output_file}")
+            
             # Create output directory if needed
             output_path = Path(output_file)
             output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -538,7 +538,10 @@ class AlignCommand(BaseCommand):
                         ])
         else:
             # Write to stdout
-            logger.debug("Writing aligned sequences to stdout")
+            if not results:
+                logger.warning("No results to write")
+            else:
+                logger.debug("Writing aligned sequences to stdout")
             
             # Write header
             if align_by_barcode:
